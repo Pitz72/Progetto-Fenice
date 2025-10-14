@@ -1,0 +1,273 @@
+import React, { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useGameStore } from '../store/gameStore';
+import { useCharacterStore } from '../store/characterStore';
+import { GameState } from '../types';
+import { useKeyboardInput } from '../hooks/useKeyboardInput';
+import CanvasMap from './CanvasMap';
+import { itemDatabase } from '../src/data/itemDatabase';
+import { WEATHER_DATA } from '../store/gameStore';
+
+// --- Reusable Panel Component ---
+const Panel: React.FC<{ title: string; children: React.ReactNode; className?: string }> = ({ title, children, className }) => (
+  <div className={`border border-green-400/30 flex flex-col bg-black/20 ${className}`}>
+    <h2 className="text-center bg-green-400/10 py-1 font-bold tracking-widest uppercase text-2xl">{title}</h2>
+    <div className="p-2 flex-grow overflow-hidden text-2xl leading-snug">
+      {children}
+    </div>
+  </div>
+);
+
+// --- Left Column Panels ---
+const SurvivalPanel: React.FC = () => {
+    const { hp, satiety, hydration } = useCharacterStore((state) => state);
+    return (
+        <Panel title="SOPRAVVIVENZA">
+            <div>
+            <div>HP: {Math.floor(hp.current)}/{hp.max}</div>
+            <div>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
+            <div>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
+            <div>Status: Normale</div>
+            </div>
+        </Panel>
+    );
+};
+
+const InventoryPanel: React.FC = () => {
+  const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
+
+  const displayInventory = useMemo(() => {
+    return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
+  }, [inventory, equippedWeapon, equippedArmor]);
+
+
+  return (
+    <Panel title="INVENTARIO" className="flex-grow">
+      <div className="border border-green-400/30 p-2 h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+        {displayInventory.length > 0 ? (
+          <ul className="space-y-1.5">
+            {displayInventory.map((invItem, index) => {
+              const itemDetails = itemDatabase[invItem.itemId];
+              if (!itemDetails) return null;
+              
+              const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}`;
+              
+              return (
+                <li key={`${invItem.itemId}-${index}`} style={{ color: itemDetails.color }}>
+                  {displayName}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="text-green-400/50">-- Vuoto --</div>
+        )}
+      </div>
+    </Panel>
+  );
+};
+
+const CommandsPanel: React.FC = () => (
+  <Panel title="COMANDI">
+    <div className="space-y-1.5">
+      <div className="flex justify-between"><span>[WASD/↑↓←→]</span> <span>Movimento/Navigazione</span></div>
+      <div className="flex justify-between"><span>[I]</span> <span>Inventario</span></div>
+      <div className="flex justify-between"><span>[TAB]</span> <span>Scheda Personaggio</span></div>
+      <div className="flex justify-between"><span>[ESC]</span> <span>Menu/Indietro</span></div>
+      <div className="flex justify-between"><span>[R]</span> <span>Riposo Breve</span></div>
+      <div className="flex justify-between"><span>[L]</span> <span>Level up</span></div>
+      <div className="flex justify-between"><span>[F5]</span> <span>Salvataggio Rapido</span></div>
+      <div className="flex justify-between"><span>[F9]</span> <span>Caricamento Rapido</span></div>
+    </div>
+  </Panel>
+);
+
+
+// --- Right Column Panels ---
+const InfoPanel: React.FC = () => {
+    const { playerPos, gameTime, weather, getTileInfo } = useGameStore();
+    
+    const tileInfo = getTileInfo(playerPos.x, playerPos.y);
+    const formattedTime = `${String(gameTime.hour).padStart(2, '0')}:${String(gameTime.minute).padStart(2, '0')}`;
+    const weatherInfo = WEATHER_DATA[weather.type];
+
+    return (
+        <Panel title="INFORMAZIONI">
+            <div className="space-y-2">
+                <div>
+                    <div className="flex justify-between">
+                        <span>Posizione:</span> 
+                        <span>({playerPos.x}, {playerPos.y})</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>Luogo:</span> 
+                        <span>{tileInfo.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>{formattedTime}</span> 
+                        <span>Giorno {gameTime.day}</span>
+                    </div>
+                    <div className="border-t border-green-400/20 my-1"></div>
+                    <div className="flex justify-between items-center">
+                        <span className={weatherInfo.color}>* {weatherInfo.name}</span>
+                         <div className="text-right">
+                        </div>
+                    </div>
+                     <div>effetti: Nessun effetto</div>
+                </div>
+            </div>
+        </Panel>
+    );
+};
+
+const EquipmentPanel: React.FC = () => {
+    const { equippedWeapon, equippedArmor } = useCharacterStore((state) => state);
+
+    const weapon = equippedWeapon ? itemDatabase[equippedWeapon] : null;
+    const armor = equippedArmor ? itemDatabase[equippedArmor] : null;
+
+    return (
+        <Panel title="EQUIPAGGIAMENTO">
+            <div>
+                <div>ARMA: {weapon ? weapon.name : 'Nessuna'}</div>
+                <div>ARMATURA: {armor ? armor.name : 'Nessuna'}</div>
+            </div>
+        </Panel>
+    );
+};
+
+const StatsPanel: React.FC = () => {
+    const { level, xp, attributes, getAttributeModifier } = useCharacterStore((state) => state);
+    const renderModifier = (attr: 'for' | 'des' | 'cos' | 'int' | 'sag' | 'car') => {
+        const mod = getAttributeModifier(attr);
+        return `(${mod >= 0 ? '+' : ''}${mod})`;
+    };
+
+    return (
+        <Panel title="STATISTICHE" className="flex-grow">
+            <div className="space-y-2">
+                <div>Livello: {level}</div>
+                <div>XP: {xp.current} / {xp.next}</div>
+                <div className="border-t border-green-400/20 my-1"></div>
+                <div className="grid grid-cols-2 gap-x-4">
+                    <div className="flex justify-between"><span>FOR:</span><span>{attributes.for} {renderModifier('for')}</span></div>
+                    <div className="flex justify-between"><span>DES:</span><span>{attributes.des} {renderModifier('des')}</span></div>
+                    <div className="flex justify-between"><span>COS:</span><span>{attributes.cos} {renderModifier('cos')}</span></div>
+                    <div className="flex justify-between"><span>INT:</span><span>{attributes.int} {renderModifier('int')}</span></div>
+                    <div className="flex justify-between"><span>SAG:</span><span>{attributes.sag} {renderModifier('sag')}</span></div>
+                    <div className="flex justify-between"><span>CAR:</span><span>{attributes.car} {renderModifier('car')}</span></div>
+                </div>
+            </div>
+        </Panel>
+    );
+};
+
+
+// --- Bottom Panel ---
+const TravelJournalPanel: React.FC = () => {
+    const journal = useGameStore((state) => state.journal);
+    const journalRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to the top (to show the latest message)
+    useEffect(() => {
+        if (journalRef.current) {
+            journalRef.current.scrollTop = 0;
+        }
+    }, [journal]);
+
+    return (
+        <Panel title="DIARIO DI VIAGGIO" className="h-full">
+            <div ref={journalRef} className="h-full overflow-y-auto space-y-2" style={{ scrollbarWidth: 'none' }}>
+                {journal.length > 0 ? (
+                    journal.map((entry, index) => (
+                        <div key={index}>
+                           <span className="text-green-400/60 mr-2">
+                                [{String(entry.time.hour).padStart(2, '0')}:{String(entry.time.minute).padStart(2, '0')}]
+                           </span>
+                           <span>{entry.message}</span>
+                        </div>
+                    ))
+                ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-green-400/60 text-center">
+                        <p className="text-4xl">Il tuo viaggio inizierà presto...</p>
+                        <p className="text-2xl">Le tue avventure saranno registrate qui</p>
+                    </div>
+                )}
+            </div>
+        </Panel>
+    );
+};
+
+
+const GameScreen: React.FC = () => {
+  const { setGameState, movePlayer, isInventoryOpen, toggleInventory } = useGameStore();
+
+  const handleExit = useCallback(() => {
+    setGameState(GameState.MAIN_MENU);
+  }, [setGameState]);
+
+  const handleMove = (dx: number, dy: number) => {
+    if (!isInventoryOpen) {
+      movePlayer(dx, dy);
+    }
+  };
+
+  const keyHandlerMap: { [key: string]: () => void } = {
+    i: toggleInventory,
+    I: toggleInventory,
+    ArrowUp: () => handleMove(0, -1),
+    w: () => handleMove(0, -1),
+    ArrowDown: () => handleMove(0, 1),
+    s: () => handleMove(0, 1),
+    ArrowLeft: () => handleMove(-1, 0),
+    a: () => handleMove(-1, 0),
+    ArrowRight: () => handleMove(1, 0),
+    d: () => handleMove(1, 0),
+  };
+
+  // The 'Escape' key should only take you to the main menu if you're not in a sub-screen like inventory.
+  if (!isInventoryOpen) {
+    keyHandlerMap['Escape'] = handleExit;
+  }
+  
+  useKeyboardInput(keyHandlerMap);
+
+
+  return (
+    <div className="w-full h-full flex p-2 space-x-2 text-green-400" style={{ textShadow: '0 0 5px rgba(110, 231, 183, 0.3)'}}>
+      {/* Left Column (25%) */}
+      <div className="w-1/4 h-full flex flex-col space-y-2">
+        <SurvivalPanel />
+        <InventoryPanel />
+        <CommandsPanel />
+      </div>
+
+      {/* Main Content Area (Center + Right Columns & Journal) (75%) */}
+      <div className="w-3/4 h-full flex flex-col space-y-2">
+        {/* Top part of Main Content (Map + Right Panels) */}
+        <div className="flex-grow flex space-x-2 overflow-hidden">
+          {/* Center Column (50% of total width) */}
+          <div className="w-2/3 h-full flex flex-col border border-green-400/30 bg-black/20">
+             <h2 className="text-center bg-green-400/10 py-1 font-bold tracking-widest uppercase text-2xl flex-shrink-0">MAPPA DEL MONDO</h2>
+             <div className="flex-grow relative">
+                <CanvasMap />
+             </div>
+          </div>
+
+          {/* Right Column (25% of total width) */}
+          <div className="w-1/3 h-full flex flex-col space-y-2">
+            <InfoPanel />
+            <EquipmentPanel />
+            <StatsPanel />
+          </div>
+        </div>
+        
+        {/* Bottom part of Main Content (Journal) */}
+        <div className="h-1/4 flex-shrink-0">
+          <TravelJournalPanel />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GameScreen;

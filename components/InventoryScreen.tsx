@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
@@ -77,9 +77,7 @@ const InventoryScreen: React.FC = () => {
     const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
     const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
 
-    const displayInventory = useMemo(() => {
-        return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
-    }, [inventory, equippedWeapon, equippedArmor]);
+    const displayInventory = inventory;
     
     const selectedItem = displayInventory.length > 0 && itemDatabase ? itemDatabase[displayInventory[inventorySelectedIndex]?.itemId] : null;
 
@@ -154,7 +152,8 @@ const InventoryScreen: React.FC = () => {
                                    if (!itemDetails) return null;
                                    
                                    const isSelected = index === inventorySelectedIndex;
-                                   const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}`;
+                                   const isEquipped = invItem.itemId === equippedWeapon || invItem.itemId === equippedArmor;
+                                   const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}${isEquipped ? ' (E)' : ''}`;
                                    
                                    return (
                                        <li 

@@ -35,7 +35,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     // --- State ---
     level: 1,
     xp: { current: 0, next: XP_PER_LEVEL[2] },
-    hp: { current: 10, max: 10 },
+    hp: { current: 100, max: 100 },
     satiety: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
     hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
     attributes: { ...initialAttributes },
@@ -47,8 +47,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     // --- Actions ---
     initCharacter: (newAttributes) => {
         const attributes = newAttributes || initialAttributes;
-        const constitutionModifier = Math.floor((attributes.cos - 10) / 2);
-        const maxHp = 10 + constitutionModifier;
+        const maxHp = 100; // Increased starting HP
 
         set({
             level: 1,
@@ -58,9 +57,11 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             satiety: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             skills: { ...initialSkills },
-            inventory: [ // Basic starting gear
-                { itemId: 'CONS_002', quantity: 1 },         // Bottiglia d'acqua
+            inventory: [ // Updated starting gear
+                { itemId: 'CONS_002', quantity: 3 },         // Bottiglia d'acqua
                 { itemId: 'CONS_001', quantity: 3 },         // Razione di cibo
+                { itemId: 'CONS_003', quantity: 2 },         // Bende
+                { itemId: 'MED_PAINKILLER', quantity: 2 }, // Antidolorifici
                 { itemId: 'combat_knife', quantity: 1 },   // Coltello da combattimento
                 { itemId: 'leather_jacket', quantity: 1 }, // Giubbotto di pelle
             ],
@@ -106,7 +107,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             const newNextXp = XP_PER_LEVEL[newLevel + 1] || state.xp.next;
             
             const constitutionModifier = get().getAttributeModifier('cos');
-            const hpIncrease = Math.max(1, (Math.floor(Math.random() * 8) + 1) + constitutionModifier);
+            const hpIncrease = 5 + constitutionModifier; // Rebalanced HP gain
             const newMaxHp = state.hp.max + hpIncrease;
 
             return {
@@ -139,24 +140,31 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     removeItem: (itemId, quantity = 1) => {
         set(state => {
+            let newInventory = [...state.inventory];
             const existingItemIndex = state.inventory.findIndex(i => i.itemId === itemId);
             if (existingItemIndex === -1) return {};
             
             const existingItem = state.inventory[existingItemIndex];
+            let shouldUnequip = false;
 
             if (existingItem.quantity > quantity) {
-                const newInventory = [...state.inventory];
                 newInventory[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity - quantity };
-                return { inventory: newInventory };
             } else {
-                const newInventory = state.inventory.filter(i => i.itemId !== itemId);
-                return { inventory: newInventory };
+                newInventory = state.inventory.filter((_, index) => index !== existingItemIndex);
+                shouldUnequip = true;
             }
+
+            if (shouldUnequip) {
+                const equippedWeapon = state.equippedWeapon === itemId ? null : state.equippedWeapon;
+                const equippedArmor = state.equippedArmor === itemId ? null : state.equippedArmor;
+                return { inventory: newInventory, equippedWeapon, equippedArmor };
+            }
+
+            return { inventory: newInventory };
         });
     },
     
     discardItem: (itemId, quantity = 1) => {
-        // Alias for removeItem for now
         get().removeItem(itemId, quantity);
     },
 
@@ -164,40 +172,15 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         set(state => {
             const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
             const itemDetails = itemDatabase[itemId];
-            if (!itemDetails || (itemDetails.type !== 'weapon' && itemDetails.type !== 'armor')) return state;
-
-            // 1. Remove item from inventory
-            const itemInInv = state.inventory.find(i => i.itemId === itemId);
-            if (!itemInInv) return state; // Can't equip something not in inventory
-
-            let nextInventory = [...state.inventory];
-            if (itemInInv.quantity > 1) {
-                nextInventory = nextInventory.map(i => i.itemId === itemId ? { ...i, quantity: i.quantity - 1 } : i);
-            } else {
-                nextInventory = nextInventory.filter(i => i.itemId !== itemId);
+            if (!itemDetails || (itemDetails.type !== 'weapon' && itemDetails.type !== 'armor')) {
+                return state;
             }
-
-            // 2. Unequip old item and add it back to inventory
-            let unequippedItemId: string | null = null;
-            if (itemDetails.type === 'weapon') unequippedItemId = state.equippedWeapon;
-            if (itemDetails.type === 'armor') unequippedItemId = state.equippedArmor;
-
-            if (unequippedItemId) {
-                const unequippedItemDetails = itemDatabase[unequippedItemId];
-                const existingInInv = nextInventory.find(i => i.itemId === unequippedItemId);
-                if (existingInInv && unequippedItemDetails?.stackable) {
-                    nextInventory = nextInventory.map(i => i.itemId === unequippedItemId ? { ...i, quantity: i.quantity + 1 } : i);
-                } else {
-                    nextInventory.push({ itemId: unequippedItemId, quantity: 1 });
-                }
-            }
-
-            // 3. Return updated state
+            // Item remains in inventory, just set the equipped ID.
             if (itemDetails.type === 'weapon') {
-                return { inventory: nextInventory, equippedWeapon: itemId };
+                return { equippedWeapon: itemId };
             }
             if (itemDetails.type === 'armor') {
-                return { inventory: nextInventory, equippedArmor: itemId };
+                return { equippedArmor: itemId };
             }
             return state;
         });
@@ -205,29 +188,12 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     unequipItem: (slot) => {
         set(state => {
-            let itemToUnequipId: string | null = null;
-            if (slot === 'weapon') itemToUnequipId = state.equippedWeapon;
-            if (slot === 'armor') itemToUnequipId = state.equippedArmor;
-
-            if (!itemToUnequipId) return state;
-
-            // Add item back to inventory
-            const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
-            const itemDetails = itemDatabase[itemToUnequipId];
-            const existingInInv = state.inventory.find(i => i.itemId === itemToUnequipId);
-            let nextInventory = [...state.inventory];
-
-            if (existingInInv && itemDetails?.stackable) {
-                nextInventory = nextInventory.map(i => i.itemId === itemToUnequipId ? { ...i, quantity: i.quantity + 1 } : i);
-            } else {
-                nextInventory.push({ itemId: itemToUnequipId, quantity: 1 });
+            // Item is already in inventory, just clear the slot.
+            if (slot === 'weapon' && state.equippedWeapon) {
+                return { equippedWeapon: null };
             }
-            
-            if (slot === 'weapon') {
-                return { inventory: nextInventory, equippedWeapon: null };
-            }
-            if (slot === 'armor') {
-                return { inventory: nextInventory, equippedArmor: null };
+            if (slot === 'armor' && state.equippedArmor) {
+                return { equippedArmor: null };
             }
             return state;
         });
@@ -237,6 +203,17 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         set(state => ({
             hp: { ...state.hp, current: Math.max(0, state.hp.current - amount) }
         }));
+    },
+    
+    calculateSurvivalCost: (minutes) => {
+        // Rates per hour
+        let satietyDecay = 1.0; 
+        let hydrationDecay = 1.5;
+        
+        const satietyCost = (minutes / 60) * satietyDecay;
+        const hydrationCost = (minutes / 60) * hydrationDecay;
+        
+        return { satietyCost, hydrationCost };
     },
 
     updateSurvivalStats: (minutes, weather) => {

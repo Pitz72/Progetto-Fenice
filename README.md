@@ -13,19 +13,21 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.3.0)
+### Caratteristiche Attuali (v0.4.0)
 
 La versione attuale del prototipo include le seguenti meccaniche fondamentali:
 
-*   **Database Oggetti Modulare:** Il cuore del gioco è un database di oggetti completo e scalabile, caricato dinamicamente da file JSON separati per categoria (armi, armature, consumabili, materiali, ecc.). Contiene decine di oggetti unici.
-*   **Esplorazione del Mondo:** Un'ampia mappa di gioco su cui muoversi, con diversi tipi di terreno che influenzano il movimento.
-*   **Sistema Temporale:** Un orologio di gioco che avanza in base alle azioni del giocatore, con un ciclo giorno/notte implicito.
-*   **Meteo Dinamico:** Un sistema meteorologico che cambia in modo realistico e influenza il gameplay, aumentando i costi di movimento e il consumo di risorse.
-*   **Meccaniche di Sopravvivenza:** Gestione di Punti Vita (HP), Sazietà e Idratazione, che si consumano con il tempo e lo sforzo.
-*   **Inventario Interattivo:** Un sistema di inventario modale e completamente navigabile da tastiera, che permette di usare, equipaggiare, togliere e scartare oggetti.
-*   **Logica degli Effetti Completa:** Il motore di gioco ora gestisce tutti gli effetti degli oggetti (cura, riparazione, riparo, ecc.), fornendo un feedback testuale nel diario di viaggio.
-*   **Sistema di Equipaggiamento:** Slot per arma e armatura, con logica di scambio automatico.
-*   **Interfaccia Dinamica:** L'interfaccia di gioco si aggiorna in tempo reale per mostrare lo stato del personaggio, l'ora, il meteo e un diario di viaggio che registra gli eventi importanti.
+*   **Creazione del Personaggio:** Il gioco inizia con una fase di creazione del personaggio in cui le statistiche di base vengono generate casualmente, rendendo ogni partita unica.
+*   **Sistema di Skill Check:** Molte azioni, come attraversare un fiume o cercare oggetti, sono governate da test di abilità basati sulle statistiche del personaggio, aggiungendo un elemento di rischio e ricompensa.
+*   **Esplorazione del Mondo:** Un'ampia mappa di gioco con diversi biomi (foreste, città, pianure) che influenzano il movimento e attivano messaggi atmosferici per aumentare l'immersione.
+*   **Sistema Temporale e Meteo Dinamico:** Un orologio di gioco che avanza con le azioni, un ciclo giorno/notte e un sistema meteorologico realistico che ha un impatto diretto sul gameplay.
+*   **Meccaniche di Sopravvivenza Avanzate:**
+    *   Gestione di **HP, Sazietà e Idratazione**.
+    *   **Riposo Rapido (Tasto 'R'):** Un'azione con cooldown di 24 ore per un recupero di emergenza sul campo.
+    *   **Sistema dei Rifugi:** Luoghi strategici a **visita singola** che mettono in pausa il gioco e offrono opzioni contestuali (riposo diurno/notturno, ricerca di oggetti tramite skill check).
+*   **Database Oggetti Modulare:** Un database scalabile caricato da file JSON, contenente decine di oggetti unici (armi, armature, consumabili, materiali, ecc.).
+*   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali per usare, equipaggiare e scartare oggetti.
+*   **Interfaccia Dinamica e Diario di Viaggio:** L'interfaccia si aggiorna in tempo reale e un diario di viaggio dettagliato, con timestamp e codifica a colori, registra ogni evento.
 
 ### Come Giocare
 
@@ -33,8 +35,9 @@ L'interazione avviene interamente tramite tastiera:
 
 *   **Movimento:** Tasti `W, A, S, D` o `Frecce Direzionali`.
 *   **Inventario:** Tasto `I` per aprire e chiudere.
+*   **Riposo Rapido:** Tasto `R` per tentare un riposo sul campo.
 *   **Interazione:** Tasto `Invio` per confermare le azioni, `ESC` per annullare o tornare indietro.
 
 ### Stato del Progetto
 
-Il progetto è ora in una fase stabile. Con il database degli oggetti completo e le meccaniche di base consolidate, i prossimi passi si concentreranno sull'introduzione di sistemi di combattimento, incontri casuali, crafting, dialogo e sulla creazione di contenuti di gioco (quest, luoghi di interesse).
+Il progetto ha ora un ciclo di gameplay strategico e completo. Le meccaniche di esplorazione, sopravvivenza e gestione delle risorse sono consolidate. I prossimi passi si concentreranno sull'introduzione di sistemi di combattimento, incontri casuali, crafting, dialogo e sulla creazione di contenuti di gioco (quest, luoghi di interesse).

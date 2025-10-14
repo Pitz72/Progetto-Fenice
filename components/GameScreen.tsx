@@ -1,11 +1,12 @@
-import React, { useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
-import { GameState } from '../types';
+import { GameState, Stat } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import CanvasMap from './CanvasMap';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { WEATHER_DATA } from '../store/gameStore';
+import { JOURNAL_ENTRY_COLORS } from '../constants';
 
 // --- Reusable Panel Component ---
 const Panel: React.FC<{ title: string; children: React.ReactNode; className?: string }> = ({ title, children, className }) => (
@@ -20,13 +21,15 @@ const Panel: React.FC<{ title: string; children: React.ReactNode; className?: st
 // --- Left Column Panels ---
 const SurvivalPanel: React.FC = () => {
     const { hp, satiety, hydration } = useCharacterStore((state) => state);
+    const isCritical = (stat: Stat) => stat.current / stat.max <= 0.25;
+
     return (
         <Panel title="SOPRAVVIVENZA">
             <div>
-            <div>HP: {Math.floor(hp.current)}/{hp.max}</div>
-            <div>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
-            <div>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
-            <div>Status: Normale</div>
+                <div className={isCritical(hp) ? 'text-red-500 animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
+                <div className={isCritical(satiety) ? 'text-red-500 animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
+                <div className={isCritical(hydration) ? 'text-red-500 animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
+                <div>Status: Normale</div>
             </div>
         </Panel>
     );
@@ -37,21 +40,17 @@ const InventoryPanel: React.FC = () => {
   const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
   const isLoaded = useItemDatabaseStore((state) => state.isLoaded);
 
-  const displayInventory = useMemo(() => {
-    return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
-  }, [inventory, equippedWeapon, equippedArmor]);
-
-
   return (
     <Panel title="INVENTARIO" className="flex-grow">
       <div className="border border-green-400/30 p-2 h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-        {isLoaded && displayInventory.length > 0 ? (
+        {isLoaded && inventory.length > 0 ? (
           <ul className="space-y-1.5">
-            {displayInventory.map((invItem, index) => {
+            {inventory.map((invItem, index) => {
               const itemDetails = itemDatabase[invItem.itemId];
               if (!itemDetails) return null;
               
-              const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}`;
+              const isEquipped = invItem.itemId === equippedWeapon || invItem.itemId === equippedArmor;
+              const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}${isEquipped ? ' (E)' : ''}`;
               
               return (
                 <li key={`${invItem.itemId}-${index}`} style={{ color: itemDetails.color }}>
@@ -91,6 +90,7 @@ const InfoPanel: React.FC = () => {
     const tileInfo = getTileInfo(playerPos.x, playerPos.y);
     const formattedTime = `${String(gameTime.hour).padStart(2, '0')}:${String(gameTime.minute).padStart(2, '0')}`;
     const weatherInfo = WEATHER_DATA[weather.type];
+    const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
 
     return (
         <Panel title="INFORMAZIONI">
@@ -104,7 +104,7 @@ const InfoPanel: React.FC = () => {
                         <span>Luogo:</span> 
                         <span>{tileInfo.name}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className={`flex justify-between ${isNight ? 'text-cyan-400' : ''}`}>
                         <span>{formattedTime}</span> 
                         <span>Giorno {gameTime.day}</span>
                     </div>
@@ -186,7 +186,9 @@ const TravelJournalPanel: React.FC = () => {
                            <span className="text-green-400/60 mr-2">
                                 [{String(entry.time.hour).padStart(2, '0')}:{String(entry.time.minute).padStart(2, '0')}]
                            </span>
-                           <span>{entry.message}</span>
+                           <span style={{ color: entry.color || JOURNAL_ENTRY_COLORS[entry.type] || '#d1d5db' }}>
+                                {entry.text}
+                           </span>
                         </div>
                     ))
                 ) : (
@@ -202,14 +204,16 @@ const TravelJournalPanel: React.FC = () => {
 
 
 const GameScreen: React.FC = () => {
-  const { setGameState, movePlayer, isInventoryOpen, toggleInventory } = useGameStore();
+  const { setGameState, movePlayer, isInventoryOpen, toggleInventory, performQuickRest, isInRefuge } = useGameStore();
 
   const handleExit = useCallback(() => {
     setGameState(GameState.MAIN_MENU);
   }, [setGameState]);
 
+  const canPerformAction = !isInventoryOpen && !isInRefuge;
+
   const handleMove = (dx: number, dy: number) => {
-    if (!isInventoryOpen) {
+    if (canPerformAction) {
       movePlayer(dx, dy);
     }
   };
@@ -217,6 +221,8 @@ const GameScreen: React.FC = () => {
   const keyHandlerMap: { [key: string]: () => void } = {
     i: toggleInventory,
     I: toggleInventory,
+    r: () => { if (canPerformAction) performQuickRest(); },
+    R: () => { if (canPerformAction) performQuickRest(); },
     ArrowUp: () => handleMove(0, -1),
     w: () => handleMove(0, -1),
     ArrowDown: () => handleMove(0, 1),
@@ -228,7 +234,7 @@ const GameScreen: React.FC = () => {
   };
 
   // The 'Escape' key should only take you to the main menu if you're not in a sub-screen like inventory.
-  if (!isInventoryOpen) {
+  if (!isInventoryOpen && !isInRefuge) {
     keyHandlerMap['Escape'] = handleExit;
   }
   

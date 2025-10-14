@@ -12,6 +12,19 @@ export enum GameState {
   IN_GAME,
 }
 
+export enum JournalEntryType {
+  GAME_START,
+  SKILL_CHECK_SUCCESS,
+  SKILL_CHECK_FAILURE,
+  ACTION_FAILURE,
+  NARRATIVE,
+  ITEM_ACQUIRED,
+  SYSTEM_ERROR,
+  SYSTEM_WARNING,
+  COMBAT,
+  XP_GAIN,
+}
+
 export interface Position {
   x: number;
   y: number;
@@ -24,8 +37,10 @@ export interface GameTime {
 }
 
 export interface JournalEntry {
-    message: string;
+    type: JournalEntryType;
+    text: string;
     time: GameTime;
+    color?: string;
 }
 
 export interface TileInfo {
@@ -54,6 +69,12 @@ export interface ActionMenuState {
     selectedIndex: number;
 }
 
+export interface RefugeMenuState {
+    isOpen: boolean;
+    options: string[];
+    selectedIndex: number;
+}
+
 // --- Store States ---
 export interface PlayerStatus {
     isExitingWater: boolean;
@@ -68,14 +89,22 @@ export interface GameStoreState {
   playerStatus: PlayerStatus;
   journal: JournalEntry[];
   isInventoryOpen: boolean;
+  isInRefuge: boolean;
   inventorySelectedIndex: number;
   actionMenuState: ActionMenuState;
+  refugeMenuState: RefugeMenuState;
+  refugeActionMessage: string | null;
+  refugeJustSearched: boolean;
+  currentBiome: string;
+  lastRestTime: GameTime | null;
+  lootedRefuges: Position[];
+  visitedRefuges: Position[];
   
   // Actions
   setGameState: (newState: GameState) => void;
-  addJournalEntry: (message: string) => void;
+  addJournalEntry: (entry: { text: string; type: JournalEntryType; color?: string }) => void;
   setMap: () => void;
-  advanceTime: (minutes: number) => void;
+  advanceTime: (minutes: number, bypassPause?: boolean) => void;
   movePlayer: (dx: number, dy: number) => void;
   getTileInfo: (x: number, y: number) => TileInfo;
   toggleInventory: () => void;
@@ -84,6 +113,13 @@ export interface GameStoreState {
   closeActionMenu: () => void;
   navigateActionMenu: (direction: number) => void;
   confirmActionMenuSelection: () => void;
+  performQuickRest: () => void;
+  enterRefuge: () => void;
+  leaveRefuge: () => void;
+  navigateRefugeMenu: (direction: number) => void;
+  confirmRefugeMenuSelection: () => void;
+  searchRefuge: () => void;
+  clearRefugeActionMessage: () => void;
 }
 
 
@@ -163,6 +199,7 @@ export interface CharacterState {
     unequipItem: (slot: 'weapon' | 'armor') => void;
     takeDamage: (amount: number) => void;
     updateSurvivalStats: (minutes: number, weather: WeatherType) => void;
+    calculateSurvivalCost: (minutes: number) => { satietyCost: number; hydrationCost: number };
     heal: (amount: number) => void;
     restoreSatiety: (amount: number) => void;
     restoreHydration: (amount: number) => void;

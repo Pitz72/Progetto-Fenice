@@ -11,11 +11,13 @@ import OptionsScreen from './components/OptionsScreen';
 import GameScreen from './components/GameScreen';
 import CharacterCreationScreen from './components/CharacterCreationScreen';
 import InventoryScreen from './components/InventoryScreen';
+import RefugeScreen from './components/RefugeScreen';
 import { useItemDatabaseStore } from './data/itemDatabase';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
   const isInventoryOpen = useGameStore((state) => state.isInventoryOpen);
+  const isInRefuge = useGameStore((state) => state.isInRefuge);
   const setMap = useGameStore((state) => state.setMap);
   const initCharacter = useCharacterStore((state) => state.initCharacter);
   const scaleStyle = useGameScale();
@@ -55,6 +57,7 @@ const App: React.FC = () => {
           <>
             <GameScreen />
             {isInventoryOpen && <InventoryScreen />}
+            {isInRefuge && !isInventoryOpen && <RefugeScreen />}
           </>
         );
       default:
@@ -71,6 +74,7 @@ const App: React.FC = () => {
         style={{ 
           width: '1920px', 
           height: '1080px',
+          border: '2px solid rgba(110, 231, 183, 0.2)',
           ...scaleStyle
         }}
       >

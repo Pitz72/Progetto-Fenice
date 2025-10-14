@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GameState } from '../types';
@@ -8,6 +7,7 @@ const BootScreen: React.FC = () => {
   const { gameState, setGameState } = useGameStore();
   const [bootLines, setBootLines] = useState<string[]>([]);
   const [showCursor, setShowCursor] = useState(true);
+  const [bootComplete, setBootComplete] = useState(false);
 
   useEffect(() => {
     if (gameState === GameState.INITIAL_BLACK_SCREEN) {
@@ -34,13 +34,28 @@ const BootScreen: React.FC = () => {
           lineIndex++;
         } else {
           clearInterval(interval);
-          setTimeout(() => setGameState(GameState.MAIN_MENU), 1000);
+          setBootComplete(true); // Boot finished, wait for key press
         }
-      }, 100);
+      }, 150); // Slowed down animation
       return () => clearInterval(interval);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState]);
+  
+  // Wait for any key press after boot is complete
+  useEffect(() => {
+    if (bootComplete) {
+      const handleKeyPress = () => {
+        setGameState(GameState.MAIN_MENU);
+      };
+      window.addEventListener('keydown', handleKeyPress, { once: true });
+
+      return () => {
+        window.removeEventListener('keydown', handleKeyPress);
+      };
+    }
+  }, [bootComplete, setGameState]);
+
 
   useEffect(() => {
     const cursorInterval = setInterval(() => {
@@ -63,11 +78,18 @@ const BootScreen: React.FC = () => {
 
   if (gameState === GameState.BOOTING_SCREEN) {
     return (
-      <div className="w-full h-full font-mono text-left">
+      <div className="w-full h-full font-mono text-left p-4 text-5xl">
         {bootLines.map((line, index) => (
           <p key={index} className="whitespace-pre">{line}</p>
         ))}
-        {showCursor && <span className="bg-green-400 w-4 h-6 inline-block"></span>}
+        {bootComplete ? (
+          <p className="whitespace-pre mt-4 animate-pulse">
+            PREMI UN TASTO PER INIZIARE
+            {showCursor && <span className="bg-green-400 w-6 h-10 inline-block ml-2 align-bottom"></span>}
+          </p>
+        ) : (
+          showCursor && <span className="bg-green-400 w-6 h-10 inline-block align-bottom"></span>
+        )}
       </div>
     );
   }

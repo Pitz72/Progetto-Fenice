@@ -9,7 +9,7 @@ import { IItem } from '../../types';
 const rawDatabase: Omit<IItem, 'color'>[] = [
     // --- Weapons ---
     { id: "WEAP_001", name: "Coltello da combattimento", description: "Un coltello affidabile per il combattimento ravvicinato.", type: "weapon", weight: 1, value: 10, damage: "1d4", rarity: "Common" },
-    { id: "WEAP_002", name: "Pistola 9mm", description: "Una pistola semiautomatica comune.", type: "weapon", weight: 3, value: 50, damage: "1d6", rarity: "Uncommon" },
+    { id: "WEAP_002", name: "Pistola 9mm", description: "Una pistola semiauto. comune.", type: "weapon", weight: 3, value: 50, damage: "1d6", rarity: "Uncommon" },
     
     // --- Armor ---
     { id: "ARMOR_001", name: "Giubbotto di pelle", description: "Un semplice giubbotto di pelle che offre una protezione minima.", type: "armor", weight: 5, value: 20, armor: 1, rarity: "Common" },

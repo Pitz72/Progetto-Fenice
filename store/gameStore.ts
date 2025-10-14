@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
-// FIX: Corrected import path for itemDatabase.
 import { itemDatabase } from '../src/data/itemDatabase';
 
 // --- Constants for Game Logic ---

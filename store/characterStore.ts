@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { CharacterState, AttributeName, SkillName, SkillCheckResult, Attributes, WeatherType, InventoryItem } from '../types';
 import { SKILLS, XP_PER_LEVEL } from '../constants';
-// FIX: Corrected import path for itemDatabase.
 import { itemDatabase } from '../src/data/itemDatabase';
 
 // --- Helper Functions ---

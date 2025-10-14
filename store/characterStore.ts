@@ -33,7 +33,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     initCharacter: (newAttributes?: Attributes) => {
         const startingAttributes = newAttributes || { for: 10, des: 10, cos: 10, int: 10, sag: 10, car: 10, };
         const conModifier = getAttributeModifier(startingAttributes.cos);
-        const initialHp = 10 + conModifier;
+        const initialHp = 100 + conModifier;
 
         set({
             level: 1,
@@ -44,13 +44,13 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             hydration: { current: 100, max: 100 },
             skills: { ...get().skills, sopravvivenza: { proficient: true }, atletica: { proficient: true } },
             inventory: [
-                { itemId: 'CONS_002', quantity: 2 },
-                { itemId: 'CONS_001', quantity: 2 },
-                { itemId: 'CONS_003', quantity: 3 },
-                { itemId: 'MED_PAINKILLER', quantity: 1 },
+                { itemId: 'CONS_002', quantity: 3 }, // Bottiglia d'acqua
+                { itemId: 'CONS_001', quantity: 3 }, // Razione di cibo
+                { itemId: 'CONS_003', quantity: 2 }, // Bende
+                { itemId: 'MED_PAINKILLER', quantity: 2 }, // Antidolorifico
             ],
-            equippedWeapon: 'WEAP_001',
-            equippedArmor: 'ARMOR_001',
+            equippedWeapon: 'combat_knife',
+            equippedArmor: 'leather_jacket',
         });
     },
 

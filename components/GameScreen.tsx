@@ -20,13 +20,22 @@ const Panel: React.FC<{ title: string; children: React.ReactNode; className?: st
 // --- Left Column Panels ---
 const SurvivalPanel: React.FC = () => {
     const { hp, satiety, hydration } = useCharacterStore((state) => state);
+
+    const getStatClass = (current: number, max: number) => {
+        const percentage = (current / max) * 100;
+        if (percentage <= 25) {
+            return "text-red-500 animate-pulse";
+        }
+        return "";
+    };
+
     return (
         <Panel title="SOPRAVVIVENZA">
             <div>
-            <div>HP: {Math.floor(hp.current)}/{hp.max}</div>
-            <div>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
-            <div>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
-            <div>Status: Normale</div>
+                <div className={getStatClass(hp.current, hp.max)}>HP: {Math.floor(hp.current)}/{hp.max}</div>
+                <div className={getStatClass(satiety.current, satiety.max)}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
+                <div className={getStatClass(hydration.current, hydration.max)}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
+                <div>Status: Normale</div>
             </div>
         </Panel>
     );
@@ -90,6 +99,9 @@ const InfoPanel: React.FC = () => {
     const formattedTime = `${String(gameTime.hour).padStart(2, '0')}:${String(gameTime.minute).padStart(2, '0')}`;
     const weatherInfo = WEATHER_DATA[weather.type];
 
+    const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
+    const timeClass = isNight ? "text-blue-400" : "";
+
     return (
         <Panel title="INFORMAZIONI">
             <div className="space-y-2">
@@ -102,7 +114,7 @@ const InfoPanel: React.FC = () => {
                         <span>Luogo:</span> 
                         <span>{tileInfo.name}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className={`flex justify-between ${timeClass}`}>
                         <span>{formattedTime}</span> 
                         <span>Giorno {gameTime.day}</span>
                     </div>

@@ -71,8 +71,9 @@ const InventoryScreen: React.FC = () => {
     const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
 
     const displayInventory = useMemo(() => {
-        return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
-    }, [inventory, equippedWeapon, equippedArmor]);
+        // We no longer filter out equipped items, just use the whole inventory.
+        return inventory;
+    }, [inventory]);
     
     const selectedItem = displayInventory.length > 0 ? itemDatabase[displayInventory[inventorySelectedIndex]?.itemId] : null;
 
@@ -147,7 +148,11 @@ const InventoryScreen: React.FC = () => {
                                    if (!itemDetails) return null;
                                    
                                    const isSelected = index === inventorySelectedIndex;
-                                   const displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}`;
+                                   const isEquipped = invItem.itemId === equippedWeapon || invItem.itemId === equippedArmor;
+                                   let displayName = `${itemDetails.name}${invItem.quantity > 1 ? ` x${invItem.quantity}`: ''}`;
+                                   if (isEquipped) {
+                                       displayName += ' (E)';
+                                   }
                                    
                                    return (
                                        <li 

@@ -30,12 +30,22 @@
         }
       }
 
+      @keyframes pulse {
+        50% {
+          opacity: .5;
+        }
+      }
+
       .animate-yellow-flash {
         animation: yellow-flash 1.5s infinite;
       }
       
       .animate-cursor-blink {
         animation: cursor-blink 1s step-end infinite;
+      }
+
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
     </style>
   <script type="importmap">

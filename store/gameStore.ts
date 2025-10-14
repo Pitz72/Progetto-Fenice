@@ -330,22 +330,27 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       
       switch (selectedAction) {
           case 'Usa':
-              if (itemDetails.type === 'consumable') {
+              if (itemDetails.type === 'consumable' && itemDetails.effects) {
                   let message = `Hai usato: ${itemDetails.name}.`;
-                  switch(itemDetails.effect) {
-                      case 'heal':
-                          charActions.heal(itemDetails.effectValue);
-                          message += ` Recuperi ${itemDetails.effectValue} HP.`;
-                          break;
-                      case 'satiety':
-                          charActions.restoreSatiety(itemDetails.effectValue);
-                           message += ` Recuperi ${itemDetails.effectValue} sazietà.`;
-                          break;
-                      case 'hydration':
-                          charActions.restoreHydration(itemDetails.effectValue);
-                           message += ` Recuperi ${itemDetails.effectValue} idratazione.`;
-                          break;
-                  }
+
+                  itemDetails.effects.forEach(effect => {
+                      switch(effect.type) {
+                          case 'heal':
+                              charActions.heal(effect.value);
+                              message += ` Recuperi ${effect.value} HP.`;
+                              break;
+                          case 'satiety':
+                              charActions.restoreSatiety(effect.value);
+                              message += ` Recuperi ${effect.value} sazietà.`;
+                              break;
+                          case 'hydration':
+                              charActions.restoreHydration(effect.value);
+                              message += ` Recuperi ${effect.value} idratazione.`;
+                              break;
+                          // Aggiungi qui altri tipi di effetti se necessario
+                      }
+                  });
+
                   addJournalEntry(message);
                   charActions.removeItem(itemToActOnId, 1);
               }

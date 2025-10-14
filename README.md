@@ -11,9 +11,10 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Frontend:** React con TypeScript
 *   **Gestione dello Stato:** Zustand
 *   **Stile:** TailwindCSS per un layout rapido e coerente
+*   **Database Oggetti:** Architettura modulare con file JSON per categoria (`src/data/items/`), unificati da un modulo aggregatore.
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.2.0)
+### Caratteristiche Attuali (v0.3.0)
 
 La versione attuale del prototipo include le seguenti meccaniche fondamentali:
 

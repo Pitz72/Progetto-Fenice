@@ -42,9 +42,24 @@ export interface PlayerStatus {
   isExitingWater: boolean;
 }
 
+export enum LogMessageType {
+  GAME_START,
+  SKILL_SUCCESS,
+  SKILL_FAILURE,
+  ACTION_FAILURE,
+  NARRATIVE,
+  ITEM_ACQUIRED,
+  SYSTEM_ERROR,
+  SYSTEM_WARNING,
+  COMBAT,
+  XP_GAIN,
+}
+
 export interface JournalEntry {
-  message: string;
-  time: GameTime;
+  type: LogMessageType;
+  text: string;
+  timestamp: GameTime;
+  icon?: string;
 }
 
 export interface TileInfo {
@@ -160,7 +175,10 @@ export interface CharacterState {
 
 // --- Interfaces & Types for Items ---
 export type ItemType = 'weapon' | 'armor' | 'ammo' | 'consumable' | 'crafting' | 'manual' | 'quest' | 'unique';
-export type ItemEffect = 'heal' | 'satiety' | 'hydration';
+export interface ItemEffect {
+    type: string;
+    value: number;
+}
 
 export interface IItem {
     id: string;
@@ -170,11 +188,12 @@ export interface IItem {
     weight: number;
     value: number;
     stackable?: boolean;
-    rarity: 'Common' | 'Uncommon' | 'Rare' | 'Legendary' | 'Unique';
-    damage?: string;
+    rarity: 'Common' | 'Uncommon' | 'Rare' | 'Legendary' | 'Unique' | 'quest';
+    damage?: string | number;
     armor?: number;
-    effect?: ItemEffect;
-    effectValue?: number;
+    effects?: ItemEffect[];
     unlocksRecipes?: string[];
-    color: string;
+    weaponType?: 'melee' | 'ranged' | 'thrown';
+    slot?: 'head' | 'chest' | 'legs';
+    defense?: number;
 }

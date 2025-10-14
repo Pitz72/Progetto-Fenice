@@ -174,28 +174,44 @@ const StatsPanel: React.FC = () => {
 };
 
 
+import { useJournalStore } from '../store/journalStore';
+import { LogMessageType } from '../types';
+
 // --- Bottom Panel ---
 const TravelJournalPanel: React.FC = () => {
-    const journal = useGameStore((state) => state.journal);
+    const entries = useJournalStore((state) => state.entries);
     const journalRef = useRef<HTMLDivElement>(null);
+
+    const logColorMap: Record<LogMessageType, string> = {
+        [LogMessageType.GAME_START]: "text-green-300 font-bold",
+        [LogMessageType.SKILL_SUCCESS]: "text-green-400",
+        [LogMessageType.SKILL_FAILURE]: "text-orange-400",
+        [LogMessageType.ACTION_FAILURE]: "text-yellow-400",
+        [LogMessageType.NARRATIVE]: "text-gray-300",
+        [LogMessageType.ITEM_ACQUIRED]: "text-cyan-400",
+        [LogMessageType.SYSTEM_ERROR]: "text-red-500 font-bold animate-pulse",
+        [LogMessageType.SYSTEM_WARNING]: "text-yellow-300",
+        [LogMessageType.COMBAT]: "text-red-400",
+        [LogMessageType.XP_GAIN]: "text-yellow-500",
+    };
 
     // Auto-scroll to the top (to show the latest message)
     useEffect(() => {
         if (journalRef.current) {
             journalRef.current.scrollTop = 0;
         }
-    }, [journal]);
+    }, [entries]);
 
     return (
         <Panel title="DIARIO DI VIAGGIO" className="h-full">
             <div ref={journalRef} className="h-full overflow-y-auto space-y-2" style={{ scrollbarWidth: 'none' }}>
-                {journal.length > 0 ? (
-                    journal.map((entry, index) => (
+                {entries.length > 0 ? (
+                    entries.map((entry, index) => (
                         <div key={index}>
                            <span className="text-green-400/60 mr-2">
-                                [{String(entry.time.hour).padStart(2, '0')}:{String(entry.time.minute).padStart(2, '0')}]
+                                [{String(entry.timestamp.hour).padStart(2, '0')}:{String(entry.timestamp.minute).padStart(2, '0')}]
                            </span>
-                           <span>{entry.message}</span>
+                           <span className={logColorMap[entry.type] || "text-gray-300"}>{entry.text}</span>
                         </div>
                     ))
                 ) : (

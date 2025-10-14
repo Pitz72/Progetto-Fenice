@@ -1,8 +1,10 @@
 import { create } from 'zustand';
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState } from '../types';
+import { GameState, TileInfo, WeatherType, WeatherState, ActionMenuState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { itemDatabase } from '../src/data/itemDatabase';
+import { useJournalStore } from './journalStore';
+import { LogMessageType } from '../types';
 
 // --- Constants for Game Logic ---
 const TRAVERSABLE_TILES = new Set(['.', 'R', 'C', 'V', 'F', 'S', 'E', '~']);
@@ -81,7 +83,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   gameTime: { day: 1, hour: 8, minute: 0 },
   weather: { type: WeatherType.SERENO, duration: WEATHER_DURATIONS[WeatherType.SERENO].max },
   playerStatus: { isExitingWater: false },
-  journal: [],
   isInventoryOpen: false,
   inventorySelectedIndex: 0,
   actionMenuState: {
@@ -94,12 +95,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   // --- Actions ---
   setGameState: (newState) => set({ gameState: newState }),
   
-  addJournalEntry: (message) => {
-    set(state => ({
-        journal: [{ message, time: state.gameTime }, ...state.journal].slice(0, 100) // Keep last 100 entries
-    }));
-  },
-
   setMap: () => {
     const newMap = MAP_DATA;
     let startPos = { x: 0, y: 0 };
@@ -119,8 +114,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         gameTime: { day: 1, hour: 8, minute: 0 },
         weather: { type: initialWeather, duration: initialDuration },
         playerStatus: { isExitingWater: false },
-        journal: [{ message: "Il tuo viaggio ha inizio.", time: { day: 1, hour: 8, minute: 0 } }]
     });
+    useJournalStore.getState().addEntry(LogMessageType.GAME_START, "GAME_WELCOME");
   },
 
   advanceTime: (minutes: number) => {
@@ -142,7 +137,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         const { min, max } = WEATHER_DURATIONS[nextWeatherType];
         const newDuration = Math.floor(Math.random() * (max - min + 1)) + min;
         newWeather = { type: nextWeatherType, duration: newDuration };
-        get().addJournalEntry(`Il tempo sta cambiando... Ora è ${WEATHER_DATA[nextWeatherType].name.toLowerCase()}.`);
+        useJournalStore.getState().addEntry(
+            LogMessageType.NARRATIVE,
+            "WEATHER_CHANGE",
+            { WEATHER_NAME: WEATHER_DATA[nextWeatherType].name.toLowerCase() }
+        );
     }
     set({ weather: newWeather });
     
@@ -151,12 +150,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, advanceTime, addJournalEntry } = get();
+    const { map, playerPos, playerStatus, weather, advanceTime } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
         advanceTime(BASE_TIME_COST_PER_MOVE); 
-        addJournalEntry("Esci dall'acqua, scrollandoti di dosso il freddo.");
+        useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "MOVE_EXIT_RIVER");
         return;
     }
 
@@ -165,7 +164,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     if ( newPos.y < 0 || newPos.y >= map.length || newPos.x < 0 || newPos.x >= map[newPos.y].length ) return;
     
     const destinationTile = map[newPos.y][newPos.x];
-    if (IMPASSABLE_TILES.has(destinationTile)) return;
+    if (IMPASSABLE_TILES.has(destinationTile)) {
+        const messageId = `MOVE_FAIL_MOUNTAIN_${Math.floor(Math.random() * 4) + 1}`;
+        useJournalStore.getState().addEntry(LogMessageType.ACTION_FAILURE, messageId);
+        return;
+    }
     if (!TRAVERSABLE_TILES.has(destinationTile)) return;
 
     // --- Calculate Time Cost ---
@@ -178,24 +181,24 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     if (weather.type === WeatherType.TEMPESTA) weatherPenalty = 10;
     if (weatherPenalty > 0) {
         timeCost += weatherPenalty;
-        addJournalEntry(`${weather.type} rallenta i tuoi movimenti. (+${weatherPenalty} min)`);
+        useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "WEATHER_STORM_SLOWS", { PENALTY: weatherPenalty.toString() });
     }
     
     // --- Weather Damage ---
     if (weather.type === WeatherType.TEMPESTA && Math.random() < 0.15) { // 15% chance
         useCharacterStore.getState().takeDamage(1);
-        addJournalEntry("Il vento violento ti fa inciampare. (-1 HP)");
+        useJournalStore.getState().addEntry(LogMessageType.COMBAT, "WEATHER_DAMAGE_WIND");
     }
     if (weather.type === WeatherType.PIOGGIA && Math.random() < 0.08) { // 8% chance
         useCharacterStore.getState().takeDamage(1);
-        addJournalEntry("Il terreno scivoloso ti fa cadere. (-1 HP)");
+        useJournalStore.getState().addEntry(LogMessageType.COMBAT, "WEATHER_DAMAGE_RAIN");
     }
 
     // --- Update State ---
     set({ playerPos: newPos });
     if (destinationTile === '~') {
         set({ playerStatus: { ...get().playerStatus, isExitingWater: true } });
-        addJournalEntry("Entri nell'acqua gelida.");
+        useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "MOVE_ENTER_RIVER");
     }
 
     advanceTime(timeCost);
@@ -287,7 +290,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
   
   confirmActionMenuSelection: () => {
-      const { actionMenuState, inventorySelectedIndex, addJournalEntry, closeActionMenu } = get();
+      const { actionMenuState, inventorySelectedIndex, closeActionMenu } = get();
       const { inventory, equippedWeapon, equippedArmor, ...charActions } = useCharacterStore.getState();
       
       const isActuallyEquipped = (itemId: string) => equippedWeapon === itemId || equippedArmor === itemId;
@@ -333,43 +336,46 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
               if (itemDetails.type === 'consumable' && itemDetails.effects) {
                   let message = `Hai usato: ${itemDetails.name}.`;
 
+                  useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "ITEM_USED", { ITEM_NAME: itemDetails.name });
                   itemDetails.effects.forEach(effect => {
+                      let messageId = "";
                       switch(effect.type) {
                           case 'heal':
                               charActions.heal(effect.value);
-                              message += ` Recuperi ${effect.value} HP.`;
+                              messageId = "EFFECT_HEAL";
                               break;
                           case 'satiety':
                               charActions.restoreSatiety(effect.value);
-                              message += ` Recuperi ${effect.value} sazietà.`;
+                              messageId = "EFFECT_SATIETY";
                               break;
                           case 'hydration':
                               charActions.restoreHydration(effect.value);
-                              message += ` Recuperi ${effect.value} idratazione.`;
+                              messageId = "EFFECT_HYDRATION";
                               break;
-                          // Aggiungi qui altri tipi di effetti se necessario
+                      }
+                      if (messageId) {
+                          useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, messageId, { VALUE: effect.value.toString() });
                       }
                   });
 
-                  addJournalEntry(message);
                   charActions.removeItem(itemToActOnId, 1);
               }
               break;
           case 'Equipaggia':
               charActions.equipItem(itemToActOnId);
-              addJournalEntry(`Hai equipaggiato: ${itemDetails.name}.`);
+              useJournalStore.getState().addEntry(LogMessageType.ITEM_ACQUIRED, "ITEM_EQUIPPED", { ITEM_NAME: itemDetails.name });
               break;
           case 'Togli':
               const slot = itemDetails.type === 'weapon' ? 'weapon' : 'armor';
               charActions.unequipItem(slot);
-              addJournalEntry(`Hai tolto: ${itemDetails.name}.`);
+              useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "ITEM_UNEQUIPPED", { ITEM_NAME: itemDetails.name });
               break;
           case 'Scarta':
               charActions.discardItem(itemToActOnId, 1);
-              addJournalEntry(`Hai scartato: ${itemDetails.name}.`);
+              useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "ITEM_DISCARDED", { ITEM_NAME: itemDetails.name });
               break;
           case 'Esamina':
-              addJournalEntry(`Esamini: ${itemDetails.name}. ${itemDetails.description}`);
+              useJournalStore.getState().addEntry(LogMessageType.NARRATIVE, "ITEM_EXAMINED", { ITEM_NAME: itemDetails.name, ITEM_DESC: itemDetails.description });
               break;
           case 'Annulla':
               // Do nothing

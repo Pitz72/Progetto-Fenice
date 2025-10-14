@@ -1,10 +1,9 @@
 import { create } from 'zustand';
-import { IItem } from '../../types';
+import { IItem } from '../types';
 
 type RawItem = Omit<IItem, 'color'>;
 
 async function loadAllItems(): Promise<Record<string, IItem>> {
-    // Fetch paths are relative to the root HTML file
     const files = [
         './data/items/weapons.json',
         './data/items/armor.json',

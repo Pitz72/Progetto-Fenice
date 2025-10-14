@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
-import { itemDatabase } from '../src/data/itemDatabase';
+import { useItemDatabaseStore } from '../data/itemDatabase';
 import { IItem } from '../types';
 
 const DetailLine: React.FC<{ label: string, value: React.ReactNode }> = ({ label, value }) => (
@@ -20,6 +20,9 @@ const ItemDetails: React.FC<{ item: IItem | null }> = ({ item }) => {
             </div>
         );
     }
+
+    const formattedEffects = item.effects?.map(e => `${e.type} (+${e.value})`).join(', ');
+
     return (
         <div className="space-y-4 text-3xl h-full flex flex-col">
             <h3 className="text-4xl font-bold mb-2 pb-2 border-b-2 border-green-400/20" style={{ color: item.color, textShadow: `0 0 8px ${item.color}` }}>
@@ -30,11 +33,14 @@ const ItemDetails: React.FC<{ item: IItem | null }> = ({ item }) => {
             </p>
             <div className="flex-shrink-0 space-y-3 pt-4 border-t-2 border-green-400/20">
                 <DetailLine label="Tipo" value={item.type} />
+                <DetailLine label="Rarità" value={item.rarity} />
                 <DetailLine label="Peso" value={item.weight} />
                 <DetailLine label="Valore" value={item.value} />
-                {item.damage && <DetailLine label="Danno" value={item.damage} />}
-                {item.armor && <DetailLine label="Armatura" value={item.armor} />}
-                {item.effect && <DetailLine label="Effetto" value={`${item.effect} (+${item.effectValue})`} />}
+                {item.damage !== undefined && <DetailLine label="Danno" value={item.damage} />}
+                {item.weaponType && <DetailLine label="Tipo Arma" value={item.weaponType} />}
+                {item.defense !== undefined && <DetailLine label="Difesa" value={item.defense} />}
+                {item.slot && <DetailLine label="Slot" value={item.slot} />}
+                {formattedEffects && <DetailLine label="Effetti" value={formattedEffects} />}
             </div>
         </div>
     );
@@ -69,12 +75,13 @@ const InventoryScreen: React.FC = () => {
     } = useGameStore();
     
     const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
+    const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
 
     const displayInventory = useMemo(() => {
         return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
     }, [inventory, equippedWeapon, equippedArmor]);
     
-    const selectedItem = displayInventory.length > 0 ? itemDatabase[displayInventory[inventorySelectedIndex]?.itemId] : null;
+    const selectedItem = displayInventory.length > 0 && itemDatabase ? itemDatabase[displayInventory[inventorySelectedIndex]?.itemId] : null;
 
     const keyHandler = useCallback((key: string) => {
         if (actionMenuState.isOpen) {

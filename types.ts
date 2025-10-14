@@ -1,27 +1,17 @@
-// --- Enums ---
+// --- Game State & Core Types ---
 export enum GameState {
   INITIAL_BLACK_SCREEN,
   PRESENTS_SCREEN,
   INTERSTITIAL_BLACK_SCREEN,
   BOOTING_SCREEN,
   MAIN_MENU,
-  CHARACTER_CREATION,
   INSTRUCTIONS_SCREEN,
   STORY_SCREEN,
   OPTIONS_SCREEN,
+  CHARACTER_CREATION,
   IN_GAME,
-  GAME_OVER,
 }
 
-export enum WeatherType {
-  SERENO,
-  NUVOLOSO,
-  PIOGGIA,
-  TEMPESTA,
-  NEBBIA,
-}
-
-// --- Interfaces & Types for Game State ---
 export interface Position {
   x: number;
   y: number;
@@ -33,18 +23,9 @@ export interface GameTime {
   minute: number;
 }
 
-export interface WeatherState {
-  type: WeatherType;
-  duration: number; // in minutes
-}
-
-export interface PlayerStatus {
-  isExitingWater: boolean;
-}
-
 export interface JournalEntry {
-  message: string;
-  time: GameTime;
+    message: string;
+    time: GameTime;
 }
 
 export interface TileInfo {
@@ -52,10 +33,30 @@ export interface TileInfo {
   name: string;
 }
 
+// --- Weather System ---
+export enum WeatherType {
+    SERENO = 'Sereno',
+    NUVOLOSO = 'Nuvoloso',
+    PIOGGIA = 'Pioggia',
+    TEMPESTA = 'Tempesta',
+    NEBBIA = 'Nebbia',
+}
+
+export interface WeatherState {
+  type: WeatherType;
+  duration: number; // in minutes
+}
+
+// --- UI & Menu States ---
 export interface ActionMenuState {
     isOpen: boolean;
     options: string[];
     selectedIndex: number;
+}
+
+// --- Store States ---
+export interface PlayerStatus {
+    isExitingWater: boolean;
 }
 
 export interface GameStoreState {
@@ -70,6 +71,7 @@ export interface GameStoreState {
   inventorySelectedIndex: number;
   actionMenuState: ActionMenuState;
   
+  // Actions
   setGameState: (newState: GameState) => void;
   addJournalEntry: (message: string) => void;
   setMap: () => void;
@@ -84,14 +86,16 @@ export interface GameStoreState {
   confirmActionMenuSelection: () => void;
 }
 
-// --- Interfaces & Types for Character State ---
+
+// --- Character System ---
 export type AttributeName = 'for' | 'des' | 'cos' | 'int' | 'sag' | 'car';
+
 export type SkillName = 
-  'atletica' | 'acrobazia' | 'furtivita' | 'rapiditaDiMano' |
-  'arcanismo' | 'storia' | 'investigare' | 'natura' | 'religione' |
-  'addestrareAnimali' | 'intuizione' | 'medicina' | 'percezione' | 'sopravvivenza' |
-  'inganno' | 'intimidire' | 'persuasione' | 'spettacolo';
-  
+  | 'atletica' | 'acrobazia' | 'furtivita' | 'rapiditaDiMano'
+  | 'arcanismo' | 'storia' | 'investigare' | 'natura' | 'religione'
+  | 'addestrareAnimali' | 'intuizione' | 'medicina' | 'percezione' | 'sopravvivenza'
+  | 'inganno' | 'intimidire' | 'persuasione' | 'spettacolo';
+
 export interface Attributes {
   for: number;
   des: number;
@@ -101,13 +105,8 @@ export interface Attributes {
   car: number;
 }
 
-export interface Stat {
-  current: number;
-  max: number;
-}
-
 export interface Skill {
-  proficient: boolean;
+    proficient: boolean;
 }
 
 export interface SkillDefinition {
@@ -123,6 +122,16 @@ export interface SkillCheckResult {
   success: boolean;
 }
 
+export interface Stat {
+    current: number;
+    max: number;
+}
+
+export interface XPState {
+    current: number;
+    next: number;
+}
+
 export interface InventoryItem {
     itemId: string;
     quantity: number;
@@ -130,7 +139,7 @@ export interface InventoryItem {
 
 export interface CharacterState {
     level: number;
-    xp: { current: number; next: number };
+    xp: XPState;
     hp: Stat;
     satiety: Stat;
     hydration: Stat;
@@ -140,7 +149,8 @@ export interface CharacterState {
     equippedWeapon: string | null;
     equippedArmor: string | null;
 
-    initCharacter: (attributes?: Attributes) => void;
+    // Actions
+    initCharacter: (newAttributes?: Attributes) => void;
     getAttributeModifier: (attribute: AttributeName) => number;
     getSkillBonus: (skill: SkillName) => number;
     performSkillCheck: (skill: SkillName, dc: number) => SkillCheckResult;
@@ -158,23 +168,34 @@ export interface CharacterState {
     restoreHydration: (amount: number) => void;
 }
 
-// --- Interfaces & Types for Items ---
-export type ItemType = 'weapon' | 'armor' | 'ammo' | 'consumable' | 'crafting' | 'manual' | 'quest' | 'unique';
-export type ItemEffect = 'heal' | 'satiety' | 'hydration';
+// --- Item System ---
+export type ItemType = 'weapon' | 'armor' | 'consumable' | 'material' | 'quest' | 'ammo';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'quest';
+export type WeaponType = 'melee' | 'ranged' | 'thrown';
+export type ArmorSlot = 'head' | 'chest' | 'legs';
+export type ItemEffectType = 
+    | 'heal' | 'satiety' | 'hydration' | 'light' | 'trap' | 'container' 
+    | 'vision' | 'repair' | 'shelter' | 'random' | 'antirad' | 'power' 
+    | 'fishing' | 'smoke' | 'communication' | 'fire';
+
+export interface ItemEffect {
+    type: ItemEffectType;
+    value: number;
+}
 
 export interface IItem {
     id: string;
     name: string;
     description: string;
     type: ItemType;
+    rarity: Rarity;
     weight: number;
     value: number;
-    stackable?: boolean;
-    rarity: 'Common' | 'Uncommon' | 'Rare' | 'Legendary' | 'Unique';
-    damage?: string;
-    armor?: number;
-    effect?: ItemEffect;
-    effectValue?: number;
-    unlocksRecipes?: string[];
+    stackable: boolean;
     color: string;
+    damage?: number;
+    weaponType?: WeaponType;
+    defense?: number;
+    slot?: ArmorSlot;
+    effects?: ItemEffect[];
 }

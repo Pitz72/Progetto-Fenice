@@ -4,7 +4,7 @@ import { useCharacterStore } from '../store/characterStore';
 import { GameState } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import CanvasMap from './CanvasMap';
-import { itemDatabase } from '../src/data/itemDatabase';
+import { useItemDatabaseStore } from '../data/itemDatabase';
 import { WEATHER_DATA } from '../store/gameStore';
 
 // --- Reusable Panel Component ---
@@ -34,6 +34,8 @@ const SurvivalPanel: React.FC = () => {
 
 const InventoryPanel: React.FC = () => {
   const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
+  const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
+  const isLoaded = useItemDatabaseStore((state) => state.isLoaded);
 
   const displayInventory = useMemo(() => {
     return inventory.filter(item => item.itemId !== equippedWeapon && item.itemId !== equippedArmor);
@@ -43,7 +45,7 @@ const InventoryPanel: React.FC = () => {
   return (
     <Panel title="INVENTARIO" className="flex-grow">
       <div className="border border-green-400/30 p-2 h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-        {displayInventory.length > 0 ? (
+        {isLoaded && displayInventory.length > 0 ? (
           <ul className="space-y-1.5">
             {displayInventory.map((invItem, index) => {
               const itemDetails = itemDatabase[invItem.itemId];
@@ -121,6 +123,7 @@ const InfoPanel: React.FC = () => {
 
 const EquipmentPanel: React.FC = () => {
     const { equippedWeapon, equippedArmor } = useCharacterStore((state) => state);
+    const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
 
     const weapon = equippedWeapon ? itemDatabase[equippedWeapon] : null;
     const armor = equippedArmor ? itemDatabase[equippedArmor] : null;

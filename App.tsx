@@ -11,6 +11,7 @@ import OptionsScreen from './components/OptionsScreen';
 import GameScreen from './components/GameScreen';
 import CharacterCreationScreen from './components/CharacterCreationScreen';
 import InventoryScreen from './components/InventoryScreen';
+import { useItemDatabaseStore } from './data/itemDatabase';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
@@ -19,10 +20,18 @@ const App: React.FC = () => {
   const initCharacter = useCharacterStore((state) => state.initCharacter);
   const scaleStyle = useGameScale();
 
+  const { loadDatabase, isLoaded } = useItemDatabaseStore();
+
   useEffect(() => {
-    setMap();
-    initCharacter();
-  }, [setMap, initCharacter]);
+    loadDatabase();
+  }, [loadDatabase]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      setMap();
+      initCharacter();
+    }
+  }, [isLoaded, setMap, initCharacter]);
 
   const renderContent = () => {
     switch (gameState) {

@@ -13,15 +13,17 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.2.0)
+### Caratteristiche Attuali (v0.3.0)
 
 La versione attuale del prototipo include le seguenti meccaniche fondamentali:
 
+*   **Database Oggetti Modulare:** Il cuore del gioco è un database di oggetti completo e scalabile, caricato dinamicamente da file JSON separati per categoria (armi, armature, consumabili, materiali, ecc.). Contiene decine di oggetti unici.
 *   **Esplorazione del Mondo:** Un'ampia mappa di gioco su cui muoversi, con diversi tipi di terreno che influenzano il movimento.
 *   **Sistema Temporale:** Un orologio di gioco che avanza in base alle azioni del giocatore, con un ciclo giorno/notte implicito.
 *   **Meteo Dinamico:** Un sistema meteorologico che cambia in modo realistico e influenza il gameplay, aumentando i costi di movimento e il consumo di risorse.
 *   **Meccaniche di Sopravvivenza:** Gestione di Punti Vita (HP), Sazietà e Idratazione, che si consumano con il tempo e lo sforzo.
 *   **Inventario Interattivo:** Un sistema di inventario modale e completamente navigabile da tastiera, che permette di usare, equipaggiare, togliere e scartare oggetti.
+*   **Logica degli Effetti Completa:** Il motore di gioco ora gestisce tutti gli effetti degli oggetti (cura, riparazione, riparo, ecc.), fornendo un feedback testuale nel diario di viaggio.
 *   **Sistema di Equipaggiamento:** Slot per arma e armatura, con logica di scambio automatico.
 *   **Interfaccia Dinamica:** L'interfaccia di gioco si aggiorna in tempo reale per mostrare lo stato del personaggio, l'ora, il meteo e un diario di viaggio che registra gli eventi importanti.
 
@@ -35,4 +37,4 @@ L'interazione avviene interamente tramite tastiera:
 
 ### Stato del Progetto
 
-Il progetto è attualmente in una fase di prototipazione avanzata. Le meccaniche di base sono state implementate e sono funzionanti. I prossimi passi si concentreranno sull'introduzione di sistemi di combattimento, incontri casuali, crafting, dialogo e sulla creazione di contenuti di gioco (quest, luoghi di interesse).
+Il progetto è ora in una fase stabile. Con il database degli oggetti completo e le meccaniche di base consolidate, i prossimi passi si concentreranno sull'introduzione di sistemi di combattimento, incontri casuali, crafting, dialogo e sulla creazione di contenuti di gioco (quest, luoghi di interesse).

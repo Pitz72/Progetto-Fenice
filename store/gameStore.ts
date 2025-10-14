@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
-// FIX: Corrected import path for itemDatabase.
-import { itemDatabase } from '../src/data/itemDatabase';
+import { useItemDatabaseStore } from '../data/itemDatabase';
 
 // --- Constants for Game Logic ---
 const TRAVERSABLE_TILES = new Set(['.', 'R', 'C', 'V', 'F', 'S', 'E', '~']);
@@ -244,6 +243,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const { inventorySelectedIndex } = get();
       const { inventory, equippedWeapon, equippedArmor } = useCharacterStore.getState();
       const displayInventory = inventory.filter(i => i.itemId !== equippedWeapon && i.itemId !== equippedArmor);
+      
+      const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
 
       if (!displayInventory[inventorySelectedIndex]) return;
       
@@ -290,64 +291,76 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   confirmActionMenuSelection: () => {
       const { actionMenuState, inventorySelectedIndex, addJournalEntry, closeActionMenu } = get();
       const { inventory, equippedWeapon, equippedArmor, ...charActions } = useCharacterStore.getState();
+      const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
       
-      const isActuallyEquipped = (itemId: string) => equippedWeapon === itemId || equippedArmor === itemId;
-
-      // Determine the correct item list based on whether we are viewing an equipped item or an inventory item
       const selectedAction = actionMenuState.options[actionMenuState.selectedIndex];
-      let itemToActOnId: string;
       
-      // A bit complex: if the action is 'Togli', we need to find the *equipped* item.
-      // Otherwise, we act on the selected item in the *visible* (filtered) inventory list.
-      if (selectedAction === 'Togli') {
-          // Find which item is equipped that matches the selected list item
-          const displayInventory = inventory.filter(i => !isActuallyEquipped(i.itemId));
-          const list_item_id = displayInventory[inventorySelectedIndex]?.itemId;
-          // This logic is tricky. Let's find the equipped item that *would have been* in this list.
-          // A better way: decide which item to act on when opening the menu. Let's assume for now it's always the selected inventory item
-          const allItems = [...inventory, {itemId: equippedWeapon, quantity: 1}, {itemId: equippedArmor, quantity: 1}].filter(i => i.itemId);
-          
-          // Let's simplify. The item must come from the displayed list. 'Togli' should be handled differently.
-          // For now, let's assume `openActionMenu` logic is correct and we can derive the item.
-           const displayInv = inventory.filter(i => i.itemId !== equippedWeapon && i.itemId !== equippedArmor);
-            if (!displayInv[inventorySelectedIndex]) {
-                // This case happens if the action was on an equipped item, let's find it.
-                // This part of the logic is flawed. Let's fix `openActionMenu` to be smarter.
-                 closeActionMenu();
-                 return;
-            }
-           itemToActOnId = displayInv[inventorySelectedIndex].itemId;
-
-      } else {
-         const displayInventory = inventory.filter(i => i.itemId !== equippedWeapon && i.itemId !== equippedArmor);
-         if (!displayInventory[inventorySelectedIndex]) {
-             closeActionMenu();
-             return;
-         }
-         itemToActOnId = displayInventory[inventorySelectedIndex].itemId;
+      const displayInventory = inventory.filter(i => i.itemId !== equippedWeapon && i.itemId !== equippedArmor);
+      if (!displayInventory[inventorySelectedIndex]) {
+          closeActionMenu();
+          return;
       }
-      
+      const itemToActOnId = displayInventory[inventorySelectedIndex].itemId;
       const itemDetails = itemDatabase[itemToActOnId];
+      if (!itemDetails) {
+          closeActionMenu();
+          return;
+      }
       
       switch (selectedAction) {
           case 'Usa':
-              if (itemDetails.type === 'consumable') {
-                  let message = `Hai usato: ${itemDetails.name}.`;
-                  switch(itemDetails.effect) {
-                      case 'heal':
-                          charActions.heal(itemDetails.effectValue);
-                          message += ` Recuperi ${itemDetails.effectValue} HP.`;
-                          break;
-                      case 'satiety':
-                          charActions.restoreSatiety(itemDetails.effectValue);
-                           message += ` Recuperi ${itemDetails.effectValue} sazietà.`;
-                          break;
-                      case 'hydration':
-                          charActions.restoreHydration(itemDetails.effectValue);
-                           message += ` Recuperi ${itemDetails.effectValue} idratazione.`;
-                          break;
-                  }
-                  addJournalEntry(message);
+              if (itemDetails.type === 'consumable' && itemDetails.effects) {
+                  let baseMessage = `Hai usato: ${itemDetails.name}.`;
+                  let effectMessages: string[] = [];
+                  
+                  itemDetails.effects.forEach(effect => {
+                      switch(effect.type) {
+                          case 'heal':
+                              charActions.heal(effect.value);
+                              effectMessages.push(`Recuperi ${effect.value} HP.`);
+                              break;
+                          case 'satiety':
+                              charActions.restoreSatiety(effect.value);
+                              effectMessages.push(`Recuperi ${effect.value} sazietà.`);
+                              break;
+                          case 'hydration':
+                              charActions.restoreHydration(effect.value);
+                              effectMessages.push(`Recuperi ${effect.value} idratazione.`);
+                              break;
+                          // --- Added handling for all other effects ---
+                          case 'light':
+                              effectMessages.push(`Fornisce luce per ${effect.value} minuti.`);
+                              break;
+                          case 'trap':
+                              effectMessages.push(`Hai piazzato una trappola.`);
+                              break;
+                          case 'shelter':
+                              effectMessages.push(`Hai montato un riparo per ${effect.value} ore.`);
+                              break;
+                          case 'repair':
+                              effectMessages.push(`Hai riparato parte del tuo equipaggiamento.`);
+                              break;
+                          case 'vision':
+                              effectMessages.push(`La tua visuale a distanza è migliorata.`);
+                              break;
+                          case 'antirad':
+                              effectMessages.push(`Senti le radiazioni diminuire.`);
+                              break;
+                          case 'power':
+                              effectMessages.push(`Hai ricaricato un dispositivo.`);
+                              break;
+                          case 'smoke':
+                              effectMessages.push(`Una fitta cortina di fumo ti nasconde.`);
+                              break;
+                          case 'fire':
+                              effectMessages.push(`Hai acceso un fuoco.`);
+                              break;
+                          default:
+                              effectMessages.push(`Senti un effetto strano...`);
+                              break;
+                      }
+                  });
+                  addJournalEntry([baseMessage, ...effectMessages].join(' '));
                   charActions.removeItem(itemToActOnId, 1);
               }
               break;

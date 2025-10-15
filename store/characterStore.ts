@@ -282,4 +282,12 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         }));
     },
     setStatus: (newStatus) => set({ status: newStatus }),
+    boostAttribute: (attribute, amount) => {
+        set(state => ({
+            attributes: {
+                ...state.attributes,
+                [attribute]: state.attributes[attribute] + amount,
+            }
+        }));
+    },
 }));

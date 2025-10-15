@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -588,25 +588,41 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const { currentBiome, eventHistory } = get();
     if (Math.random() > EVENT_TRIGGER_PROBABILITY) return;
 
-    const allEvents = useEventDatabaseStore.getState().events;
-    // Map biome characters to their full names for event filtering
-    const biomeCharToName: Record<string, string> = { 
-        '.': 'Pianura', 
-        'F': 'Foresta',
-        'V': 'Villaggio',
-        'C': 'Città',
+    const { biomeEvents, globalEncounters } = useEventDatabaseStore.getState();
+
+    // Filter biome-specific events
+    const biomeCharToName: Record<string, string> = {
+        '.': 'Pianura', 'F': 'Foresta', 'V': 'Villaggio', 'C': 'Città',
     };
     const currentBiomeName = biomeCharToName[currentBiome] || currentBiome;
-
-    const possibleEvents = allEvents.filter(event => 
+    const possibleBiomeEvents = biomeEvents.filter(event => 
         event.biomes.includes(currentBiomeName) &&
         (!event.isUnique || !eventHistory.includes(event.id))
     );
+
+    // Filter global encounters
+    const possibleGlobalEncounters = globalEncounters.filter(event => 
+        !event.isUnique || !eventHistory.includes(event.id)
+    );
     
-    if (possibleEvents.length > 0) {
-        const event = possibleEvents[Math.floor(Math.random() * possibleEvents.length)];
-        set({ activeEvent: event, gameState: GameState.EVENT_SCREEN, eventResolutionText: null });
-        get().addJournalEntry({ text: `EVENTO: ${event.title}`, type: JournalEntryType.EVENT });
+    const hasBiomeEvents = possibleBiomeEvents.length > 0;
+    const hasGlobalEncounters = possibleGlobalEncounters.length > 0;
+
+    if (!hasBiomeEvents && !hasGlobalEncounters) return;
+
+    let eventToTrigger: GameEvent | null = null;
+    
+    // Decide which pool to draw from. 75% chance for a biome event if available.
+    const roll = Math.random();
+    if (hasBiomeEvents && (!hasGlobalEncounters || roll < 0.75)) {
+        eventToTrigger = possibleBiomeEvents[Math.floor(Math.random() * possibleBiomeEvents.length)];
+    } else if (hasGlobalEncounters) {
+        eventToTrigger = possibleGlobalEncounters[Math.floor(Math.random() * possibleGlobalEncounters.length)];
+    }
+    
+    if (eventToTrigger) {
+        set({ activeEvent: eventToTrigger, gameState: GameState.EVENT_SCREEN, eventResolutionText: null });
+        get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
     }
   },
 
@@ -630,7 +646,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   resolveEventChoice: (choiceIndex: number) => {
     const { activeEvent, addJournalEntry, advanceTime } = get();
-    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal, setStatus } = useCharacterStore.getState();
+    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal, setStatus, boostAttribute } = useCharacterStore.getState();
     const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
 
     if (!activeEvent) return;
@@ -699,11 +715,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
               addJournalEntry({ text: textStatus, type: JournalEntryType.SYSTEM_WARNING });
               message = textStatus;
               break;
-           case 'statBoost':
-              const textStat = `La tua statistica ${result.value.stat} è aumentata!`;
+           case 'statBoost': {
+              const { stat, amount } = result.value as { stat: AttributeName; amount: number };
+              boostAttribute(stat, amount);
+              const textStat = `La tua statistica ${stat.toUpperCase()} è aumentata permanentemente di ${amount}!`;
               addJournalEntry({ text: textStat, type: JournalEntryType.XP_GAIN });
               message = textStat;
               break;
+            }
           case 'revealMapPOI':
                const textPoi = "Hai scoperto un nuovo punto di interesse sulla mappa!";
                addJournalEntry({ text: textPoi, type: JournalEntryType.NARRATIVE, color: '#60a5fa' });

@@ -288,6 +288,7 @@ export interface CharacterState {
     restoreHydration: (amount: number) => void;
     changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
     setStatus: (newStatus: string | null) => void;
+    boostAttribute: (attribute: AttributeName, amount: number) => void;
 }
 
 // --- Item System ---

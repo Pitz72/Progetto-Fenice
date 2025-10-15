@@ -32,9 +32,9 @@
       }] },
       { "text": "Controlla il retrobottega", "outcomes": [{
         "type": "skillCheck", "skill": "acrobazia", "dc": 12,
-        "successText": "Sgattaioli oltre uno scaffale pericolante nel retro e trovi un armadietto del personale. Dentro ci sono degli antidolorifici.",
+        "successText": "Sgattaioli oltre uno scaffale pericolante nel retro e trovi un armadietto del personale. Dentro ci sono degli antidolorifici e un manuale di medicina.",
         "failureText": "Nel tentativo di passare, urti lo scaffale che crolla con un boato, facendo rumore e costringendoti a una rapida ritirata.",
-        "success": [{ "type": "addItem", "value": { "itemId": "MED_PAINKILLER", "quantity": 2 } }, { "type": "addXp", "value": 20 }],
+        "success": [{ "type": "addItem", "value": { "itemId": "MED_PAINKILLER", "quantity": 2 } }, { "type": "addItem", "value": { "itemId": "manual_field_medicine", "quantity": 1 } }, { "type": "addXp", "value": 20 }],
         "failure": [{ "type": "addXp", "value": 10 }]
       }] }
     ]

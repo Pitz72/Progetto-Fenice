@@ -13,7 +13,7 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.5.4)
+### Caratteristiche Attuali (v0.6.0)
 
 Il prototipo vanta un ciclo di gameplay robusto e completo, con le seguenti meccaniche interconnesse:
 
@@ -38,7 +38,10 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con le seguenti mecc
 #### Gestione Oggetti e Crafting
 *   **Database Modulare:** Un database scalabile di centinaia di oggetti (armi, armature, consumabili, materiali) caricato dinamicamente da file JSON.
 *   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali.
-*   **Sistema di Crafting:** Nei rifugi, il giocatore può usare il "Banco di Lavoro" per creare nuovi oggetti a partire dai materiali raccolti, basandosi su test di abilità specifici.
+*   **Sistema di Crafting Dinamico e Progressivo:**
+    *   **Ricette da Scoprire:** Le ricette di crafting non sono disponibili dall'inizio. Il giocatore deve trovare "Manuali di Crafting" durante l'esplorazione per apprendere nuove formule.
+    *   **Banco di Lavoro Intelligente:** L'interfaccia del banco di lavoro mostra solo le ricette che il personaggio ha imparato, fornendo un feedback visivo immediato su quali sono creabili in base agli ingredienti posseduti.
+    *   **Creazione basata su Abilità:** Ogni tentativo di crafting richiede un test di abilità (es. Sopravvivenza, Medicina) e consuma tempo di gioco, con il rischio di sprecare materiali in caso di fallimento.
 
 #### Sviluppo del Personaggio
 *   **Creazione Personaggio:** La partita inizia con una generazione casuale delle statistiche del personaggio, garantendo rigiocabilità.

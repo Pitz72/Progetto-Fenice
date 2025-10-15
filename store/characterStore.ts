@@ -15,6 +15,7 @@ import {
 import { SKILLS, XP_PER_LEVEL } from '../constants';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { useGameStore } from './gameStore';
+import { useRecipeDatabaseStore } from '../data/recipeDatabase';
 
 const BASE_STAT_VALUE = 100;
 
@@ -54,6 +55,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     alignment: { ...initialAlignment },
     status: null,
     levelUpPending: false,
+    knownRecipes: [],
 
     // --- Actions ---
     initCharacter: (newAttributes) => {
@@ -81,6 +83,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             ],
             equippedWeapon: null,
             equippedArmor: null,
+            knownRecipes: ['recipe_makeshift_knife', 'recipe_bandage_adv'], // Start with basic recipes
         });
     },
 
@@ -162,7 +165,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             const newSkills = { ...state.skills };
             newSkills[choices.skill].proficient = true;
             
-            // FIX: JournalEntryType was not defined, it has been imported from ../types.
             useGameStore.getState().addJournalEntry({
                 text: `Sei salito al livello ${newLevel}! Le tue abilità migliorano.`,
                 type: JournalEntryType.XP_GAIN
@@ -359,5 +361,25 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
                 [attribute]: state.attributes[attribute] + amount,
             }
         }));
+    },
+    learnRecipe: (recipeId) => {
+        set(state => {
+            if (state.knownRecipes.includes(recipeId)) {
+                useGameStore.getState().addJournalEntry({
+                    text: "Hai già studiato questo schema.",
+                    type: JournalEntryType.SYSTEM_WARNING,
+                });
+                return {};
+            }
+            const recipe = useRecipeDatabaseStore.getState().recipes.find(r => r.id === recipeId);
+            if (recipe) {
+                useGameStore.getState().addJournalEntry({
+                    text: `Hai imparato una nuova ricetta: ${recipe.name}!`,
+                    type: JournalEntryType.XP_GAIN,
+                });
+                return { knownRecipes: [...state.knownRecipes, recipeId] };
+            }
+            return {};
+        });
     },
 }));

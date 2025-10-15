@@ -36,18 +36,6 @@
     "rarity": "common"
   },
   {
-    "id": "hunting_knife",
-    "name": "Coltello da Caccia",
-    "description": "Un robusto coltello con una lama adatta a scuoiare animali e a lavori di precisione nel bosco.",
-    "type": "weapon",
-    "weaponType": "melee",
-    "damage": 9,
-    "weight": 0.4,
-    "value": 50,
-    "stackable": false,
-    "rarity": "common"
-  },
-  {
     "id": "antlers",
     "name": "Corna di Cervo",
     "description": "Le corna intatte di un cervo. Possono essere usate come un'arma da taglio improvvisata, affilata e pericolosa.",

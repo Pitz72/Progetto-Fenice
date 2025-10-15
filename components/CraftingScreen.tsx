@@ -61,20 +61,28 @@ const RecipeDetails: React.FC<{ recipe: Recipe | null }> = ({ recipe }) => {
 const CraftingScreen: React.FC = () => {
     const { toggleCrafting, craftingMenuState, navigateCraftingMenu, performCrafting } = useGameStore();
     const { selectedIndex } = craftingMenuState;
-    const { inventory } = useCharacterStore();
-    const { recipes } = useRecipeDatabaseStore();
-    const { itemDatabase } = useItemDatabaseStore();
+    const { inventory, knownRecipes } = useCharacterStore();
+    const { recipes: allRecipes } = useRecipeDatabaseStore();
+    
+    const displayableRecipes = useMemo(() => 
+        allRecipes.filter(recipe => knownRecipes.includes(recipe.id))
+    , [allRecipes, knownRecipes]);
 
     const craftableStatus = useMemo(() => {
-        return recipes.map(recipe => {
+        return displayableRecipes.map(recipe => {
             return recipe.ingredients.every(ing => {
                 const playerItem = inventory.find(i => i.itemId === ing.itemId);
                 return playerItem && playerItem.quantity >= ing.quantity;
             });
         });
-    }, [recipes, inventory]);
+    }, [displayableRecipes, inventory]);
 
-    const selectedRecipe = recipes[selectedIndex] || null;
+    const selectedRecipe = displayableRecipes[selectedIndex] || null;
+
+    const handleNavigate = useCallback((direction: number) => {
+        if (displayableRecipes.length === 0) return;
+        navigateCraftingMenu(direction);
+    }, [displayableRecipes.length, navigateCraftingMenu]);
 
     const handleKey = useCallback((key: string) => {
         switch (key) {
@@ -82,16 +90,16 @@ const CraftingScreen: React.FC = () => {
                 toggleCrafting();
                 break;
             case 'w': case 'ArrowUp':
-                navigateCraftingMenu(-1);
+                handleNavigate(-1);
                 break;
             case 's': case 'ArrowDown':
-                navigateCraftingMenu(1);
+                handleNavigate(1);
                 break;
             case 'Enter':
                 if (selectedRecipe && craftableStatus[selectedIndex]) performCrafting();
                 break;
         }
-    }, [toggleCrafting, navigateCraftingMenu, performCrafting, selectedRecipe, craftableStatus, selectedIndex]);
+    }, [toggleCrafting, handleNavigate, performCrafting, selectedRecipe, craftableStatus, selectedIndex]);
 
     const handlerMap = useMemo(() => ({
         'Escape': () => handleKey('Escape'),
@@ -109,9 +117,9 @@ const CraftingScreen: React.FC = () => {
                 <div className="flex-grow flex space-x-6 overflow-hidden">
                     {/* Recipe List */}
                     <div className="w-2/5 h-full border-2 border-green-400/30 p-2 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-                        {recipes.length > 0 ? (
+                        {displayableRecipes.length > 0 ? (
                             <ul className="space-y-2 text-4xl">
-                                {recipes.map((recipe, index) => {
+                                {displayableRecipes.map((recipe, index) => {
                                     const isSelected = index === selectedIndex;
                                     const isCraftable = craftableStatus[index];
                                     let color = isCraftable ? '#ffffff' : '#6b7280'; // White for craftable, gray for not

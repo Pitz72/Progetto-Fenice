@@ -340,6 +340,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
       switch(itemDetails.type) {
           case 'consumable': options = ['Usa', 'Scarta', 'Annulla']; break;
+          case 'manual': options = ['Leggi', 'Scarta', 'Annulla']; break;
           case 'weapon': case 'armor':
               if (isEquipped) { options = ['Togli', 'Scarta', 'Annulla']; } 
               else { options = ['Equipaggia', 'Scarta', 'Annulla']; }
@@ -388,6 +389,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                       }
                   });
                   addJournalEntry({ text: [baseMessage, ...effectMessages].join(' '), type: JournalEntryType.NARRATIVE });
+                  charState.removeItem(itemToActOn.itemId, 1);
+              }
+              break;
+          case 'Leggi':
+              if (itemDetails.type === 'manual' && itemDetails.unlocksRecipe) {
+                  charState.learnRecipe(itemDetails.unlocksRecipe);
                   charState.removeItem(itemToActOn.itemId, 1);
               }
               break;

@@ -34,6 +34,7 @@ async function loadAllItems(): Promise<Record<string, IItem>> {
                 case 'armor':     color = '#d1d5db'; break; // gray-300
                 case 'material':  color = '#a16207'; break; // yellow-700
                 case 'quest':     color = '#facc15'; break; // yellow-400
+                case 'manual':    color = '#c084fc'; break; // purple-400
                 case 'consumable':
                     if (item.id.includes('med') || item.effects?.some(e => e.type === 'heal')) {
                         color = '#4ade80'; // green-400 for medical

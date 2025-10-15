@@ -1,5 +1,27 @@
 [
   {
+    "id": "manual_field_medicine",
+    "name": "Manuale: Medicina da Campo",
+    "description": "Un manuale illustrato che insegna tecniche di primo soccorso avanzate, inclusa la creazione di bende migliorate.",
+    "type": "manual",
+    "weight": 0.5,
+    "value": 100,
+    "stackable": false,
+    "rarity": "uncommon",
+    "unlocksRecipe": "recipe_bandage_adv"
+  },
+   {
+    "id": "manual_survival_basics",
+    "name": "Manuale: Sopravvivenza Base",
+    "description": "Un opuscolo su come sfruttare al meglio le risorse naturali, con istruzioni per cucinare zuppe nutrienti e costruire frecce.",
+    "type": "manual",
+    "weight": 0.5,
+    "value": 100,
+    "stackable": false,
+    "rarity": "uncommon",
+    "unlocksRecipe": "recipe_soup"
+  },
+  {
     "id": "sealed_package_quest",
     "name": "Pacco Sigillato",
     "description": "Un pacco avvolto in tela cerata e sigillato con cura. Non sai cosa contenga, ma sembra importante. È indirizzato a un 'avamposto a nord'.",

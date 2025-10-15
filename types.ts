@@ -270,6 +270,7 @@ export interface CharacterState {
     alignment: Alignment;
     status: string | null; // e.g., 'POISONED', 'SAD', 'WOUNDED', 'ESAUSTO'
     levelUpPending: boolean;
+    knownRecipes: string[];
 
     // Actions
     initCharacter: (newAttributes?: Attributes) => void;
@@ -293,10 +294,11 @@ export interface CharacterState {
     changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
     setStatus: (newStatus: string | null) => void;
     boostAttribute: (attribute: AttributeName, amount: number) => void;
+    learnRecipe: (recipeId: string) => void;
 }
 
 // --- Item System ---
-export type ItemType = 'weapon' | 'armor' | 'consumable' | 'material' | 'quest' | 'ammo';
+export type ItemType = 'weapon' | 'armor' | 'consumable' | 'material' | 'quest' | 'ammo' | 'manual';
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'quest';
 export type WeaponType = 'melee' | 'ranged' | 'thrown';
 export type ArmorSlot = 'head' | 'chest' | 'legs';
@@ -325,4 +327,5 @@ export interface IItem {
     defense?: number;
     slot?: ArmorSlot;
     effects?: ItemEffect[];
+    unlocksRecipe?: string;
 }

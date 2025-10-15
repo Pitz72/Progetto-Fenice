@@ -40,6 +40,87 @@
     ]
   },
   {
+    "id": "village_general_store",
+    "title": "L'Emporio Silenzioso",
+    "isUnique": true,
+    "biomes": [
+      "Villaggio"
+    ],
+    "description": "Ti trovi di fronte a un vecchio emporio. La vetrina è coperta di polvere e l'insegna di legno è quasi illeggibile. La porta è socchiusa.",
+    "choices": [
+      {
+        "text": "Fruga dietro al bancone",
+        "outcomes": [
+          {
+            "type": "skillCheck",
+            "skill": "investigare",
+            "dc": 11,
+            "successText": "Sotto il bancone, in un cassetto nascosto, trovi un manuale di sopravvivenza e una scatola di sigari.",
+            "failureText": "Cerchi ovunque, ma trovi solo scontrini sbiaditi e polvere.",
+            "success": [
+              {
+                "type": "addItem",
+                "value": {
+                  "itemId": "manual_survival_basics",
+                  "quantity": 1
+                }
+              },
+              {
+                "type": "addItem",
+                "value": {
+                  "itemId": "cigars_box",
+                  "quantity": 1
+                }
+              },
+              {
+                "type": "addXp",
+                "value": 30
+              }
+            ],
+            "failure": [
+              {
+                "type": "addXp",
+                "value": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Ispeziona il magazzino sul retro",
+        "outcomes": [
+          {
+            "type": "direct",
+            "results": [
+              {
+                "type": "journalEntry",
+                "text": "Il magazzino è umido e buio. Trovi un piede di porco appoggiato a un muro e alcuni rottami metallici."
+              },
+              {
+                "type": "addItem",
+                "value": {
+                  "itemId": "crowbar",
+                  "quantity": 1
+                }
+              },
+              {
+                "type": "addItem",
+                "value": {
+                  "itemId": "scrap_metal",
+                  "quantity": 3
+                }
+              },
+              {
+                "type": "addXp",
+                "value": 20
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "village_doctor_clinic", "title": "Il Giuramento Silenzioso", "isUnique": true, "biomes": ["Villaggio"],
     "description": "La porta della clinica di un medico di campagna è socchiusa.",
     "choices": [

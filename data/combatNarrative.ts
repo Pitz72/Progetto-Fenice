@@ -47,3 +47,9 @@ export const ENEMY_MISS_DESCRIPTIONS = [
   "Schivi per un soffio!",
   "L'attacco del nemico va a vuoto.",
 ];
+
+export const ENEMY_DEATH_DESCRIPTIONS = [
+  "Il {enemy} crolla a terra in un ammasso scomposto, sconfitto.",
+  "Con un ultimo rantolo, il {enemy} esala il suo ultimo respiro.",
+  "Il colpo finale è decisivo. Il {enemy} cade senza vita.",
+];

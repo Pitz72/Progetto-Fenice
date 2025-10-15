@@ -932,8 +932,25 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
       if (result === 'win') {
           useCharacterStore.getState().addXp(activeCombat.enemy.xp);
-          get().addJournalEntry({ text: `Hai sconfitto ${activeCombat.enemy.name}! Hai guadagnato ${activeCombat.enemy.xp} XP.`, type: JournalEntryType.XP_GAIN });
-      } else if (result === 'flee') {
+          const victoryText = `Hai sconfitto ${activeCombat.enemy.name}! Hai guadagnato ${activeCombat.enemy.xp} XP.`;
+          const deathDesc = getRandom(N.ENEMY_DEATH_DESCRIPTIONS).replace('{enemy}', activeCombat.enemy.name);
+
+          set(state => ({
+            activeCombat: {
+                ...state.activeCombat!,
+                log: [
+                    ...state.activeCombat!.log,
+                    { text: victoryText, color: '#f59e0b' },
+                    { text: deathDesc, color: '#d1d5db' }
+                ],
+                victory: true,
+                playerTurn: false,
+            }
+          }));
+          return;
+      } 
+      
+      if (result === 'flee') {
           get().addJournalEntry({ text: "Sei riuscito a fuggire.", type: JournalEntryType.NARRATIVE });
       } else if (result === 'lose') {
           // Handle player death later
@@ -943,7 +960,16 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       set({ activeCombat: null, gameState: GameState.IN_GAME });
   },
 
-  playerCombatAction: (action) => {
+  cleanupCombat: () => {
+    get().addJournalEntry({ 
+        text: `Esci vittorioso dallo scontro.`,
+        type: JournalEntryType.NARRATIVE
+    });
+    set({ activeCombat: null, gameState: GameState.IN_GAME });
+  },
+
+  // FIX: Explicitly typed the 'action' parameter to resolve an 'unknown' type error.
+  playerCombatAction: (action: Parameters<GameStoreState['playerCombatAction']>[0]) => {
     const { activeCombat } = get();
     if (!activeCombat || !activeCombat.playerTurn) return;
 
@@ -955,6 +981,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     };
 
     const endPlayerTurn = () => {
+        if (currentCombatState.enemyHp.current <= 0) {
+            get().endCombat('win');
+            return;
+        }
         currentCombatState.playerTurn = false;
         set({ activeCombat: currentCombatState });
         setTimeout(enemyTurn, 1500);
@@ -962,7 +992,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const enemyTurn = () => {
         let combatState = get().activeCombat;
-        if (!combatState) return;
+        if (!combatState || combatState.victory) return;
 
         combatState = { ...combatState, log: [...combatState.log] };
 
@@ -1005,6 +1035,43 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     };
 
     // --- Process Player Action ---
+    if (action.type === 'use_item') {
+        const { itemId } = action;
+        const charState = useCharacterStore.getState();
+        const item = useItemDatabaseStore.getState().itemDatabase[itemId];
+        if (!item) {
+            addCombatLog("Oggetto non valido!", "#ff0000");
+            return; // Don't end turn on error
+        }
+
+        addCombatLog(`Usi: ${item.name}.`);
+        charState.removeItem(itemId, 1);
+        
+        if (item.type === 'consumable' && item.effects) {
+            item.effects.forEach(effect => {
+                if (effect.type === 'heal') {
+                    charState.heal(effect.value);
+                    addCombatLog(`Recuperi ${effect.value} HP.`, '#4ade80');
+                }
+            });
+        } else if (item.weaponType === 'thrown') {
+            const attackBonus = charState.getSkillBonus('rapiditaDiMano');
+            const attackRoll = Math.floor(Math.random() * 20) + 1;
+            const totalAttack = attackRoll + attackBonus;
+            addCombatLog(`Lanci ${item.name}... (Tiri ${attackRoll} + ${attackBonus} = ${totalAttack} vs CA ${activeCombat.enemy.ac})`);
+
+            if (totalAttack >= activeCombat.enemy.ac) {
+                const damage = (item.damage ? Math.floor(Math.random() * item.damage) : 0) + 1;
+                addCombatLog(`${getRandom(N.PLAYER_HIT_DESCRIPTIONS)} Infliggi ${damage} danni.`, '#f59e0b');
+                currentCombatState.enemyHp.current -= damage;
+            } else {
+                addCombatLog(getRandom(N.PLAYER_MISS_DESCRIPTIONS), '#9ca3af');
+            }
+        }
+        endPlayerTurn();
+        return;
+    }
+    
     switch (action.type) {
       case 'attack': {
           const charState = useCharacterStore.getState();
@@ -1026,12 +1093,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
               addCombatLog(`${getRandom(N.PLAYER_HIT_DESCRIPTIONS)} Infliggi ${damage} danni.`, '#f59e0b');
               
               currentCombatState.enemyHp = { ...currentCombatState.enemyHp, current: currentCombatState.enemyHp.current - damage };
-              
-              if (currentCombatState.enemyHp.current <= 0) {
-                  set({ activeCombat: currentCombatState });
-                  get().endCombat('win');
-                  return;
-              }
 
           } else {
               addCombatLog(getRandom(N.PLAYER_MISS_DESCRIPTIONS), '#9ca3af');
@@ -1108,12 +1169,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                      const damage = (Math.floor(Math.random() * baseDamage) + 1) * 2; // Double damage (crit)
                      addCombatLog(`Colpo critico! Infliggi ${damage} danni!`, '#f59e0b');
                      currentCombatState.enemyHp.current -= damage;
-                  }
-
-                  if (currentCombatState.enemyHp.current <= 0) {
-                      set({ activeCombat: currentCombatState });
-                      get().endCombat('win');
-                      return;
                   }
 
               } else {

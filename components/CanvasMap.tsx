@@ -6,7 +6,8 @@ const CanvasMap: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const map = useGameStore((state) => state.map);
     const playerPos = useGameStore((state) => state.playerPos);
-    const renderMapRef = useRef<() => void>();
+    // FIX: Initialized useRef with 'undefined' as the starting value, as required when a generic type is provided.
+    const renderMapRef = useRef<(() => void) | undefined>(undefined);
 
     const [tilesetImage, setTilesetImage] = useState<HTMLImageElement | null>(null);
 

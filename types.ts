@@ -188,6 +188,7 @@ export interface CombatState {
     revealedTactics: boolean;
     availableTacticalActions: EnemyTactic[];
     debuffs?: CombatDebuff[];
+    victory?: boolean;
 }
 
 
@@ -252,7 +253,12 @@ export interface GameStoreState {
   triggerRandomCombat: () => void;
   startCombat: (enemyId: string) => void;
   endCombat: (result: 'win' | 'flee' | 'lose') => void;
-  playerCombatAction: (action: { type: 'attack' | 'analyze' | 'flee' } | { type: 'tactic', tacticId: string }) => void;
+  playerCombatAction: (
+    action: { type: 'attack' | 'analyze' | 'flee' } | 
+            { type: 'tactic', tacticId: string } | 
+            { type: 'use_item', itemId: string }
+  ) => void;
+  cleanupCombat: () => void;
 }
 
 

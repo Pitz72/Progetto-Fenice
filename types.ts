@@ -1,3 +1,5 @@
+// FIX: Removed self-import of GameState and JournalEntryType to fix circular dependency and merge declaration errors.
+
 // --- Game State & Core Types ---
 export enum GameState {
   INITIAL_BLACK_SCREEN,
@@ -12,6 +14,7 @@ export enum GameState {
   IN_GAME,
   EVENT_SCREEN,
   LEVEL_UP_SCREEN,
+  COMBAT,
 }
 
 export enum JournalEntryType {
@@ -140,6 +143,53 @@ export interface Recipe {
     };
 }
 
+// --- Combat System ---
+export interface EnemyTactic {
+  id: string;
+  name: string;
+  description: string;
+  skillCheck?: { skill: SkillName; dc: number };
+}
+
+export interface Enemy {
+  id: string;
+  name: string;
+  description: string;
+  hp: number;
+  ac: number;
+  attack: {
+    damage: number;
+    bonus: number;
+  };
+  xp: number;
+  biomes: string[];
+  tactics: {
+    revealDc: number;
+    description: string;
+    actions: EnemyTactic[];
+  };
+}
+
+export interface CombatLogEntry {
+    text: string;
+    color?: string;
+}
+
+export interface CombatDebuff {
+    type: 'stunned';
+    turns: number;
+}
+
+export interface CombatState {
+    enemy: Enemy;
+    enemyHp: Stat;
+    playerTurn: boolean;
+    log: CombatLogEntry[];
+    revealedTactics: boolean;
+    availableTacticalActions: EnemyTactic[];
+    debuffs?: CombatDebuff[];
+}
+
 
 // --- Store States ---
 export interface PlayerStatus {
@@ -170,6 +220,7 @@ export interface GameStoreState {
   activeEvent: GameEvent | null;
   eventHistory: string[];
   eventResolutionText: string | null;
+  activeCombat: CombatState | null;
   
   // Actions
   setGameState: (newState: GameState) => void;
@@ -198,6 +249,10 @@ export interface GameStoreState {
   navigateCraftingMenu: (direction: number) => void;
   performCrafting: () => void;
   openLevelUpScreen: () => void;
+  triggerRandomCombat: () => void;
+  startCombat: (enemyId: string) => void;
+  endCombat: (result: 'win' | 'flee' | 'lose') => void;
+  playerCombatAction: (action: { type: 'attack' | 'analyze' | 'flee' } | { type: 'tactic', tacticId: string }) => void;
 }
 
 
@@ -295,6 +350,7 @@ export interface CharacterState {
     setStatus: (newStatus: string | null) => void;
     boostAttribute: (attribute: AttributeName, amount: number) => void;
     learnRecipe: (recipeId: string) => void;
+    getPlayerAC: () => number;
 }
 
 // --- Item System ---

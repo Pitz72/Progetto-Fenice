@@ -382,4 +382,12 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             return {};
         });
     },
+    getPlayerAC: () => {
+        const { getAttributeModifier, equippedArmor } = get();
+        const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
+        const dexMod = getAttributeModifier('des');
+        const armor = equippedArmor ? itemDatabase[equippedArmor] : null;
+        const armorBonus = armor?.defense || 0;
+        return 10 + dexMod + armorBonus;
+    },
 }));

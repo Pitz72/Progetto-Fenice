@@ -15,9 +15,11 @@ import RefugeScreen from './components/RefugeScreen';
 import EventScreen from './components/EventScreen';
 import CraftingScreen from './components/CraftingScreen';
 import LevelUpScreen from './components/LevelUpScreen';
+import CombatScreen from './components/CombatScreen';
 import { useItemDatabaseStore } from './data/itemDatabase';
 import { useEventDatabaseStore } from './data/eventDatabase';
 import { useRecipeDatabaseStore } from './data/recipeDatabase';
+import { useEnemyDatabaseStore } from './data/enemyDatabase';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
@@ -31,19 +33,22 @@ const App: React.FC = () => {
   const { loadDatabase: loadItemDatabase, isLoaded: itemsLoaded } = useItemDatabaseStore();
   const { loadDatabase: loadEventDatabase, isLoaded: eventsLoaded } = useEventDatabaseStore();
   const { loadDatabase: loadRecipeDatabase, isLoaded: recipesLoaded } = useRecipeDatabaseStore();
+  const { loadDatabase: loadEnemyDatabase, isLoaded: enemiesLoaded } = useEnemyDatabaseStore();
+
 
   useEffect(() => {
     loadItemDatabase();
     loadEventDatabase();
     loadRecipeDatabase();
-  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase]);
+    loadEnemyDatabase();
+  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase, loadEnemyDatabase]);
 
   useEffect(() => {
-    if (itemsLoaded && eventsLoaded && recipesLoaded) {
+    if (itemsLoaded && eventsLoaded && recipesLoaded && enemiesLoaded) {
       setMap();
       initCharacter();
     }
-  }, [itemsLoaded, eventsLoaded, recipesLoaded, setMap, initCharacter]);
+  }, [itemsLoaded, eventsLoaded, recipesLoaded, enemiesLoaded, setMap, initCharacter]);
 
   const renderContent = () => {
     switch (gameState) {
@@ -66,6 +71,13 @@ const App: React.FC = () => {
         return <EventScreen />;
       case GameState.LEVEL_UP_SCREEN:
         return <LevelUpScreen />;
+      case GameState.COMBAT:
+        return (
+          <>
+            <GameScreen />
+            <CombatScreen />
+          </>
+        );
       case GameState.IN_GAME:
         return (
           <>

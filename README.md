@@ -13,42 +13,42 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.6.0)
+### Caratteristiche Attuali (v0.7.1)
 
-Il prototipo vanta un ciclo di gameplay robusto e completo, con le seguenti meccaniche interconnesse:
+Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting e Combattimento) pienamente implementati e integrati.
 
 #### Esplorazione e Mondo di Gioco
-*   **Mappa Vasta:** Un'ampia mappa di gioco con diversi biomi (Pianure, Foreste, Villaggi, Città) che influenzano il movimento e gli incontri.
-*   **Messaggi Atmosferici:** Messaggi descrittivi contestuali basati su bioma, ora del giorno e meteo aumentano l'immersione.
-*   **Diario di Viaggio Dettagliato:** Un log cronologico di tutte le azioni e gli eventi, con timestamp e codifica a colori per una facile lettura.
+*   **Mappa Vasta e Diversificata:** Un'ampia mappa con biomi unici (Pianure, Foreste, Villaggi, Città) che influenzano movimento, incontri e risorse.
+*   **Immersione Atmosferica:** Messaggi descrittivi contestuali basati su bioma, ora del giorno e meteo aumentano l'immersione.
+*   **Pericoli Notturni:** Esplorare di notte comporta un rischio costante di subire danni, rendendo la ricerca di un riparo una decisione strategica.
+*   **Diario di Viaggio Dettagliato:** Un log cronologico di tutte le azioni e gli eventi, con timestamp e codifica a colori.
 
-#### Meccaniche di Sopravvivenza Avanzate
-*   **Gestione Risorse Critica:** Statistiche di HP, Sazietà e Idratazione con un tasso di consumo bilanciato per rendere la ricerca di cibo e acqua una priorità costante.
-*   **Sistema Temporale e Meteo:** Un orologio di gioco e un sistema meteo dinamico che influenzano movimento, consumo di risorse e pericoli ambientali.
-*   **Pericoli Notturni:** Esplorare di notte comporta il rischio di subire danni a ogni passo, rendendo la ricerca di un riparo una decisione strategica.
-*   **Rifugi a Visita Singola:** Luoghi sicuri che offrono riposo, ricerca di oggetti tramite skill check e crafting, ma che possono essere utilizzati una sola volta.
-*   **Riposo Rapido:** Un'azione da campo con cooldown di 24 ore per un recupero di emergenza.
+#### Meccaniche di Sopravvivenza Impegnative
+*   **Gestione Risorse Critica:** Statistiche di HP, Sazietà e Idratazione con tassi di consumo bilanciati che rendono la ricerca di cibo e acqua una priorità costante e pressante.
+*   **Sistema Temporale e Meteo Dinamico:** Un orologio di gioco e un sistema meteo che influenzano movimento, consumo di risorse e pericoli ambientali.
+*   **Rifugi Strategici:** Luoghi sicuri a visita singola che offrono riposo, ricerca di oggetti tramite skill check e crafting, trasformandoli in decisioni cruciali e irripetibili.
 
 #### Sistema di Eventi Stratificato
-*   **Eventi di Bioma:** Ogni area ha un set dedicato di eventi a tema, garantendo varietà e coerenza narrativa.
+Il mondo è vivo grazie a un sistema di eventi a tre livelli che garantisce varietà e rigiocabilità:
+*   **Eventi di Bioma:** Ogni area ha un set dedicato di incontri narrativi a tema.
 *   **Incontri Globali:** Sfide di sopravvivenza e combattimenti semplificati che possono verificarsi ovunque, mantenendo alta la tensione.
-*   **Eventi Lore:** Incontri rari e unici che approfondiscono la trama principale e il conflitto interiore del protagonista.
-*   **Logica di Attivazione Dinamica:** Il gioco bilancia la frequenza tra eventi narrativi e sfide di sopravvivenza per un'esperienza varia e imprevedibile.
-
-#### Gestione Oggetti e Crafting
-*   **Database Modulare:** Un database scalabile di centinaia di oggetti (armi, armature, consumabili, materiali) caricato dinamicamente da file JSON.
-*   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali.
-*   **Sistema di Crafting Dinamico e Progressivo:**
-    *   **Ricette da Scoprire:** Le ricette di crafting non sono disponibili dall'inizio. Il giocatore deve trovare "Manuali di Crafting" durante l'esplorazione per apprendere nuove formule.
-    *   **Banco di Lavoro Intelligente:** L'interfaccia del banco di lavoro mostra solo le ricette che il personaggio ha imparato, fornendo un feedback visivo immediato su quali sono creabili in base agli ingredienti posseduti.
-    *   **Creazione basata su Abilità:** Ogni tentativo di crafting richiede un test di abilità (es. Sopravvivenza, Medicina) e consuma tempo di gioco, con il rischio di sprecare materiali in caso di fallimento.
+*   **Eventi Lore:** Incontri rari e unici che approfondiscono la trama e il conflitto interiore del protagonista.
 
 #### Sviluppo del Personaggio
-*   **Creazione Personaggio:** La partita inizia con una generazione casuale delle statistiche del personaggio, garantendo rigiocabilità.
-*   **Progressione tramite XP:** I Punti Esperienza si guadagnano esplorando, superando eventi (con bonus maggiori per i successi) e completando azioni.
-*   **Level Up Strategico:** Alla pressione del tasto 'L', il giocatore accede a una schermata dedicata per aumentare permanentemente un attributo e acquisire una nuova competenza in un'abilità.
-*   **Sistema di Skill Check:** Le azioni complesse sono risolte tramite un sistema di test di abilità (d20 + modificatori vs CD) che aggiunge un elemento di rischio e ricompensa.
-*   **Bussola Morale con Effetti:** Un sistema di allineamento (Lena/Elian) traccia le decisioni morali. Raggiungere una forte inclinazione verso la compassione o il pragmatismo sblocca bonus passivi a determinate abilità, collegando direttamente le scelte narrative ai vantaggi meccanici.
+*   **Progressione tramite XP:** I Punti Esperienza si guadagnano da ogni azione: esplorare, superare eventi, vincere combattimenti.
+*   **Level Up Strategico:** Una schermata dedicata permette di aumentare un attributo e acquisire una nuova competenza in un'abilità, personalizzando la crescita del personaggio.
+*   **Bussola Morale con Effetti:** Un sistema di allineamento (Lena/Elian) traccia le decisioni morali. Raggiungere una forte inclinazione verso la compassione o il pragmatismo sblocca **bonus passivi permanenti** a determinate abilità.
+
+#### Gestione Oggetti e Crafting Dinamico
+*   **Database Modulare:** Un database scalabile di oggetti (armi, armature, consumabili, materiali) caricato dinamicamente.
+*   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali.
+*   **Sistema di Crafting Progressivo:** Le ricette di crafting non sono disponibili dall'inizio. Il giocatore deve **trovare "Manuali di Crafting"** durante l'esplorazione per apprendere nuove formule, rendendo la scoperta una parte fondamentale della progressione.
+
+#### Sistema di Combattimento Tattico e Narrativo
+*   **Combattimento a Turni:** Un sistema di combattimento testuale che mette in pausa il gioco e si concentra sulla narrazione e sulle scelte tattiche.
+*   **Premiare l'Astuzia:** La filosofia è "sopravvivere, non solo vincere". Il giocatore è incoraggiato a studiare il nemico per scoprire le sue debolezze.
+*   **Azione "Analizza":** Spendendo un turno per analizzare il nemico con un test di Percezione, il giocatore può sbloccare opzioni di combattimento tattiche uniche che offrono vantaggi significativi.
+*   **Fuga Strategica:** Fuggire è una tattica valida, risolta con un test di abilità che comporta dei rischi in caso di fallimento.
 
 ### Come Giocare
 
@@ -62,4 +62,4 @@ L'interazione avviene interamente tramite tastiera:
 
 ### Stato del Progetto
 
-Il progetto ha raggiunto la piena maturità delle sue meccaniche di base. Il ciclo di gameplay **esplora -> sopravvivi -> incontra eventi -> fai scelte morali -> sali di livello -> crea oggetti** è completo, robusto e bilanciato. La base tecnica e di contenuto è solida e pronta per l'implementazione delle prossime fasi: sistema di combattimento a turni, incontri con PNG, dialoghi e lo sviluppo della trama principale.
+Il prototipo ha raggiunto la piena maturità delle sue meccaniche di base. Il ciclo di gameplay **esplora -> sopravvivi -> incontra eventi -> combatti -> fai scelte morali -> sali di livello -> crea oggetti** è completo, robusto e bilanciato. La base tecnica e di contenuto è solida e pronta per l'implementazione di incontri con PNG, dialoghi e lo sviluppo della trama principale.

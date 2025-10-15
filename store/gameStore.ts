@@ -1,16 +1,19 @@
 import { create } from 'zustand';
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { useEventDatabaseStore } from '../data/eventDatabase';
 import { useRecipeDatabaseStore } from '../data/recipeDatabase';
+import { useEnemyDatabaseStore } from '../data/enemyDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS } from '../constants';
+import * as N from '../data/combatNarrative';
 
 // --- Constants for Game Logic ---
 const TRAVERSABLE_TILES = new Set(['.', 'R', 'C', 'V', 'F', 'S', 'E', '~']);
 const IMPASSABLE_TILES = new Set(['M']);
 const EVENT_TRIGGER_PROBABILITY = 0.20; // 20% chance to trigger an event on a valid tile
+const COMBAT_TRIGGER_PROBABILITY = 0.10; // 10% chance to trigger combat
 
 const TILE_NAMES: Record<string, string> = {
     '.': 'Pianura', 'F': 'Foresta', '~': 'Acqua', 'M': 'Montagna',
@@ -24,6 +27,9 @@ const BASE_TIME_COST_PER_MOVE = 10; // minutes
 const timeToMinutes = (time: GameTime): number => {
     return (time.day - 1) * 1440 + time.hour * 60 + time.minute; // 1440 = 24 * 60
 };
+
+const getRandom = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
 
 // --- Weather System Engine ---
 export const WEATHER_DATA: Record<WeatherType, { name: string; color: string; }> = {
@@ -107,6 +113,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   activeEvent: null,
   eventHistory: [],
   eventResolutionText: null,
+  activeCombat: null,
 
 
   // --- Actions ---
@@ -144,6 +151,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         visitedRefuges: [],
         activeEvent: null,
         eventHistory: [],
+        activeCombat: null,
     });
     get().addJournalEntry({ text: "Benvenuto in The Safe Place. La tua avventura inizia ora.", type: JournalEntryType.GAME_START });
     get().addJournalEntry({ text: BIOME_MESSAGES['S'], type: JournalEntryType.NARRATIVE, color: BIOME_COLORS['S'] });
@@ -178,7 +186,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent, triggerRandomCombat } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -265,10 +273,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     advanceTime(timeCost);
     useCharacterStore.getState().gainExplorationXp(); // Gain XP for moving
 
-    // Event Trigger Logic
+    // Event & Combat Trigger Logic
     triggerRandomEvent();
-    if (get().activeEvent) return; // Stop further processing if an event is triggered
+    if (get().activeEvent) return;
     
+    triggerRandomCombat();
+    if (get().activeCombat) return;
+
     if (Math.random() < 0.15) {
         const { weather: current_weather, currentBiome } = get();
         const biomeMessages = ATMOSPHERIC_MESSAGES[currentBiome];
@@ -884,6 +895,234 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         set({ gameState: GameState.LEVEL_UP_SCREEN });
     } else {
         get().addJournalEntry({ text: "Non hai ancora abbastanza esperienza per salire di livello.", type: JournalEntryType.SYSTEM_WARNING });
+    }
+  },
+  
+  // --- COMBAT ACTIONS ---
+  triggerRandomCombat: () => {
+    if (Math.random() > COMBAT_TRIGGER_PROBABILITY) return;
+    const { enemyDatabase } = useEnemyDatabaseStore.getState();
+    const enemies = Object.values(enemyDatabase);
+    if (enemies.length === 0) return;
+    const enemy = enemies[Math.floor(Math.random() * enemies.length)];
+    get().startCombat(enemy.id);
+  },
+
+  startCombat: (enemyId) => {
+    const { enemyDatabase } = useEnemyDatabaseStore.getState();
+    const enemy = enemyDatabase[enemyId];
+    if (!enemy) return;
+
+    const combatState: CombatState = {
+      enemy,
+      enemyHp: { current: enemy.hp, max: enemy.hp },
+      playerTurn: true,
+      log: [{ text: `Un ${enemy.name} ti sbarra la strada!`, color: '#ef4444' }],
+      revealedTactics: false,
+      availableTacticalActions: [],
+      debuffs: [],
+    };
+
+    set({ activeCombat: combatState, gameState: GameState.COMBAT });
+  },
+
+  endCombat: (result) => {
+      const { activeCombat } = get();
+      if (!activeCombat) return;
+
+      if (result === 'win') {
+          useCharacterStore.getState().addXp(activeCombat.enemy.xp);
+          get().addJournalEntry({ text: `Hai sconfitto ${activeCombat.enemy.name}! Hai guadagnato ${activeCombat.enemy.xp} XP.`, type: JournalEntryType.XP_GAIN });
+      } else if (result === 'flee') {
+          get().addJournalEntry({ text: "Sei riuscito a fuggire.", type: JournalEntryType.NARRATIVE });
+      } else if (result === 'lose') {
+          // Handle player death later
+          get().addJournalEntry({ text: "Sei stato sconfitto...", type: JournalEntryType.COMBAT });
+      }
+      
+      set({ activeCombat: null, gameState: GameState.IN_GAME });
+  },
+
+  playerCombatAction: (action) => {
+    const { activeCombat } = get();
+    if (!activeCombat || !activeCombat.playerTurn) return;
+
+    // Create a mutable copy of the combat state for this turn's operations
+    let currentCombatState = { ...activeCombat, log: [...activeCombat.log] };
+
+    const addCombatLog = (text: string, color?: string) => {
+        currentCombatState.log.push({ text, color });
+    };
+
+    const endPlayerTurn = () => {
+        currentCombatState.playerTurn = false;
+        set({ activeCombat: currentCombatState });
+        setTimeout(enemyTurn, 1500);
+    };
+
+    const enemyTurn = () => {
+        let combatState = get().activeCombat;
+        if (!combatState) return;
+
+        combatState = { ...combatState, log: [...combatState.log] };
+
+        // Check for debuffs
+        const stunnedDebuff = combatState.debuffs?.find(d => d.type === 'stunned');
+        if (stunnedDebuff) {
+            combatState.log.push({ text: `Il ${combatState.enemy.name} è stordito e non può agire!`, color: '#38bdf8'});
+            combatState.debuffs = combatState.debuffs?.map(d => 
+                d.type === 'stunned' ? { ...d, turns: d.turns - 1 } : d
+            ).filter(d => d.turns > 0);
+            combatState.playerTurn = true;
+            set({ activeCombat: combatState });
+            return;
+        }
+
+        const { getPlayerAC, takeDamage } = useCharacterStore.getState();
+        const playerAC = getPlayerAC();
+        const enemy = combatState.enemy;
+
+        const attackRoll = Math.floor(Math.random() * 20) + 1;
+        const totalAttack = attackRoll + enemy.attack.bonus;
+        
+        const attackDesc = getRandom(N.ENEMY_ATTACK_DESCRIPTIONS).replace('{enemy}', enemy.name);
+        combatState.log.push({ text: `${attackDesc} (Tira ${attackRoll} + ${enemy.attack.bonus} = ${totalAttack} vs CA ${playerAC})`});
+
+        if (totalAttack >= playerAC) {
+            const damage = Math.floor(Math.random() * enemy.attack.damage) + 1;
+            combatState.log.push({ text: `${getRandom(N.ENEMY_HIT_DESCRIPTIONS)} Subisci ${damage} danni.`, color: '#ef4444'});
+            takeDamage(damage);
+            if (useCharacterStore.getState().hp.current <= 0) {
+                get().endCombat('lose');
+                return;
+            }
+        } else {
+            combatState.log.push({ text: getRandom(N.ENEMY_MISS_DESCRIPTIONS), color: '#60BF77'});
+        }
+
+        combatState.playerTurn = true;
+        set({ activeCombat: combatState });
+    };
+
+    // --- Process Player Action ---
+    switch (action.type) {
+      case 'attack': {
+          const charState = useCharacterStore.getState();
+          const { equippedWeapon } = charState;
+          const { itemDatabase } = useItemDatabaseStore.getState();
+          const weapon = equippedWeapon ? itemDatabase[equippedWeapon] : null;
+
+          const attackAttribute: AttributeName = (weapon?.weaponType === 'ranged') ? 'des' : 'for';
+          const attackBonus = charState.getSkillBonus(attackAttribute === 'for' ? 'atletica' : 'acrobazia');
+          const attackRoll = Math.floor(Math.random() * 20) + 1;
+          const totalAttack = attackRoll + attackBonus;
+
+          addCombatLog(`${getRandom(N.PLAYER_ATTACK_DESCRIPTIONS)} (Tiri ${attackRoll} + ${attackBonus} = ${totalAttack} vs CA ${activeCombat.enemy.ac})`);
+
+          if (totalAttack >= activeCombat.enemy.ac) {
+              const baseDamage = weapon?.damage || 2;
+              const damage = Math.floor(Math.random() * baseDamage) + 1;
+              
+              addCombatLog(`${getRandom(N.PLAYER_HIT_DESCRIPTIONS)} Infliggi ${damage} danni.`, '#f59e0b');
+              
+              currentCombatState.enemyHp = { ...currentCombatState.enemyHp, current: currentCombatState.enemyHp.current - damage };
+              
+              if (currentCombatState.enemyHp.current <= 0) {
+                  set({ activeCombat: currentCombatState });
+                  get().endCombat('win');
+                  return;
+              }
+
+          } else {
+              addCombatLog(getRandom(N.PLAYER_MISS_DESCRIPTIONS), '#9ca3af');
+          }
+          endPlayerTurn();
+          break;
+      }
+      case 'analyze': {
+          const skillCheck = useCharacterStore.getState().performSkillCheck('percezione', activeCombat.enemy.tactics.revealDc);
+          addCombatLog(`Analizzi il nemico... (Prova di Percezione CD ${skillCheck.dc}: ${skillCheck.roll} + ${skillCheck.bonus} = ${skillCheck.total})`);
+
+          if (skillCheck.success) {
+              addCombatLog(`SUCCESSO: ${activeCombat.enemy.tactics.description}`, '#38bdf8');
+              currentCombatState.revealedTactics = true;
+              currentCombatState.availableTacticalActions = activeCombat.enemy.tactics.actions;
+          } else {
+              addCombatLog("FALLIMENTO: Non noti nulla di particolare.", '#9ca3af');
+          }
+          endPlayerTurn();
+          break;
+      }
+      case 'flee': {
+          const skillCheck = useCharacterStore.getState().performSkillCheck('furtivita', 12);
+          addCombatLog(`Tenti di fuggire... (Prova di Furtività CD ${skillCheck.dc}: ${skillCheck.roll} + ${skillCheck.bonus} = ${skillCheck.total})`);
+          if (skillCheck.success) {
+              addCombatLog("SUCCESSO: Scappi senza essere visto.", '#60BF77');
+              set({ activeCombat: currentCombatState });
+              get().endCombat('flee');
+          } else {
+              const failureOutcomes = ['attack', 'stumble', 'blocked'];
+              const outcome = getRandom(failureOutcomes);
+              if (outcome === 'attack') {
+                  addCombatLog("FALLIMENTO: Il nemico ti nota e ti attacca mentre scappi!", '#ef4444');
+                  endPlayerTurn(); // This will trigger an enemy attack
+              } else if (outcome === 'stumble') {
+                  addCombatLog("FALLIMENTO: Inciampi mentre cerchi di fuggire e perdi l'attimo!", '#ef4444');
+                  endPlayerTurn(); // Triggers enemy turn, but player didn't attack
+              } else { // blocked
+                  addCombatLog(`FALLIMENTO: Il ${activeCombat.enemy.name} ti taglia la strada, impedendoti la fuga!`, '#ef4444');
+                  endPlayerTurn();
+              }
+          }
+          break;
+      }
+      case 'tactic': {
+          const tactic = activeCombat.enemy.tactics.actions.find(t => t.id === action.tacticId);
+          if (!tactic) {
+              addCombatLog("Azione tattica non valida!", "#ff0000");
+              endPlayerTurn();
+              break;
+          }
+          
+          if (tactic.skillCheck) {
+              const { skill, dc } = tactic.skillCheck;
+              const skillCheck = useCharacterStore.getState().performSkillCheck(skill, dc);
+              addCombatLog(`Usi la tattica: ${tactic.name}... (Prova di ${skill} CD ${dc}: ${skillCheck.total})`);
+
+              if (skillCheck.success) {
+                  // --- SPECIFIC TACTIC SUCCESS LOGIC ---
+                  if (tactic.id === 'tactic_trip') {
+                      addCombatLog("SUCCESSO! Il predone cade a terra, completamente esposto!", '#38bdf8');
+                      const baseDamage = useItemDatabaseStore.getState().itemDatabase[useCharacterStore.getState().equippedWeapon || '']?.damage || 2;
+                      const damage = Math.floor((Math.random() * baseDamage + 1) * 1.5); // 1.5x damage
+                      addCombatLog(`Infliggi ${damage} danni bonus!`, '#f59e0b');
+                      currentCombatState.enemyHp.current -= damage;
+                      
+                      if (Math.random() < 0.5) {
+                          addCombatLog("È stordito dal colpo!", '#38bdf8');
+                          currentCombatState.debuffs = [...(currentCombatState.debuffs || []), { type: 'stunned', turns: 1 }];
+                      }
+                  } else if (tactic.id === 'tactic_feint') {
+                     addCombatLog("SUCCESSO! Il lupo abbocca alla finta, lasciando il fianco scoperto!", '#38bdf8');
+                     const baseDamage = useItemDatabaseStore.getState().itemDatabase[useCharacterStore.getState().equippedWeapon || '']?.damage || 2;
+                     const damage = (Math.floor(Math.random() * baseDamage) + 1) * 2; // Double damage (crit)
+                     addCombatLog(`Colpo critico! Infliggi ${damage} danni!`, '#f59e0b');
+                     currentCombatState.enemyHp.current -= damage;
+                  }
+
+                  if (currentCombatState.enemyHp.current <= 0) {
+                      set({ activeCombat: currentCombatState });
+                      get().endCombat('win');
+                      return;
+                  }
+
+              } else {
+                  addCombatLog("FALLIMENTO! Il tuo tentativo va a vuoto, lasciandoti scoperto.", '#9ca3af');
+              }
+          }
+          endPlayerTurn();
+          break;
+      }
     }
   },
 

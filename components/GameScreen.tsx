@@ -212,6 +212,7 @@ const TravelJournalPanel: React.FC = () => {
 
 const GameScreen: React.FC = () => {
   const { setGameState, movePlayer, isInventoryOpen, toggleInventory, performQuickRest, isInRefuge, openLevelUpScreen } = useGameStore();
+  const gameState = useGameStore((state) => state.gameState);
 
   const handleExit = useCallback(() => {
     setGameState(GameState.MAIN_MENU);
@@ -230,6 +231,10 @@ const GameScreen: React.FC = () => {
   }, [isInventoryOpen, isInRefuge, performQuickRest]);
 
   const keyHandlerMap = useMemo(() => {
+    if (gameState !== GameState.IN_GAME) {
+      return {};
+    }
+
     const map: { [key: string]: () => void } = {
       i: toggleInventory,
       I: toggleInventory,
@@ -251,7 +256,7 @@ const GameScreen: React.FC = () => {
       map['Escape'] = handleExit;
     }
     return map;
-  }, [toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit, openLevelUpScreen]);
+  }, [gameState, toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit, openLevelUpScreen]);
   
   useKeyboardInput(keyHandlerMap);
 

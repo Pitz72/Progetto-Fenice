@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
@@ -64,22 +64,25 @@ const ActionMenu: React.FC = () => {
 
 
 const InventoryScreen: React.FC = () => {
-    const { 
-        toggleInventory, 
-        inventorySelectedIndex, 
-        setInventorySelectedIndex, 
-        actionMenuState,
-        openActionMenu,
-        navigateActionMenu,
-        confirmActionMenuSelection
-    } = useGameStore();
+    // Granular selectors to prevent unnecessary re-renders
+    const toggleInventory = useGameStore(s => s.toggleInventory);
+    const inventorySelectedIndex = useGameStore(s => s.inventorySelectedIndex);
+    const setInventorySelectedIndex = useGameStore(s => s.setInventorySelectedIndex);
+    const actionMenuState = useGameStore(s => s.actionMenuState);
+    const openActionMenu = useGameStore(s => s.openActionMenu);
+    const navigateActionMenu = useGameStore(s => s.navigateActionMenu);
+    const confirmActionMenuSelection = useGameStore(s => s.confirmActionMenuSelection);
+    const closeActionMenu = useGameStore(s => s.closeActionMenu);
     
-    const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
+    const inventory = useCharacterStore(s => s.inventory);
+    const equippedWeapon = useCharacterStore(s => s.equippedWeapon);
+    const equippedArmor = useCharacterStore(s => s.equippedArmor);
     const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
 
     const displayInventory = inventory;
     
     const selectedItem = displayInventory.length > 0 && itemDatabase ? itemDatabase[displayInventory[inventorySelectedIndex]?.itemId] : null;
+    const isItemSelected = !!selectedItem;
 
     const keyHandler = useCallback((key: string) => {
         if (actionMenuState.isOpen) {
@@ -96,7 +99,7 @@ const InventoryScreen: React.FC = () => {
                     confirmActionMenuSelection();
                     break;
                 case 'Escape':
-                    toggleInventory(); // Also closes the action menu
+                    closeActionMenu();
                     break;
             }
         } else {
@@ -115,7 +118,7 @@ const InventoryScreen: React.FC = () => {
                     setInventorySelectedIndex(prev => prev + 1);
                     break;
                 case 'Enter':
-                    if (selectedItem) openActionMenu();
+                    if (isItemSelected) openActionMenu();
                     break;
             }
         }
@@ -126,15 +129,18 @@ const InventoryScreen: React.FC = () => {
         toggleInventory, 
         setInventorySelectedIndex, 
         openActionMenu,
-        selectedItem
+        closeActionMenu,
+        isItemSelected
     ]);
 
-    useKeyboardInput({
+    const handlerMap = useMemo(() => ({
         'i': () => keyHandler('i'), 'I': () => keyHandler('I'), 'Escape': () => keyHandler('Escape'),
         'w': () => keyHandler('w'), 'ArrowUp': () => keyHandler('ArrowUp'),
         's': () => keyHandler('s'), 'ArrowDown': () => keyHandler('ArrowDown'),
         'Enter': () => keyHandler('Enter'),
-    });
+    }), [keyHandler]);
+
+    useKeyboardInput(handlerMap);
 
     return (
         <div className="absolute inset-0 bg-black/95 flex items-center justify-center p-8">

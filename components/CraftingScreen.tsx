@@ -88,17 +88,19 @@ const CraftingScreen: React.FC = () => {
                 navigateCraftingMenu(1);
                 break;
             case 'Enter':
-                if (selectedRecipe) performCrafting();
+                if (selectedRecipe && craftableStatus[selectedIndex]) performCrafting();
                 break;
         }
-    }, [toggleCrafting, navigateCraftingMenu, performCrafting, selectedRecipe]);
+    }, [toggleCrafting, navigateCraftingMenu, performCrafting, selectedRecipe, craftableStatus, selectedIndex]);
 
-    useKeyboardInput({
+    const handlerMap = useMemo(() => ({
         'Escape': () => handleKey('Escape'),
         'w': () => handleKey('w'), 'ArrowUp': () => handleKey('ArrowUp'),
         's': () => handleKey('s'), 'ArrowDown': () => handleKey('ArrowDown'),
         'Enter': () => handleKey('Enter'),
-    });
+    }), [handleKey]);
+
+    useKeyboardInput(handlerMap);
 
     return (
         <div className="absolute inset-0 bg-black/95 flex items-center justify-center p-8">

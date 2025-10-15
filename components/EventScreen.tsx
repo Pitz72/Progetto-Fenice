@@ -45,12 +45,14 @@ const EventScreen: React.FC = () => {
             resolveEventChoice(selectedIndex);
         }
     }, [activeEvent, selectedIndex, resolveEventChoice, choiceStatus, eventResolutionText, dismissEventResolution]);
-
-    useKeyboardInput({
+    
+    const handlerMap = useMemo(() => ({
         'w': () => handleNavigate(-1), 'ArrowUp': () => handleNavigate(-1),
         's': () => handleNavigate(1), 'ArrowDown': () => handleNavigate(1),
         'Enter': handleConfirm,
-    });
+    }), [handleNavigate, handleConfirm]);
+
+    useKeyboardInput(handlerMap);
 
     if (!activeEvent) {
         return null; // Should not happen if gameState is EVENT_SCREEN, but good practice

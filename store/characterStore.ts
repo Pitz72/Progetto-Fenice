@@ -50,6 +50,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     equippedWeapon: null,
     equippedArmor: null,
     alignment: { ...initialAlignment },
+    status: null,
 
     // --- Actions ---
     initCharacter: (newAttributes) => {
@@ -65,6 +66,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             skills: { ...initialSkills },
             alignment: { ...initialAlignment },
+            status: null,
             inventory: [ // Updated starting gear
                 { itemId: 'CONS_002', quantity: 3 },         // Bottiglia d'acqua
                 { itemId: 'CONS_001', quantity: 3 },         // Razione di cibo
@@ -148,31 +150,32 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     removeItem: (itemId, quantity = 1) => {
         set(state => {
-            let newInventory = [...state.inventory];
-            const existingItemIndex = state.inventory.findIndex(i => i.itemId === itemId);
-            if (existingItemIndex === -1) return {};
-            
-            const existingItem = state.inventory[existingItemIndex];
-            let shouldUnequip = false;
+            const existingItem = state.inventory.find(i => i.itemId === itemId);
+            if (!existingItem) return {};
 
             if (existingItem.quantity > quantity) {
-                newInventory[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity - quantity };
+                // Riduci la quantità
+                const newInventory = state.inventory.map(i =>
+                    i.itemId === itemId ? { ...i, quantity: i.quantity - quantity } : i
+                );
+                return { inventory: newInventory };
             } else {
-                newInventory = state.inventory.filter((_, index) => index !== existingItemIndex);
-                shouldUnequip = true;
+                // Rimuovi completamente l'oggetto
+                const newInventory = state.inventory.filter(i => i.itemId !== itemId);
+                return { inventory: newInventory };
             }
-
-            if (shouldUnequip) {
-                const equippedWeapon = state.equippedWeapon === itemId ? null : state.equippedWeapon;
-                const equippedArmor = state.equippedArmor === itemId ? null : state.equippedArmor;
-                return { inventory: newInventory, equippedWeapon, equippedArmor };
-            }
-
-            return { inventory: newInventory };
         });
     },
     
     discardItem: (itemId, quantity = 1) => {
+        const itemInInventory = get().inventory.find(i => i.itemId === itemId);
+        if (!itemInInventory) return;
+        
+        const isEquipped = get().equippedWeapon === itemId || get().equippedArmor === itemId;
+        // Se l'oggetto è equipaggiato e la quantità da scartare è l'intera quantità posseduta
+        if (isEquipped && itemInInventory.quantity <= quantity) {
+            get().unequipItem(useItemDatabaseStore.getState().itemDatabase[itemId]?.type as 'weapon' | 'armor');
+        }
         get().removeItem(itemId, quantity);
     },
 
@@ -196,14 +199,13 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     unequipItem: (slot) => {
         set(state => {
-            // Item is already in inventory, just clear the slot.
             if (slot === 'weapon' && state.equippedWeapon) {
                 return { equippedWeapon: null };
             }
             if (slot === 'armor' && state.equippedArmor) {
                 return { equippedArmor: null };
             }
-            return state;
+            return {};
         });
     },
 
@@ -278,5 +280,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
                 [type]: state.alignment[type] + amount,
             }
         }));
-    }
+    },
+    setStatus: (newStatus) => set({ status: newStatus }),
 }));

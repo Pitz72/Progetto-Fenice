@@ -1,0 +1,285 @@
+[
+  {
+    "id": "city_military_checkpoint", "title": "Posto di Blocco Militare", "isUnique": true, "biomes": ["Città"],
+    "description": "Barricate di cemento e filo spinato bloccano una strada. Ci sono segnali di un vecchio checkpoint militare, con postazioni di guardia abbandonate e un container sigillato.",
+    "choices": [
+      { "text": "Cerca negli armadietti della postazione", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 12,
+        "successText": "La maggior parte sono vuoti, ma in uno trovi un kit di pronto soccorso militare e un paio di granate fumogene.",
+        "failureText": "I posti di guardia sono stati saccheggiati a fondo e ora rivelano solo detriti e spazzatura.",
+        "success": [{ "type": "addItem", "value": { "itemId": "first_aid_kit", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "smoke_grenade", "quantity": 2 } }]
+      }] },
+      { "text": "Forza il container chiuso", "outcomes": [{
+        "type": "skillCheck", "skill": "atletica", "dc": 14,
+        "successText": "Con uno sforzo immenso, riesci a far leva sulla serratura, che si spezza. All'interno trovi una cassa di munizioni per fucile e alcune razioni a lunga conservazione.",
+        "failureText": "Il container è sigillato ermeticamente. Le serrature sono troppo resistenti anche per i tuoi sforzi.",
+        "success": [{ "type": "addItem", "value": { "itemId": "ammo_rifle", "quantity": 10 } }, { "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 2 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_broken_pharmacy", "title": "Farmacia Saccheggiata", "isUnique": true, "biomes": ["Città"],
+    "description": "Una farmacia con la vetrina infranta. Gli scaffali sono stati quasi completamente svuotati, ma qualcosa potrebbe essere sfuggito ai saccheggiatori.",
+    "choices": [
+      { "text": "Cerca tra gli scaffali rimasti", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 11,
+        "successText": "Dietro una scatola di cotone idrofilo rovesciata, recuperi una scatola di antibiotici scaduti e alcune bende ancora sigillate.",
+        "failureText": "Hai cercato ovunque, ma non è rimasto assolutamente nulla di utile.",
+        "success": [{ "type": "addItem", "value": { "itemId": "antibiotics_expired", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "CONS_003", "quantity": 2 } }]
+      }] },
+      { "text": "Controlla il retrobottega", "outcomes": [{
+        "type": "skillCheck", "skill": "acrobazia", "dc": 12,
+        "successText": "Sgattaioli oltre uno scaffale pericolante nel retro e trovi un armadietto del personale. Dentro ci sono degli antidolorifici.",
+        "failureText": "Nel tentativo di passare, urti lo scaffale che crolla con un boato, facendo rumore e costringendoti a una rapida ritirata.",
+        "success": [{ "type": "addItem", "value": { "itemId": "MED_PAINKILLER", "quantity": 2 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_subway_entrance", "title": "Ingresso della Metropolitana", "isUnique": true, "biomes": ["Città"],
+    "description": "Una scala porta nel buio di una stazione sotterranea. Si sentono gocce d'acqua e un ronzio lontano. L'aria è umida e fredda.",
+    "choices": [
+      { "text": "Scendi e esplora", "outcomes": [{
+        "type": "skillCheck", "skill": "acrobazia", "dc": 13,
+        "successText": "Ti muovi con cautela nell'oscurità, trovando i resti di rifugi improvvisati. Recuperi un pacco di batterie e un vecchio radio portatile.",
+        "failureText": "Scivoli sui gradini bagnati e ti perdi nei corridoi bui. Dopo aver vagato per un po', decidi che è troppo pericoloso e risali.",
+        "success": [{ "type": "addItem", "value": { "itemId": "batteries_pack", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "walkie_talkie", "quantity": 1 } }]
+      }] },
+      { "text": "Evita i sotterranei", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "Un'ondata di presentimento ti assale. Meglio non rischiare imboscate nel buio." }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_rooftop_access", "title": "Accesso ai Tetti", "isUnique": true, "biomes": ["Città"],
+    "description": "Una scala antincendio arrugginita porta ai tetti di un palazzo di uffici. Da lì la visuale potrebbe aiutarti a pianificare il percorso.",
+    "choices": [
+      { "text": "Sali e osserva", "outcomes": [{
+        "type": "skillCheck", "skill": "acrobazia", "dc": 12,
+        "successText": "Dall'alto, la città sembra un cimitero di cemento. La visuale ti permette di individuare un percorso più sicuro e alcuni punti di interesse.",
+        "failureText": "Un gradino della scala cede sotto il tuo peso. Riesci ad aggrapparti, ma scendi in fretta, con alcuni graffi e un bello spavento.",
+        "success": [{ "type": "revealMapPOI", "value": null }],
+        "failure": [{ "type": "takeDamage", "value": 6 }]
+      }] },
+      { "text": "Controlla il locale tecnico sul tetto", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 11,
+        "successText": "Forzi la porta del locale tecnico e trovi una cassetta con alcuni componenti elettronici ancora utilizzabili.",
+        "failureText": "Il locale è stato svuotato da tempo. C'è solo polvere e cavi tagliati.",
+        "success": [{ "type": "addItem", "value": { "itemId": "tech_components", "quantity": 3 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_bookstore", "title": "Libreria Abbandonata", "isUnique": true, "biomes": ["Città"],
+    "description": "Una piccola libreria con scaffali impolverati. Alcuni libri sono caduti a terra, creando un tappeto di carta ingiallita.",
+    "choices": [
+      { "text": "Cerca guide e manuali utili", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 11,
+        "successText": "Nel reparto 'hobby e fai da te', trovi un manuale di meccanica di base e un libro illustrato sul primo soccorso.",
+        "failureText": "La maggior parte dei libri è narrativa o saggistica, inutile per la sopravvivenza in questo momento.",
+        "success": [{ "type": "addItem", "value": { "itemId": "mechanic_manual", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "first_aid_book", "quantity": 1 } }]
+      }] },
+      { "text": "Recupera carta per accendere fuochi", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Ignori i titoli e raccogli quanta più carta asciutta e di facile combustione possibile." },
+          { "type": "addItem", "value": { "itemId": "dry_paper", "quantity": 5 } }
+        ]
+      }] }
+    ]
+  },
+  {
+    "id": "city_department_store", "title": "Grande Magazzino", "isUnique": true, "biomes": ["Città"],
+    "description": "Un grande magazzino con diversi reparti. Molti scaffali sono rovesciati ma potrebbero esserci scorte dimenticate in aree meno accessibili.",
+    "choices": [
+      { "text": "Ispeziona il reparto campeggio", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 12,
+        "successText": "Dietro uno scaffale crollato, trovi una tenda portatile, del filo resistente e un multiuso ancora nella sua confezione.",
+        "failureText": "Il reparto è stato completamente ripulito. Non è rimasto nemmeno un picchetto da tenda.",
+        "success": [{ "type": "addItem", "value": { "itemId": "portable_tent", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "nylon_wire", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "multitool", "quantity": 1 } }]
+      }] },
+      { "text": "Forza la porta del magazzino sul retro", "outcomes": [{
+        "type": "skillCheck", "skill": "atletica", "dc": 13,
+        "successText": "Con una spallata ben assestata, apri la porta bloccata e trovi scatoloni con conserve e bottiglie d'acqua.",
+        "failureText": "La porta è bloccata da detriti dall'altra parte. Non si muove di un centimetro.",
+        "success": [{ "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 3 } }, { "type": "addItem", "value": { "itemId": "CONS_002", "quantity": 3 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_police_station", "title": "Stazione di Polizia", "isUnique": true, "biomes": ["Città"],
+    "description": "Una stazione di polizia parzialmente crollata. L'area delle celle è inagibile, ma l'armeria e gli uffici potrebbero contenere qualcosa.",
+    "choices": [
+      { "text": "Cerca nell'armeria", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 13,
+        "successText": "L'armeria è stata quasi del tutto svuotata, ma trovi una scatola di munizioni per pistola e un giubbotto antiproiettile dimenticato in un armadietto.",
+        "failureText": "La porta dell'armeria è divelta e l'interno è completamente vuoto. Non è rimasto nemmeno un proiettile.",
+        "success": [{ "type": "addItem", "value": { "itemId": "ammo_9mm", "quantity": 10 } }, { "type": "addItem", "value": { "itemId": "kevlar_vest", "quantity": 1 } }]
+      }] },
+      { "text": "Controlla gli uffici", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 11,
+        "successText": "In un cassetto chiuso a chiave, recuperi un walkie-talkie funzionante e una lista di codici e frequenze della polizia.",
+        "failureText": "I documenti sono bagnati e illeggibili, e tutta l'attrezzatura è stata distrutta.",
+        "success": [{ "type": "addItem", "value": { "itemId": "walkie_talkie", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "code_list", "quantity": 1 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_gas_station", "title": "Stazione di Servizio", "isUnique": true, "biomes": ["Città"],
+    "description": "Una stazione di servizio con le pompe all'asciutto. La piccola officina e il negozio potrebbero ancora contenere qualcosa.",
+    "choices": [
+      { "text": "Controlla l'officina", "outcomes": [{
+        "type": "skillCheck", "skill": "atletica", "dc": 12,
+        "successText": "Spingi via una scaffalatura pesante e trovi una tanica di prodotti chimici e un kit di attrezzi da meccanico.",
+        "failureText": "L'officina è stata spogliata di tutto ciò che era di metallo. Non c'è rimasto nulla.",
+        "success": [{ "type": "addItem", "value": { "itemId": "chemicals_basic", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "mechanic_toolkit", "quantity": 1 } }]
+      }] },
+      { "text": "Smonta una pompa di benzina", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 13,
+        "successText": "Con un po' di lavoro, riesci a recuperare rottami metallici di buona qualità e alcune guarnizioni di gomma intatte.",
+        "failureText": "Le pompe sono troppo corrose e usurate. Non riesci a recuperare nulla di utilizzabile.",
+        "success": [{ "type": "addItem", "value": { "itemId": "scrap_metal", "quantity": 4 } }, { "type": "addItem", "value": { "itemId": "rubber_gasket", "quantity": 2 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_hospital_ruins", "title": "Rovine dell'Ospedale", "isUnique": true, "biomes": ["Città"],
+    "description": "Un vecchio ospedale in rovina. La maggior parte è inaccessibile, ma il reparto farmacia e un'officina tecnica sembrano ancora esplorabili.",
+    "choices": [
+      { "text": "Esplora il reparto farmacia", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 12,
+        "successText": "In un armadietto sigillato, trovi antibiotici e delle bende sterili.",
+        "failureText": "Gli armadi sono stati svuotati e i locali sono troppo danneggiati per una ricerca sicura.",
+        "success": [{ "type": "addItem", "value": { "itemId": "antibiotics_expired", "quantity": 2 } }, { "type": "addItem", "value": { "itemId": "CONS_003", "quantity": 3 } }]
+      }] },
+      { "text": "Controlla l'officina tecnica", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 13,
+        "successText": "Recuperi strumenti di precisione e delle batterie speciali, probabilmente per apparecchiature mediche.",
+        "failureText": "La maggior parte delle attrezzature è stata portata via o è irrimediabilmente danneggiata.",
+        "success": [{ "type": "addItem", "value": { "itemId": "precision_tools", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "batteries_pack", "quantity": 2 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_electronics_store", "title": "Negozio di Elettronica", "isUnique": true, "biomes": ["Città"],
+    "description": "Vetrine spaccate e scaffali rovesciati. Componenti elettronici e cavi sono sparsi ovunque sul pavimento.",
+    "choices": [
+      { "text": "Recupera componenti utili", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 12,
+        "successText": "Con un occhio attento, riesci a trovare alcuni microchip, cavi di rame e altri moduli elettronici ancora funzionanti.",
+        "failureText": "È tutto troppo danneggiato dall'umidità e dalla polvere per essere ancora utilizzabile.",
+        "success": [{ "type": "addItem", "value": { "itemId": "tech_components", "quantity": 5 } }, { "type": "addItem", "value": { "itemId": "copper_wire", "quantity": 3 } }]
+      }] },
+      { "text": "Cerca nel magazzino sul retro", "outcomes": [{
+        "type": "skillCheck", "skill": "atletica", "dc": 14,
+        "successText": "Sollevi una pesante scaffalatura caduta e trovi uno zaino militare, probabilmente di un saccheggiatore rimasto intrappolato.",
+        "failureText": "La scaffalatura è troppo pesante. Non riesci a smuoverla.",
+        "success": [{ "type": "addItem", "value": { "itemId": "military_backpack", "quantity": 1 } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_rooftop_webradio", "title": "Antenna Radio Cittadina", "isUnique": true, "biomes": ["Città"],
+    "description": "Sul tetto di un palazzo trovi un'antenna ancora in piedi, collegata a una piccola postazione radio improvvisata.",
+    "choices": [
+      { "text": "Prova a sintonizzare la radio", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 12,
+        "successText": "Dopo vari tentativi, riesci a captare una debole trasmissione in loop. È un vecchio messaggio di evacuazione che indica un punto di raccolta.",
+        "failureText": "Riesci a sentire solo un fruscio statico. L'attrezzatura sembra essere danneggiata.",
+        "success": [{ "type": "revealMapPOI", "value": null }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_opera_house", "title": "Sinfonia del Silenzio", "isUnique": true, "biomes": ["Città"],
+    "description": "Le porte monumentali di un teatro dell'opera sono spalancate. All'interno, il velluto rosso dei sedili è scolorito e uno strato di polvere copre il palco.",
+    "choices": [
+      { "text": "Esplora i camerini dietro le quinte", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Nei camerini, tra costumi di scena logori, trovi un kit da cucito di alta qualità e sostanze chimiche riutilizzabili." },
+          { "type": "addItem", "value": { "itemId": "sewing_kit_professional", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "chemicals_basic", "quantity": 1 } }
+        ]
+      }] },
+      { "text": "Scendi nella buca dell'orchestra", "outcomes": [{
+        "type": "skillCheck", "skill": "acrobazia", "dc": 12,
+        "successText": "Ti cali con attenzione nella buca. In una custodia di violino, trovi un fucile di precisione smontato.",
+        "failureText": "Scivoli e cadi malamente. Il rumore attira attenzioni indesiderate.",
+        "success": [{ "type": "addItem", "value": { "itemId": "sniper_rifle_disassembled", "quantity": 1 } }],
+        "failure": [{ "type": "special", "value": { "effect": "attract_predators" } }]
+      }] }
+    ]
+  },
+  {
+    "id": "city_sewer_entrance", "title": "Sotto la Città Morta", "isUnique": true, "biomes": ["Città"],
+    "description": "Un tombino aperto rivela una scala arrugginita che scende nelle fogne. Un odore nauseabondo ne fuoriesce, ma potrebbe essere un percorso sicuro.",
+    "choices": [
+      { "text": "Avventurati nelle fogne", "outcomes": [{
+        "type": "skillCheck", "skill": "sopravvivenza", "dc": 13,
+        "successText": "Resisti all'odore e attraversi un lungo tratto. Riemergi in un'altra zona, evitando una pattuglia di predoni.",
+        "failureText": "Le esalazioni sono troppo forti. Sei costretto a tornare indietro, nauseato e indebolito.",
+        "success": [{ "type": "special", "value": { "effect": "bypass_danger_zone" } }],
+        "failure": [{ "type": "statusChange", "value": "SICK" }]
+      }] },
+      { "text": "Controlla solo l'ingresso", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Noti un piede di porco incastrato in una grata, perso da qualcuno prima di te." },
+          { "type": "addItem", "value": { "itemId": "crowbar", "quantity": 1 } }
+        ]
+      }] }
+    ]
+  },
+  {
+    "id": "city_collector_apartment", "title": "Il Museo Personale", "isUnique": true, "biomes": ["Città"],
+    "description": "Entri in un appartamento all'ultimo piano di un palazzo di lusso, pieno di teche con artefatti pre-Silenzio.",
+    "choices": [
+      { "text": "Cerca tra gli oggetti tecnologici", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 14,
+        "successText": "Riconosci un vecchio computer militare portatile. Potrebbe contenere dati preziosi, come mappe tattiche.",
+        "failureText": "È tutto affascinante, ma non sai come far funzionare nulla. Per te, è solo un ammasso di plastica inutile.",
+        "success": [{ "type": "addItem", "value": { "itemId": "rugged_laptop_military", "quantity": 1 } }]
+      }] },
+      { "text": "Cerca provviste pratiche", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Nella dispensa trovi cibo gourmet in scatola e una bottiglia di liquore, un lusso quasi dimenticato." },
+          { "type": "addItem", "value": { "itemId": "gourmet_canned_food", "quantity": 2 } }, { "type": "addItem", "value": { "itemId": "strong_liquor", "quantity": 1 } }
+        ]
+      }] }
+    ]
+  },
+  {
+    "id": "city_bank_vault", "title": "La Cassaforte Aperta", "isUnique": true, "biomes": ["Città"],
+    "description": "Ti trovi di fronte a una banca con un enorme buco nel muro. La porta del caveau è stata divelta. L'interno è un caos.",
+    "choices": [
+      { "text": "Cerca tra le cassette di sicurezza", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 14,
+        "successText": "In una cassetta trascurata, trovi un piccolo lingotto d'oro e alcuni documenti che sembrano importanti.",
+        "failureText": "Hai cercato per quasi un'ora, ma è tutto inutile. Chiunque sia passato di qui ha fatto un lavoro meticoloso. Hai solo perso tempo.",
+        "success": [{ "type": "addItem", "value": { "itemId": "gold_bar", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "sensitive_documents", "quantity": 1 } }],
+        "failure": [{ "type": "advanceTime", "value": 60 }]
+      }] },
+      { "text": "Ispeziona l'ufficio del direttore", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Sotto una pesante scrivania trovi una pistola di piccolo calibro, probabilmente l'arma di difesa personale del direttore." },
+          { "type": "addItem", "value": { "itemId": "pistol_small_caliber", "quantity": 1 } }
+        ]
+      }] }
+    ]
+  },
+  {
+    "id": "city_museum_ruins", "title": "Silenzio tra i Giganti", "isUnique": true, "biomes": ["Città"],
+    "description": "Entri nella grande sala di un museo di storia naturale. Scheletri di dinosauri si ergono come fantasmi silenziosi nella penombra.",
+    "choices": [
+      { "text": "Cerca nel deposito dei reperti", "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 13,
+        "successText": "Nel deposito trovi strumenti di precisione e delle sostanze chimiche per la conservazione che possono essere riutilizzate.",
+        "failureText": "Il deposito è stato sigillato a causa di un crollo. Non riesci ad entrare.",
+        "success": [{ "type": "addItem", "value": { "itemId": "precision_tools", "quantity": 1 } }, { "type": "addItem", "value": { "itemId": "MED_ANTISEPTIC", "quantity": 2 } }]
+      }] },
+      { "text": "Smonta una base di metallo", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Decidi che i vivi hanno più bisogno di risorse. Smonti la base di un'esposizione, recuperando rottami di alta qualità." },
+          { "type": "addItem", "value": { "itemId": "scrap_metal_high_quality", "quantity": 2 } }
+        ]
+      }] }
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { MENU_ITEMS } from '../constants';
 import { useGameStore } from '../store/gameStore';
@@ -35,11 +35,13 @@ const MainMenuScreen: React.FC = () => {
     }
   }, [selectedIndex, setGameState]);
 
-  useKeyboardInput({
+  const handlerMap = useMemo(() => ({
     ArrowUp: handleArrowUp,
     ArrowDown: handleArrowDown,
     Enter: handleEnter,
-  });
+  }), [handleArrowUp, handleArrowDown, handleEnter]);
+
+  useKeyboardInput(handlerMap);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">

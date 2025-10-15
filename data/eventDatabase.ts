@@ -6,7 +6,8 @@ async function loadAllEvents(): Promise<GameEvent[]> {
     const filesToLoad = [
         './data/events/plains.json',
         './data/events/forest.json',
-        './data/events/village.json'
+        './data/events/village.json',
+        './data/events/city.json'
     ];
     
     try {

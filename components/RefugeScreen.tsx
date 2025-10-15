@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 
@@ -22,11 +22,13 @@ const RefugeScreen: React.FC = () => {
         }
     }, [navigateRefugeMenu, confirmRefugeMenuSelection]);
 
-    useKeyboardInput({
+    const handlerMap = useMemo(() => ({
         'w': () => keyHandler('w'), 'ArrowUp': () => keyHandler('ArrowUp'),
         's': () => keyHandler('s'), 'ArrowDown': () => keyHandler('ArrowDown'),
         'Enter': () => keyHandler('Enter'),
-    });
+    }), [keyHandler]);
+
+    useKeyboardInput(handlerMap);
 
     return (
         <div className="absolute inset-0 bg-black/95 flex items-center justify-center p-8">

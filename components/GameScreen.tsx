@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { GameState, Stat } from '../types';
@@ -12,7 +12,11 @@ import AlignmentPanel from './AlignmentPanel';
 
 // --- Left Column Panels ---
 const SurvivalPanel: React.FC = () => {
-    const { hp, satiety, hydration } = useCharacterStore((state) => state);
+    const hp = useCharacterStore((state) => state.hp);
+    const satiety = useCharacterStore((state) => state.satiety);
+    const hydration = useCharacterStore((state) => state.hydration);
+    const status = useCharacterStore((state) => state.status);
+
     const isCritical = (stat: Stat) => stat.current / stat.max <= 0.25;
 
     return (
@@ -21,14 +25,16 @@ const SurvivalPanel: React.FC = () => {
                 <div className={isCritical(hp) ? 'text-red-500 animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
                 <div className={isCritical(satiety) ? 'text-red-500 animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
                 <div className={isCritical(hydration) ? 'text-red-500 animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
-                <div>Status: Normale</div>
+                <div>Status: {status || 'Normale'}</div>
             </div>
         </Panel>
     );
 };
 
 const InventoryPanel: React.FC = () => {
-  const { inventory, equippedWeapon, equippedArmor } = useCharacterStore();
+  const inventory = useCharacterStore((state) => state.inventory);
+  const equippedWeapon = useCharacterStore((state) => state.equippedWeapon);
+  const equippedArmor = useCharacterStore((state) => state.equippedArmor);
   const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
   const isLoaded = useItemDatabaseStore((state) => state.isLoaded);
 
@@ -77,7 +83,10 @@ const CommandsPanel: React.FC = () => (
 
 // --- Right Column Panels ---
 const InfoPanel: React.FC = () => {
-    const { playerPos, gameTime, weather, getTileInfo } = useGameStore();
+    const playerPos = useGameStore((state) => state.playerPos);
+    const gameTime = useGameStore((state) => state.gameTime);
+    const weather = useGameStore((state) => state.weather);
+    const getTileInfo = useGameStore((state) => state.getTileInfo);
     
     const tileInfo = getTileInfo(playerPos.x, playerPos.y);
     const formattedTime = `${String(gameTime.hour).padStart(2, '0')}:${String(gameTime.minute).padStart(2, '0')}`;
@@ -114,7 +123,8 @@ const InfoPanel: React.FC = () => {
 };
 
 const EquipmentPanel: React.FC = () => {
-    const { equippedWeapon, equippedArmor } = useCharacterStore((state) => state);
+    const equippedWeapon = useCharacterStore((state) => state.equippedWeapon);
+    const equippedArmor = useCharacterStore((state) => state.equippedArmor);
     const itemDatabase = useItemDatabaseStore((state) => state.itemDatabase);
 
     const weapon = equippedWeapon ? itemDatabase[equippedWeapon] : null;
@@ -131,7 +141,11 @@ const EquipmentPanel: React.FC = () => {
 };
 
 const StatsPanel: React.FC = () => {
-    const { level, xp, attributes, getAttributeModifier } = useCharacterStore((state) => state);
+    const level = useCharacterStore((state) => state.level);
+    const xp = useCharacterStore((state) => state.xp);
+    const attributes = useCharacterStore((state) => state.attributes);
+    const getAttributeModifier = useCharacterStore((state) => state.getAttributeModifier);
+    
     const renderModifier = (attr: 'for' | 'des' | 'cos' | 'int' | 'sag' | 'car') => {
         const mod = getAttributeModifier(attr);
         return `(${mod >= 0 ? '+' : ''}${mod})`;
@@ -202,33 +216,39 @@ const GameScreen: React.FC = () => {
     setGameState(GameState.MAIN_MENU);
   }, [setGameState]);
 
-  const canPerformAction = !isInventoryOpen && !isInRefuge;
-
-  const handleMove = (dx: number, dy: number) => {
-    if (canPerformAction) {
+  const handleMove = useCallback((dx: number, dy: number) => {
+    if (!isInventoryOpen && !isInRefuge) {
       movePlayer(dx, dy);
     }
-  };
+  }, [isInventoryOpen, isInRefuge, movePlayer]);
 
-  const keyHandlerMap: { [key: string]: () => void } = {
-    i: toggleInventory,
-    I: toggleInventory,
-    r: () => { if (canPerformAction) performQuickRest(); },
-    R: () => { if (canPerformAction) performQuickRest(); },
-    ArrowUp: () => handleMove(0, -1),
-    w: () => handleMove(0, -1),
-    ArrowDown: () => handleMove(0, 1),
-    s: () => handleMove(0, 1),
-    ArrowLeft: () => handleMove(-1, 0),
-    a: () => handleMove(-1, 0),
-    ArrowRight: () => handleMove(1, 0),
-    d: () => handleMove(1, 0),
-  };
+  const handleQuickRest = useCallback(() => {
+    if (!isInventoryOpen && !isInRefuge) {
+      performQuickRest();
+    }
+  }, [isInventoryOpen, isInRefuge, performQuickRest]);
 
-  // The 'Escape' key should only take you to the main menu if you're not in a sub-screen like inventory.
-  if (!isInventoryOpen && !isInRefuge) {
-    keyHandlerMap['Escape'] = handleExit;
-  }
+  const keyHandlerMap = useMemo(() => {
+    const map: { [key: string]: () => void } = {
+      i: toggleInventory,
+      I: toggleInventory,
+      r: handleQuickRest,
+      R: handleQuickRest,
+      ArrowUp: () => handleMove(0, -1),
+      w: () => handleMove(0, -1),
+      ArrowDown: () => handleMove(0, 1),
+      s: () => handleMove(0, 1),
+      ArrowLeft: () => handleMove(-1, 0),
+      a: () => handleMove(-1, 0),
+      ArrowRight: () => handleMove(1, 0),
+      d: () => handleMove(1, 0),
+    };
+
+    if (!isInventoryOpen && !isInRefuge) {
+      map['Escape'] = handleExit;
+    }
+    return map;
+  }, [toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit]);
   
   useKeyboardInput(keyHandlerMap);
 

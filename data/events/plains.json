@@ -292,5 +292,103 @@
             }]
         }
     ]
+  },
+  {
+    "id": "plains_unsent_letter", "title": "Le Ultime Parole", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Accanto ai resti scheletrici di un postino, noti una borsa di cuoio ancora intatta. Dentro, una singola lettera è stata miracolosamente preservata dalle intemperie. È indirizzata a te, Ultimo. La calligrafia è inconfondibile: è di tuo padre.",
+    "choices": [
+      { "text": "Leggi la lettera.", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "La lettera recita: 'Figlio mio, se leggi questo, non sono riuscito a tornare. Ricorda Lena, tua madre. Lei credeva nella compassione, in un mondo dove aiutare il prossimo non era un lusso. Io ho dovuto insegnarti la durezza, la via di Elian, per proteggerti. Ma non dimenticare mai la sua luce. Il Safe Place non è solo un luogo, è la promessa di un mondo dove la sua filosofia possa rinascere. Trovami lì. Sii forte, ma non perdere il tuo cuore.' Le parole ti scuotono nel profondo." },
+          { "type": "special", "value": { "effect": "lore_clue", "clueId": "fathers_letter" } },
+          { "type": "alignmentChange", "value": {"type": "lena", "amount": 1} }
+        ]
+      }] },
+      { "text": "Lascia la lettera intatta. Non sei pronto.", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "Decidi di non leggere. Il peso del passato è troppo grande in questo momento. Riponi la lettera con cura e prosegui il tuo cammino." }]
+      }] }
+    ]
+  },
+  {
+    "id": "plains_impact_crater", "title": "Ferita della Terra", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Ti imbatti in un piccolo cratere da impatto. Il terreno attorno è vetrificato e ancora debolmente caldo. Al centro del cratere, qualcosa di scuro e non terrestre è incastonato nel suolo.",
+    "choices": [
+      { "text": "Tenta di recuperare il frammento.", "outcomes": [{
+        "type": "skillCheck", "skill": "sopravvivenza", "dc": 12,
+        "successText": "Resistendo al calore, riesci a estrarre un frammento di meteorite dal terreno. È stranamente pesante.",
+        "failureText": "Mentre cerchi di estrarre il frammento, ti scotti la mano. Il calore è più intenso di quanto pensassi.",
+        "success": [{ "type": "addItem", "value": { "itemId": "meteorite_fragment", "quantity": 1 } }],
+        "failure": [{ "type": "takeDamage", "value": 5 }]
+      }] },
+      { "text": "Lascia stare. Potrebbe essere pericoloso.", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "La prudenza ha la meglio. Ti allontani dal cratere e dal suo strano contenuto." }]
+      }] }
+    ]
+  },
+  {
+    "id": "plains_electronic_whispers", "title": "Voci Statiche", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Passi accanto a un groviglio di cavi di comunicazione tranciati, provenienti da un tombino. Un ronzio quasi impercettibile emana da essi.",
+    "choices": [
+      { "text": "Usa il walkie-talkie per sintonizzarti.", "itemRequirements": [{ "itemId": "walkie_talkie", "quantity": 1 }], "outcomes": [{
+        "type": "skillCheck", "skill": "investigare", "dc": 14,
+        "successText": "Trovando la frequenza giusta, intercetti un frammento di una vecchia trasmissione militare in loop: '...protocollo Echo fallito... contenimento violato... Il Silenzio non è un'arma, è una conseguenza... ripeto, il Silenzio è...'",
+        "failureText": "Riesci a captare solo scariche di statica. Qualunque segnale ci fosse, è ormai perduto.",
+        "success": [{ "type": "special", "value": { "effect": "lore_clue", "clueId": "echo_protocol" } }]
+      }] },
+      { "text": "Ignora il ronzio.", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "Potrebbe essere qualsiasi cosa. Non hai tempo da perdere con echi del passato." }]
+      }] }
+    ]
+  },
+  {
+    "id": "plains_mute_butterflies", "title": "Volo Silenzioso", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Uno sciame di centinaia di farfalle bianche ti circonda improvvisamente, muovendosi in un silenzio innaturale. Non senti il battito delle loro ali, né il fruscio del vento. È uno spettacolo inquietante e bellissimo.",
+    "choices": [
+      { "text": "Rimani immobile e osserva.", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Ti fermi, lasciando che le farfalle ti avvolgano. Per un momento, la tensione e la paura del mondo svaniscono, sostituite da una calma profonda. Poi, così come sono apparse, volano via." },
+          { "type": "heal", "value": 10 }
+        ]
+      }] },
+      { "text": "Allontanati in fretta, è innaturale.", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "La scena ti mette a disagio. Ti allontani rapidamente, il silenzio innaturale che ti pesa sulle spalle." }]
+      }] }
+    ]
+  },
+  {
+    "id": "plains_fossilized_lightning", "title": "La Cicatrice del Cielo", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Noti uno strano e bellissimo schema a raggiera vetrificato sul terreno: una fulgurite, creata da un fulmine che ha colpito la sabbia. Al centro, un pezzo più grande brilla di una debole luce interna.",
+    "choices": [
+      { "text": "Recupera il frammento centrale.", "outcomes": [{
+        "type": "skillCheck", "skill": "sopravvivenza", "dc": 13,
+        "successText": "Con attenzione, riesci a staccare il frammento di fulgurite più grande. È ancora caldo al tatto.",
+        "failureText": "Mentre cerchi di staccare il frammento, esso si frantuma e una piccola scarica elettrica ti percorre il braccio.",
+        "success": [{ "type": "addItem", "value": { "itemId": "fulgurite_shard", "quantity": 1 } }],
+        "failure": [{ "type": "takeDamage", "value": 5 }]
+      }] },
+      { "text": "Ammira la formazione e prosegui.", "outcomes": [{
+        "type": "direct", "results": [{ "type": "journalEntry", "text": "È uno spettacolo affascinante della furia della natura. Lo lasci intatto e continui il tuo viaggio." }]
+      }] }
+    ]
+  },
+  {
+    "id": "plains_giant_skeleton", "title": "Dove Dormono i Giganti", "isUnique": true, "biomes": ["Pianura"],
+    "description": "Le ossa colossali di una creatura mai vista spuntano dal terreno, simili a colline bianche. La cassa toracica, grande come una piccola capanna, offre un riparo invitante.",
+    "choices": [
+      { "text": "Usa la cassa toracica come riparo per un'ora.", "outcomes": [{
+        "type": "direct", "results": [
+          { "type": "journalEntry", "text": "Ti riposi all'ombra delle gigantesche costole. Il senso di maestosità e antichità del luogo ti dona un riposo sorprendentemente profondo." },
+          { "type": "heal", "value": 15 },
+          { "type": "advanceTime", "value": 60 }
+        ]
+      }] },
+      { "text": "Stacca una costola per usarla come arma.", "outcomes": [{
+        "type": "skillCheck", "skill": "atletica", "dc": 15,
+        "successText": "Con uno sforzo titanico, riesci a spezzare e staccare una delle costole più piccole. È pesante e sbilanciata, ma incredibilmente robusta.",
+        "failureText": "Tiri e spingi con tutta la tua forza, ma l'osso non si muove. Improvvisamente, una parte della struttura cede e vieni colpito da alcune schegge d'osso.",
+        "success": [{ "type": "addItem", "value": { "itemId": "giant_bone_club", "quantity": 1 } }],
+        "failure": [{ "type": "takeDamage", "value": 10 }]
+      }] }
+    ]
   }
 ]

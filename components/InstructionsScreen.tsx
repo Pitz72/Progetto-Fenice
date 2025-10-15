@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GameState } from '../types';
 import { INSTRUCTIONS_TEXT } from '../constants';
@@ -43,13 +42,15 @@ const InstructionsScreen: React.FC = () => {
     setGameState(GameState.MAIN_MENU);
   }, [setGameState]);
 
-  useKeyboardInput({
+  const handlerMap = useMemo(() => ({
     ArrowUp: () => handleScroll(-30),
     w: () => handleScroll(-30),
     ArrowDown: () => handleScroll(30),
     s: () => handleScroll(30),
     Escape: handleExit,
-  });
+  }), [handleScroll, handleExit]);
+
+  useKeyboardInput(handlerMap);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">

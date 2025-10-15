@@ -266,6 +266,7 @@ export interface CharacterState {
     equippedWeapon: string | null;
     equippedArmor: string | null;
     alignment: Alignment;
+    status: string | null; // e.g., 'POISONED', 'SAD', 'WOUNDED', 'ESAUSTO'
 
     // Actions
     initCharacter: (newAttributes?: Attributes) => void;
@@ -286,6 +287,7 @@ export interface CharacterState {
     restoreSatiety: (amount: number) => void;
     restoreHydration: (amount: number) => void;
     changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
+    setStatus: (newStatus: string | null) => void;
 }
 
 // --- Item System ---

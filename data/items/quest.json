@@ -98,5 +98,35 @@
     "value": 0,
     "stackable": false,
     "rarity": "quest"
+  },
+  {
+    "id": "mechanic_manual",
+    "name": "Manuale di Meccanica",
+    "description": "Un manuale tecnico su motori e macchinari semplici. Potrebbe sbloccare nuove ricette di crafting.",
+    "type": "quest",
+    "weight": 0.5,
+    "value": 0,
+    "stackable": false,
+    "rarity": "quest"
+  },
+  {
+    "id": "first_aid_book",
+    "name": "Manuale di Primo Soccorso",
+    "description": "Un libro illustrato sulle procedure di primo soccorso. Leggerlo potrebbe migliorare le tue abilità mediche.",
+    "type": "quest",
+    "weight": 0.5,
+    "value": 0,
+    "stackable": false,
+    "rarity": "quest"
+  },
+  {
+    "id": "code_list",
+    "name": "Lista di Codici",
+    "description": "Un foglio con una serie di codici numerici e frequenze radio. Potrebbe essere utile per accedere a luoghi o comunicazioni bloccate.",
+    "type": "quest",
+    "weight": 0.1,
+    "value": 0,
+    "stackable": false,
+    "rarity": "quest"
   }
 ]

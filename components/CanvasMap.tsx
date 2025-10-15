@@ -6,6 +6,7 @@ const CanvasMap: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const map = useGameStore((state) => state.map);
     const playerPos = useGameStore((state) => state.playerPos);
+    const renderMapRef = useRef<() => void>();
 
     const [tilesetImage, setTilesetImage] = useState<HTMLImageElement | null>(null);
 
@@ -86,17 +87,21 @@ const CanvasMap: React.FC = () => {
 
     }, [map, playerPos, tilesetImage]);
     
-    // This effect now handles resizing without triggering React state updates.
+    // Store the latest renderMap function in a ref
+    useEffect(() => {
+        renderMapRef.current = renderMap;
+    }, [renderMap]);
+
+    // This effect handles resizing without triggering React state updates.
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const container = canvas.parentElement;
         if (!container) return;
         
-        let animationFrameId: number;
-
         const resizeObserver = new ResizeObserver(entries => {
-            animationFrameId = window.requestAnimationFrame(() => {
+            // Defer this logic to the next animation frame to avoid resize loops.
+            window.requestAnimationFrame(() => {
                 const entry = entries[0];
                 if (entry) {
                     const { width, height } = entry.contentRect;
@@ -115,21 +120,21 @@ const CanvasMap: React.FC = () => {
         // Disconnect observer on cleanup.
         return () => {
             resizeObserver.disconnect();
-            window.cancelAnimationFrame(animationFrameId);
         }
-    }, []); // Empty dependency array means this runs once on mount.
+    }, []);
 
-    // This effect runs the animation loop.
+    // This effect runs the animation loop, but it's set up only once.
     useEffect(() => {
         let animationFrameId: number;
-        // The renderMap function is stable due to useCallback, so this loop is not re-created unnecessarily.
         const renderLoop = () => {
-            renderMap();
+            if (renderMapRef.current) {
+                renderMapRef.current();
+            }
             animationFrameId = requestAnimationFrame(renderLoop);
         };
         animationFrameId = requestAnimationFrame(renderLoop);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [renderMap]);
+    }, []); // Empty dependency array ensures this effect runs only once.
 
 
     return (

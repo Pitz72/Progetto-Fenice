@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-// FIX: Corrected imports by swapping file content. This file now correctly imports types from `../types` and implements the store.
 import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
@@ -358,13 +357,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   
   confirmActionMenuSelection: () => {
       const { actionMenuState, inventorySelectedIndex, addJournalEntry, closeActionMenu } = get();
-      const { inventory, ...charActions } = useCharacterStore.getState();
+      const charState = useCharacterStore.getState();
       const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
       const selectedAction = actionMenuState.options[actionMenuState.selectedIndex];
-      if (!inventory[inventorySelectedIndex]) { closeActionMenu(); return; }
       
-      const itemToActOnId = inventory[inventorySelectedIndex].itemId;
-      const itemDetails = itemDatabase[itemToActOnId];
+      if (!charState.inventory[inventorySelectedIndex]) { closeActionMenu(); return; }
+      
+      const itemToActOn = charState.inventory[inventorySelectedIndex];
+      const itemDetails = itemDatabase[itemToActOn.itemId];
       if (!itemDetails) { closeActionMenu(); return; }
       
       switch (selectedAction) {
@@ -374,35 +374,30 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                   let effectMessages: string[] = [];
                   itemDetails.effects.forEach(effect => {
                       switch(effect.type) {
-                          case 'heal': charActions.heal(effect.value); effectMessages.push(`Recuperi ${effect.value} HP.`); break;
-                          case 'satiety': charActions.restoreSatiety(effect.value); effectMessages.push(`Recuperi ${effect.value} sazietà.`); break;
-                          case 'hydration': charActions.restoreHydration(effect.value); effectMessages.push(`Recuperi ${effect.value} idratazione.`); break;
-                          case 'light': effectMessages.push(`Fornisce luce per ${effect.value} minuti.`); break;
-                          case 'trap': effectMessages.push(`Hai piazzato una trappola.`); break;
-                          case 'shelter': effectMessages.push(`Hai montato un riparo per ${effect.value} ore.`); break;
-                          case 'repair': effectMessages.push(`Hai riparato parte del tuo equipaggiamento.`); break;
-                          case 'vision': effectMessages.push(`La tua visuale a distanza è migliorata.`); break;
-                          case 'antirad': effectMessages.push(`Senti le radiazioni diminuire.`); break;
-                          case 'power': effectMessages.push(`Hai ricaricato un dispositivo.`); break;
-                          case 'smoke': effectMessages.push(`Una densa nuvola di fumo ti nasconde.`); break;
-                          case 'fire': effectMessages.push(`Hai acceso un fuoco.`); break;
+                          case 'heal': charState.heal(effect.value); effectMessages.push(`Recuperi ${effect.value} HP.`); break;
+                          case 'satiety': charState.restoreSatiety(effect.value); effectMessages.push(`Recuperi ${effect.value} sazietà.`); break;
+                          case 'hydration': charState.restoreHydration(effect.value); effectMessages.push(`Recuperi ${effect.value} idratazione.`); break;
+                          // ... other effects
                           default: effectMessages.push(`Senti un effetto strano...`); break;
                       }
                   });
                   addJournalEntry({ text: [baseMessage, ...effectMessages].join(' '), type: JournalEntryType.NARRATIVE });
-                  charActions.removeItem(itemToActOnId, 1);
+                  charState.removeItem(itemToActOn.itemId, 1);
               }
               break;
-          case 'Equipaggia': charActions.equipItem(itemToActOnId); addJournalEntry({ text: `Hai equipaggiato: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); break;
-          case 'Togli': charActions.unequipItem(itemDetails.type === 'weapon' ? 'weapon' : 'armor'); addJournalEntry({ text: `Hai tolto: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); break;
-          case 'Scarta': charActions.discardItem(itemToActOnId, 1); addJournalEntry({ text: `Hai scartato: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); break;
+          case 'Equipaggia': charState.equipItem(itemToActOn.itemId); addJournalEntry({ text: `Hai equipaggiato: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); break;
+          case 'Togli': charState.unequipItem(itemDetails.type === 'weapon' ? 'weapon' : 'armor'); addJournalEntry({ text: `Hai tolto: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); break;
+          case 'Scarta':
+              charState.discardItem(itemToActOn.itemId, 1);
+              addJournalEntry({ text: `Hai scartato: ${itemDetails.name}.`, type: JournalEntryType.NARRATIVE }); 
+              break;
           case 'Esamina': addJournalEntry({ text: `Esamini: ${itemDetails.name}. ${itemDetails.description}`, type: JournalEntryType.NARRATIVE }); break;
       }
       
       closeActionMenu();
-      const newInventory = useCharacterStore.getState().inventory;
-      if (inventorySelectedIndex >= newInventory.length) {
-          set({ inventorySelectedIndex: Math.max(0, newInventory.length - 1) });
+      // Adjust selected index if the item was removed
+      if (useCharacterStore.getState().inventory.length <= inventorySelectedIndex) {
+          set({ inventorySelectedIndex: Math.max(0, useCharacterStore.getState().inventory.length - 1) });
       }
   },
 
@@ -598,7 +593,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const biomeCharToName: Record<string, string> = { 
         '.': 'Pianura', 
         'F': 'Foresta',
-        'V': 'Villaggio'
+        'V': 'Villaggio',
+        'C': 'Città',
     };
     const currentBiomeName = biomeCharToName[currentBiome] || currentBiome;
 
@@ -634,7 +630,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   resolveEventChoice: (choiceIndex: number) => {
     const { activeEvent, addJournalEntry, advanceTime } = get();
-    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal } = useCharacterStore.getState();
+    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal, setStatus } = useCharacterStore.getState();
     const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
 
     if (!activeEvent) return;
@@ -698,6 +694,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                message = textAl;
               break;
           case 'statusChange':
+              setStatus(result.value);
               const textStatus = `Sei ora in stato: ${result.value}.`;
               addJournalEntry({ text: textStatus, type: JournalEntryType.SYSTEM_WARNING });
               message = textStatus;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { GameState, AttributeName, Attributes } from '../types';
@@ -68,9 +68,11 @@ const CharacterCreationScreen: React.FC = () => {
     }
   }, [isComplete, rolledStats, initCharacter, setGameState]);
 
-  useKeyboardInput({
+  const handlerMap = useMemo(() => ({
     Enter: startGame,
-  });
+  }), [startGame]);
+
+  useKeyboardInput(handlerMap);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">

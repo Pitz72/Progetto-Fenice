@@ -14,6 +14,11 @@ const getEnemyHealthDescription = (hpState: Stat): string => {
     return "Sconfitto";
 };
 
+// FIX: Defined a discriminated union type for combat actions to enable proper type narrowing.
+type CombatAction = 
+    | { type: 'attack' | 'analyze' | 'use_item' | 'flee'; name: string }
+    | { type: 'tactic'; name: string; id: string };
+
 const CombatScreen: React.FC = () => {
     const { activeCombat, playerCombatAction, cleanupCombat } = useGameStore();
     const { hp, inventory } = useCharacterStore();
@@ -32,9 +37,9 @@ const CombatScreen: React.FC = () => {
         });
     }, [inventory, itemDatabase]);
 
-    const availableActions = useMemo(() => {
+    const availableActions = useMemo((): CombatAction[] => {
         if (!activeCombat) return [];
-        const baseActions = [
+        const baseActions: CombatAction[] = [
             { type: 'attack', name: 'Attacca' },
             { type: 'analyze', name: 'Analizza' },
         ];
@@ -43,7 +48,7 @@ const CombatScreen: React.FC = () => {
         }
         baseActions.push({ type: 'flee', name: 'Fuggi' });
 
-        const tacticalActions = activeCombat.availableTacticalActions.map(tactic => ({
+        const tacticalActions: CombatAction[] = activeCombat.availableTacticalActions.map(tactic => ({
             type: 'tactic',
             name: tactic.name,
             id: tactic.id
@@ -79,7 +84,7 @@ const CombatScreen: React.FC = () => {
         if (action.type === 'use_item') {
             setIsItemMenuOpen(true);
         } else if (action.type === 'tactic') {
-            playerCombatAction({ type: 'tactic', tacticId: action.id! });
+            playerCombatAction({ type: 'tactic', tacticId: action.id });
         } else {
             playerCombatAction({ type: action.type as 'attack' | 'analyze' | 'flee' });
         }

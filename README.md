@@ -27,6 +27,7 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri
 *   **Gestione Risorse Critica:** Statistiche di HP, Sazietà e Idratazione con tassi di consumo bilanciati che rendono la ricerca di cibo e acqua una priorità costante e pressante.
 *   **Sistema Temporale e Meteo Dinamico:** Un orologio di gioco e un sistema meteo che influenzano movimento, consumo di risorse e pericoli ambientali.
 *   **Rifugi Strategici:** Luoghi sicuri a visita singola che offrono riposo, ricerca di oggetti tramite skill check e crafting, trasformandoli in decisioni cruciali e irripetibili.
+*   **Sistema di Stati del Giocatore:** Il personaggio può subire stati negativi come `FERITO` (penalità alle abilità fisiche), `MALATO` (lenta perdita di HP) o `AVVELENATO` (perdita rapida di HP). Questi stati, causati da eventi o combattimenti, richiedono cure specifiche (come antidolorifici o antidoti), aggiungendo un ulteriore livello di gestione del rischio e dell'inventario.
 
 #### Sistema di Eventi Stratificato
 Il mondo è vivo grazie a un sistema di eventi a tre livelli che garantisce varietà e rigiocabilità:

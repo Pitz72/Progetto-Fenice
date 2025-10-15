@@ -217,8 +217,8 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     
     calculateSurvivalCost: (minutes) => {
         // Rates per hour
-        let satietyDecay = 1.0; 
-        let hydrationDecay = 1.5;
+        let satietyDecay = 3.0; 
+        let hydrationDecay = 4.5;
         
         const satietyCost = (minutes / 60) * satietyDecay;
         const hydrationCost = (minutes / 60) * hydrationDecay;
@@ -228,9 +228,9 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     updateSurvivalStats: (minutes, weather) => {
         set(state => {
-            // Rates per hour
-            let satietyDecay = 1.0; 
-            let hydrationDecay = 1.5;
+            // Rates per hour - INCREASED FOR DIFFICULTY
+            let satietyDecay = 3.0; 
+            let hydrationDecay = 4.5;
 
             if (weather === WeatherType.TEMPESTA) {
                 hydrationDecay *= 1.5;
@@ -243,8 +243,9 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             const newHydration = Math.max(0, state.hydration.current - hydrationLoss);
             
             let hpLossFromSurvival = 0;
-            if (newSatiety === 0) hpLossFromSurvival += (minutes / 60); // 1 HP loss per hour of starvation
-            if (newHydration === 0) hpLossFromSurvival += (minutes / 60) * 2; // 2 HP loss per hour of dehydration
+            // INCREASED HP PENALTY
+            if (newSatiety === 0) hpLossFromSurvival += (minutes / 60) * 2; // 2 HP loss per hour of starvation
+            if (newHydration === 0) hpLossFromSurvival += (minutes / 60) * 3; // 3 HP loss per hour of dehydration
 
             const newHp = Math.max(0, state.hp.current - hpLossFromSurvival);
             

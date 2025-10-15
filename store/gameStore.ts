@@ -178,7 +178,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -245,7 +245,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         timeCost += weatherPenalty;
         addJournalEntry({ text: `${weather.type} rallenta i tuoi movimenti. (+${weatherPenalty} min)`, type: JournalEntryType.SYSTEM_WARNING });
     }
-    
+
+    // --- Environmental Damage ---
+    const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
+    if (isNight && Math.random() < 0.20) {
+        useCharacterStore.getState().takeDamage(1);
+        addJournalEntry({ text: "L'oscurità ti fa inciampare. (-1 HP)", type: JournalEntryType.COMBAT });
+    }
     if (weather.type === WeatherType.TEMPESTA && Math.random() < 0.15) {
         useCharacterStore.getState().takeDamage(1);
         addJournalEntry({ text: "Il vento violento ti fa inciampare. (-1 HP)", type: JournalEntryType.COMBAT });
@@ -263,14 +269,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     if (get().activeEvent) return; // Stop further processing if an event is triggered
     
     if (Math.random() < 0.15) {
-        const { gameTime, weather, currentBiome } = get();
-        const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
+        const { weather: current_weather, currentBiome } = get();
         const biomeMessages = ATMOSPHERIC_MESSAGES[currentBiome];
         
         if (biomeMessages) {
             let possibleMessages: string[] = [];
             
-            if ((weather.type === WeatherType.PIOGGIA || weather.type === WeatherType.TEMPESTA) && biomeMessages.rain) {
+            if ((current_weather.type === WeatherType.PIOGGIA || current_weather.type === WeatherType.TEMPESTA) && biomeMessages.rain) {
                 possibleMessages.push(...biomeMessages.rain);
             }
 
@@ -612,9 +617,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     let eventToTrigger: GameEvent | null = null;
     
-    // Decide which pool to draw from. 75% chance for a biome event if available.
+    // Decide which pool to draw from. 50% chance for a biome event if available.
     const roll = Math.random();
-    if (hasBiomeEvents && (!hasGlobalEncounters || roll < 0.75)) {
+    if (hasBiomeEvents && (!hasGlobalEncounters || roll < 0.50)) {
         eventToTrigger = possibleBiomeEvents[Math.floor(Math.random() * possibleBiomeEvents.length)];
     } else if (hasGlobalEncounters) {
         eventToTrigger = possibleGlobalEncounters[Math.floor(Math.random() * possibleGlobalEncounters.length)];

@@ -1,0 +1,296 @@
+[
+  {
+    "id": "due_stranieri",
+    "title": "Due Stranieri nel Bisogno",
+    "description": "Attraversando una radura spazzata dal vento, noti due figure accasciate a terra. Avvicinandoti con cautela, vedi un uomo che cerca disperatamente di tamponare una brutta ferita alla gamba di una donna, chiaramente in stato di shock. L'uomo alza lo sguardo, i suoi occhi pieni di paura e speranza.\n\n\"Ti prego,\" sussurra, \"Abbiamo finito le bende e l'acqua. Puoi aiutarci? Qualsiasi cosa...\"",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "[Lena] Offri loro una benda e una bottiglia d'acqua.", "alignment": "Lena",
+        "itemRequirements": [{ "itemId": "CONS_003", "quantity": 1 }, { "itemId": "CONS_002", "quantity": 1 }],
+        "outcomes": [{
+          "type": "direct",
+          "results": [
+            { "type": "removeItem", "value": { "itemId": "CONS_003", "quantity": 1 } },
+            { "type": "removeItem", "value": { "itemId": "CONS_002", "quantity": 1 } },
+            { "type": "journalEntry", "text": "L'uomo ti ringrazia con le lacrime agli occhi. Usi le tue risorse per aiutarli." },
+            { "type": "addXp", "value": 50 },
+            { "type": "alignmentChange", "value": {"type": "lena", "amount": 1} }
+          ]
+        }]
+      },
+      {
+        "text": "[Elian] Ignorali e prosegui. Le tue risorse sono troppo preziose.", "alignment": "Elian",
+        "outcomes": [{
+          "type": "direct",
+          "results": [
+            { "type": "journalEntry", "text": "Indurisci il cuore e prosegui per la tua strada, lasciandoli al loro destino. La sopravvivenza viene prima di tutto." },
+            { "type": "alignmentChange", "value": {"type": "elian", "amount": 1} }
+          ]
+        }]
+      },
+      {
+        "text": "Avvicinati con l'arma in pugno e derubali di ciò che hanno.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "intimidire", "dc": 12,
+          "success": [
+              { "type": "journalEntry", "text": "La tua minaccia è efficace. L'uomo, terrorizzato, ti porge una piccola sacca. Dentro trovi delle munizioni."},
+              { "type": "addItem", "value": { "itemId": "ammo_9mm", "quantity": 5 } },
+              { "type": "alignmentChange", "value": {"type": "elian", "amount": 2} }
+          ],
+          "failure": [
+              { "type": "journalEntry", "text": "L'uomo non si lascia intimidire. Vede la tua esitazione e estrae un coltello. Ne nasce una breve colluttazione."},
+              { "type": "takeDamage", "value": 10 },
+              { "type": "alignmentChange", "value": {"type": "elian", "amount": 1} }
+          ]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "animale_ferito",
+    "title": "La Creatura Sofferente",
+    "description": "Un lamento pietoso attira la tua attenzione. Nascosto tra l'erba alta, trovi un cerbiatto con una zampa anteriore chiaramente spezzata, intrappolata in una vecchia tagliola arrugginita. L'animale ti guarda con occhi grandi e terrorizzati, incapace di fuggire.\n\nUn ricordo affiora: tua madre che ti insegnava a rispettare ogni creatura. Ma senti anche l'eco delle parole di tuo padre: 'Nel mondo di oggi, la pietà è un lusso che non possiamo permetterci.'",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "[Lena] Libera e medica l'animale.", "alignment": "Lena",
+        "itemRequirements": [{ "itemId": "CONS_003", "quantity": 1 }],
+        "outcomes": [{
+          "type": "skillCheck", "skill": "medicina", "dc": 10,
+          "success": [
+              { "type": "journalEntry", "text": "Con mano ferma e pazienza, riesci a liberare la zampa del cerbiatto e a steccarla con dei rami e una benda. L'animale zoppica via, scomparendo nell'erba alta." },
+              { "type": "removeItem", "value": { "itemId": "CONS_003", "quantity": 1 } },
+              { "type": "advanceTime", "value": 30 }, { "type": "addXp", "value": 35 },
+              { "type": "alignmentChange", "value": {"type": "lena", "amount": 1} }
+          ],
+          "failure": [
+              { "type": "journalEntry", "text": "Provi ad aiutare, ma i tuoi tentativi sono goffi. Il cerbiatto, spaventato, si divincola peggiorando la ferita. Sei costretto a lasciarlo al suo destino, avendo sprecato tempo e una benda." },
+              { "type": "removeItem", "value": { "itemId": "CONS_003", "quantity": 1 } },
+              { "type": "advanceTime", "value": 30 }
+          ]
+        }]
+      },
+      {
+        "text": "[Elian] Sopprimi l'animale per recuperare la carne.", "alignment": "Elian",
+        "outcomes": [{
+          "type": "direct",
+          "results": [
+            { "type": "journalEntry", "text": "È una scelta difficile ma pragmatica. Poni fine alle sofferenze del cerbiatto e recuperi carne e pelle utili alla sopravvivenza." },
+            { "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 2 } },
+            { "type": "addItem", "value": { "itemId": "animal_hide", "quantity": 1 } },
+            { "type": "advanceTime", "value": 15 },
+            { "type": "alignmentChange", "value": {"type": "elian", "amount": 1} }
+          ]
+        }]
+      },
+      {
+        "text": "Ignora la scena e prosegui.",
+        "outcomes": [{ "type": "direct", "results": [{ "type": "journalEntry", "text": "Decidi di non intervenire. La natura farà il suo corso." }] }]
+      }
+    ]
+  },
+  {
+    "id": "plains_wild_dog_pack", "title": "Branco di Cani Selvatici",
+    "description": "Un branco di cani randagi ti blocca la strada. Sembrano affamati e aggressivi.",
+    "biomes": ["Pianura"], "isUnique": false,
+    "choices": [
+      {
+        "text": "Combatti per scacciarli.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "atletica", "dc": 12,
+          "success": [{ "type": "journalEntry", "text": "Riesci a scacciare il branco senza ferite gravi." }],
+          "failure": [
+            { "type": "journalEntry", "text": "I cani ti feriscono prima di fuggire." },
+            { "type": "takeDamage", "value": 15 }
+          ]
+        }]
+      },
+      {
+        "text": "Offri loro del cibo per distrarli.", "itemRequirements": [{ "itemId": "CONS_001", "quantity": 1 }],
+        "outcomes": [{
+          "type": "skillCheck", "skill": "persuasione", "dc": 10,
+          "success": [
+            { "type": "journalEntry", "text": "I cani accettano il cibo e si allontanano pacificamente." },
+            { "type": "removeItem", "value": { "itemId": "CONS_001", "quantity": 1 } }
+          ],
+          "failure": [
+            { "type": "journalEntry", "text": "I cani prendono il cibo ma rimangono aggressivi." },
+            { "type": "removeItem", "value": { "itemId": "CONS_001", "quantity": 1 } }
+          ]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "plains_old_scarecrow", "title": "Vecchio Spaventapasseri",
+    "description": "In mezzo a un campo arido, noti uno spaventapasseri solitario. La sua figura contorta sembra quasi umana. Potrebbe nascondere qualcosa di utile o essere una trappola.",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "Ispeziona con cautela.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "investigare", "dc": 11,
+          "success": [
+            { "type": "journalEntry", "text": "Analizzando la struttura, noti un piccolo scomparto nascosto alla base. Dentro, trovi delle bende pulite." },
+            { "type": "addItem", "value": { "itemId": "CONS_003", "quantity": 1 } }
+          ],
+          "failure": [
+            { "type": "journalEntry", "text": "È solo un ammasso di stracci e paglia fradicia. Mentre frughi, un nido di insetti mutati ti assale." },
+            { "type": "takeDamage", "value": 3 }
+          ]
+        }]
+      },
+      {
+        "text": "Ignoralo e prosegui.",
+        "outcomes": [{ "type": "direct", "results": [{ "type": "journalEntry", "text": "Decidi che non vale la pena rischiare. Prosegui il tuo cammino." }] }]
+      }
+    ]
+  },
+  {
+    "id": "plains_abandoned_vehicle", "title": "Veicolo Abbandonato",
+    "description": "La carcassa arrugginita di un'auto è ferma sul ciglio di quella che un tempo era una strada. Il bagagliaio sembra chiuso ermeticamente.",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "Forza il bagagliaio.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "atletica", "dc": 13,
+          "success": [
+            { "type": "journalEntry", "text": "Con uno sforzo immane, riesci a scardinare il bagagliaio. Dentro, trovi dei rottami metallici." },
+            { "type": "addItem", "value": { "itemId": "scrap_metal", "quantity": 3 } }
+          ],
+          "failure": [
+            { "type": "journalEntry", "text": "Il meccanismo è saldato dalla ruggine. Lo sforzo ti lascia senza fiato e con una fitta alla schiena." },
+            { "type": "statusChange", "value": "WOUNDED" }
+          ]
+        }]
+      },
+      {
+        "text": "Controlla l'abitacolo.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "investigare", "dc": 10,
+          "success": [
+            { "type": "journalEntry", "text": "Nel vano portaoggetti, dietro a carte ammuffite, trovi una vecchia mappa stradale della regione." },
+            { "type": "addItem", "value": { "itemId": "local_map", "quantity": 1 } }
+          ],
+          "failure": [{ "type": "journalEntry", "text": "L'interno è stato completamente saccheggiato. Non c'è rimasto nulla di valore." }]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "plains_memorial_forgotten", "title": "Monumento Dimenticato",
+    "description": "Trovi una piccola lapide di pietra grezza, incisa rozzamente. Dice: 'Hanno combattuto per un domani che non hanno mai visto'. Alla base, qualcuno ha lasciato un piccolo oggetto avvolto in un panno.",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "Prendi l'oggetto.",
+        "outcomes": [{
+          "type": "direct",
+          "results": [
+            { "type": "journalEntry", "text": "Con rispetto, prendi l'offerta. È una bussola funzionante." },
+            { "type": "addItem", "value": { "itemId": "fathers_compass", "quantity": 1 } }
+          ]
+        }]
+      },
+      {
+        "text": "Lascia una tua razione in segno di rispetto.", "itemRequirements": [{"itemId": "CONS_001", "quantity": 1}],
+        "outcomes": [{
+          "type": "skillCheck", "skill": "persuasione", "dc": 8,
+          "success": [
+            { "type": "journalEntry", "text": "Decidi di onorare il loro sacrificio. Lasci una delle tue razioni. Questo semplice gesto ti riempie di determinazione." },
+            { "type": "removeItem", "value": { "itemId": "CONS_001", "quantity": 1 } },
+            { "type": "statBoost", "value": { "stat": "carisma", "amount": 1 } }
+          ],
+          "failure": [{ "type": "journalEntry", "text": "Vorresti onorarli, ma la tua fame è più forte. Tieni le tue scorte per te." }]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "plains_dust_devil", "title": "Diavolo di Polvere",
+    "description": "All'improvviso, un piccolo ma violento tornado di polvere si forma davanti a te, sollevando detriti e terra. Puoi tentare di attraversarlo o cercare di aggirarlo.",
+    "biomes": ["Pianura"], "isUnique": false,
+    "choices": [
+      {
+        "text": "Attraversalo di corsa.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "acrobazia", "dc": 13,
+          "success": [{ "type": "journalEntry", "text": "Con uno scatto fulmineo, passi attraverso il vortice quasi indenne." }],
+          "failure": [
+            { "type": "journalEntry", "text": "Vieni investito in pieno. La polvere ti acceca e i detriti ti colpiscono." },
+            { "type": "takeDamage", "value": 10 }
+          ]
+        }]
+      },
+      {
+        "text": "Aggiralo perdendo tempo.",
+        "outcomes": [{
+          "type": "direct",
+          "results": [
+            { "type": "journalEntry", "text": "Non ne vale la pena. Fai un lungo giro, perdendo quasi un'ora di luce." },
+            { "type": "advanceTime", "value": 60 }
+          ]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "plains_radio_tower", "title": "Torre Radio Solitaria",
+    "description": "Una torre di trasmissione arrugginita si erge solitaria contro il cielo. Alla sua base c'è un piccolo capanno di manutenzione con la porta socchiusa.",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+      {
+        "text": "Esplora il capanno.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "investigare", "dc": 10,
+          "success": [
+            { "type": "journalEntry", "text": "All'interno, trovi una cassetta degli attrezzi con parti elettroniche." },
+            { "type": "addItem", "value": { "itemId": "tech_components", "quantity": 4 } }
+          ],
+          "failure": [{ "type": "journalEntry", "text": "Il capanno è vuoto e pieno di polvere. Qualcuno è già passato." }]
+        }]
+      },
+      {
+        "text": "Tenta di arrampicarti sulla torre.",
+        "outcomes": [{
+          "type": "skillCheck", "skill": "atletica", "dc": 14,
+          "success": [
+            { "type": "journalEntry", "text": "Con fatica, sali abbastanza in alto da avere una visuale migliore. Noti un'anomalia sulla mappa in lontananza." },
+            { "type": "revealMapPOI", "value": null }
+          ],
+          "failure": [
+            { "type": "journalEntry", "text": "Un piolo arrugginito cede. Cadi da un paio di metri, facendoti male a una caviglia." },
+            { "type": "statusChange", "value": "WOUNDED" }
+          ]
+        }]
+      }
+    ]
+  },
+  {
+    "id": "plains_lone_glyph", "title": "Il Segno sul Sasso",
+    "description": "In mezzo a un'immensa distesa d'erba secca, trovi una singola, grande pietra piatta. Sulla sua superficie è inciso un glifo che non riconosci, ma che emana una strana sensazione di pace.",
+    "biomes": ["Pianura"], "isUnique": true,
+    "choices": [
+        {
+            "text": "Tocca il glifo.",
+            "outcomes": [{
+                "type": "direct",
+                "results": [
+                    { "type": "journalEntry", "text": "Posi la mano sulla pietra. Un calore inaspettato si diffonde attraverso di te, calmando i tuoi nervi." },
+                    { "type": "heal", "value": 5 }
+                ]
+            }]
+        },
+        {
+            "text": "Studia il glifo da lontano.",
+            "outcomes": [{
+                "type": "skillCheck", "skill": "investigare", "dc": 14,
+                "success": [{ "type": "journalEntry", "text": "Osservandolo, capisci che è un antico segnavia che significa 'riposo sicuro qui'. Ti senti rassicurato." }],
+                "failure": [{ "type": "journalEntry", "text": "Il simbolo rimane un mistero. La prudenza ti suggerisce di non interagire con l'ignoto." }]
+            }]
+        }
+    ]
+  }
+]

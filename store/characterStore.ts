@@ -9,6 +9,7 @@ import {
   InventoryItem,
   Stat,
   Skill,
+  Alignment,
 } from '../types';
 import { SKILLS, XP_PER_LEVEL } from '../constants';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -30,6 +31,11 @@ const initialSkills: Record<SkillName, Skill> = Object.keys(SKILLS).reduce((acc,
   return acc;
 }, {} as Record<SkillName, Skill>);
 
+const initialAlignment: Alignment = {
+    lena: 0,
+    elian: 0,
+};
+
 
 export const useCharacterStore = create<CharacterState>((set, get) => ({
     // --- State ---
@@ -43,6 +49,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     inventory: [],
     equippedWeapon: null,
     equippedArmor: null,
+    alignment: { ...initialAlignment },
 
     // --- Actions ---
     initCharacter: (newAttributes) => {
@@ -57,6 +64,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             satiety: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             skills: { ...initialSkills },
+            alignment: { ...initialAlignment },
             inventory: [ // Updated starting gear
                 { itemId: 'CONS_002', quantity: 3 },         // Bottiglia d'acqua
                 { itemId: 'CONS_001', quantity: 3 },         // Razione di cibo
@@ -263,4 +271,12 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             hydration: { ...state.hydration, current: Math.min(state.hydration.max, state.hydration.current + amount) }
         }));
     },
+    changeAlignment: (type, amount) => {
+        set(state => ({
+            alignment: {
+                ...state.alignment,
+                [type]: state.alignment[type] + amount,
+            }
+        }));
+    }
 }));

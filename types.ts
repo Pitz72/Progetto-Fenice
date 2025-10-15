@@ -10,6 +10,7 @@ export enum GameState {
   OPTIONS_SCREEN,
   CHARACTER_CREATION,
   IN_GAME,
+  EVENT_SCREEN,
 }
 
 export enum JournalEntryType {
@@ -23,6 +24,7 @@ export enum JournalEntryType {
   SYSTEM_WARNING,
   COMBAT,
   XP_GAIN,
+  EVENT,
 }
 
 export interface Position {
@@ -75,6 +77,69 @@ export interface RefugeMenuState {
     selectedIndex: number;
 }
 
+export interface CraftingMenuState {
+    selectedIndex: number;
+}
+
+// --- Event System ---
+export type EventResultType = 
+    | 'addItem' | 'removeItem' | 'addXp' | 'takeDamage' | 'advanceTime' 
+    | 'journalEntry' | 'alignmentChange' | 'statusChange' | 'statBoost' | 'revealMapPOI' | 'heal' | 'special';
+
+export interface EventResult {
+    type: EventResultType;
+    value: any;
+    text?: string;
+}
+
+export interface EventOutcome {
+    type: 'direct' | 'skillCheck';
+    skill?: SkillName;
+    dc?: number;
+    success?: EventResult[];
+    failure?: EventResult[];
+    results?: EventResult[]; // For direct outcomes
+    successText?: string;
+    failureText?: string;
+}
+
+export interface EventChoice {
+    text: string;
+    alignment?: 'Lena' | 'Elian';
+    itemRequirements?: { itemId: string; quantity: number }[];
+    outcomes: EventOutcome[];
+}
+
+export interface GameEvent {
+    id: string;
+    title: string;
+    description: string;
+    biomes: string[];
+    isUnique: boolean;
+    choices: EventChoice[];
+}
+
+// --- Crafting System ---
+export interface Ingredient {
+    itemId: string;
+    quantity: number;
+}
+
+export interface Recipe {
+    id: string;
+    name: string;
+    description: string;
+    skill: SkillName;
+    dc: number;
+    timeCost: number; // in minutes
+    ingredients: Ingredient[];
+    result: {
+        itemId: string;
+        quantity: number;
+    };
+}
+
+
 // --- Store States ---
 export interface PlayerStatus {
     isExitingWater: boolean;
@@ -90,15 +155,20 @@ export interface GameStoreState {
   journal: JournalEntry[];
   isInventoryOpen: boolean;
   isInRefuge: boolean;
+  isCraftingOpen: boolean;
   inventorySelectedIndex: number;
   actionMenuState: ActionMenuState;
   refugeMenuState: RefugeMenuState;
+  craftingMenuState: CraftingMenuState;
   refugeActionMessage: string | null;
   refugeJustSearched: boolean;
   currentBiome: string;
   lastRestTime: GameTime | null;
   lootedRefuges: Position[];
   visitedRefuges: Position[];
+  activeEvent: GameEvent | null;
+  eventHistory: string[];
+  eventResolutionText: string | null;
   
   // Actions
   setGameState: (newState: GameState) => void;
@@ -120,6 +190,12 @@ export interface GameStoreState {
   confirmRefugeMenuSelection: () => void;
   searchRefuge: () => void;
   clearRefugeActionMessage: () => void;
+  triggerRandomEvent: () => void;
+  resolveEventChoice: (choiceIndex: number) => void;
+  dismissEventResolution: () => void;
+  toggleCrafting: () => void;
+  navigateCraftingMenu: (direction: number) => void;
+  performCrafting: () => void;
 }
 
 
@@ -173,6 +249,11 @@ export interface InventoryItem {
     quantity: number;
 }
 
+export interface Alignment {
+  lena: number;
+  elian: number;
+}
+
 export interface CharacterState {
     level: number;
     xp: XPState;
@@ -184,6 +265,7 @@ export interface CharacterState {
     inventory: InventoryItem[];
     equippedWeapon: string | null;
     equippedArmor: string | null;
+    alignment: Alignment;
 
     // Actions
     initCharacter: (newAttributes?: Attributes) => void;
@@ -203,6 +285,7 @@ export interface CharacterState {
     heal: (amount: number) => void;
     restoreSatiety: (amount: number) => void;
     restoreHydration: (amount: number) => void;
+    changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
 }
 
 // --- Item System ---

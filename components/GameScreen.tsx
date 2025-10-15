@@ -7,16 +7,8 @@ import CanvasMap from './CanvasMap';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { WEATHER_DATA } from '../store/gameStore';
 import { JOURNAL_ENTRY_COLORS } from '../constants';
-
-// --- Reusable Panel Component ---
-const Panel: React.FC<{ title: string; children: React.ReactNode; className?: string }> = ({ title, children, className }) => (
-  <div className={`border border-green-400/30 flex flex-col bg-black/20 ${className}`}>
-    <h2 className="text-center bg-green-400/10 py-1 font-bold tracking-widest uppercase text-2xl">{title}</h2>
-    <div className="p-2 flex-grow overflow-hidden text-2xl leading-snug">
-      {children}
-    </div>
-  </div>
-);
+import Panel from './Panel';
+import AlignmentPanel from './AlignmentPanel';
 
 // --- Left Column Panels ---
 const SurvivalPanel: React.FC = () => {
@@ -146,7 +138,7 @@ const StatsPanel: React.FC = () => {
     };
 
     return (
-        <Panel title="STATISTICHE" className="flex-grow">
+        <Panel title="STATISTICHE">
             <div className="space-y-2">
                 <div>Livello: {level}</div>
                 <div>XP: {xp.current} / {xp.next}</div>
@@ -267,6 +259,7 @@ const GameScreen: React.FC = () => {
             <InfoPanel />
             <EquipmentPanel />
             <StatsPanel />
+            <AlignmentPanel />
           </div>
         </div>
         

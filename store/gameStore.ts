@@ -1,13 +1,17 @@
 import { create } from 'zustand';
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position } from '../types';
+// FIX: Corrected imports by swapping file content. This file now correctly imports types from `../types` and implements the store.
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
+import { useEventDatabaseStore } from '../data/eventDatabase';
+import { useRecipeDatabaseStore } from '../data/recipeDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS } from '../constants';
 
 // --- Constants for Game Logic ---
 const TRAVERSABLE_TILES = new Set(['.', 'R', 'C', 'V', 'F', 'S', 'E', '~']);
 const IMPASSABLE_TILES = new Set(['M']);
+const EVENT_TRIGGER_PROBABILITY = 0.20; // 20% chance to trigger an event on a valid tile
 
 const TILE_NAMES: Record<string, string> = {
     '.': 'Pianura', 'F': 'Foresta', '~': 'Acqua', 'M': 'Montagna',
@@ -90,15 +94,20 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   journal: [],
   isInventoryOpen: false,
   isInRefuge: false,
+  isCraftingOpen: false,
   inventorySelectedIndex: 0,
   actionMenuState: { isOpen: false, options: [], selectedIndex: 0 },
   refugeMenuState: { isOpen: false, options: [], selectedIndex: 0 },
+  craftingMenuState: { selectedIndex: 0 },
   refugeActionMessage: null,
   refugeJustSearched: false,
   currentBiome: '',
   lastRestTime: null,
   lootedRefuges: [],
   visitedRefuges: [],
+  activeEvent: null,
+  eventHistory: [],
+  eventResolutionText: null,
 
 
   // --- Actions ---
@@ -134,6 +143,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         lastRestTime: null,
         lootedRefuges: [],
         visitedRefuges: [],
+        activeEvent: null,
+        eventHistory: [],
     });
     get().addJournalEntry({ text: "Benvenuto in The Safe Place. La tua avventura inizia ora.", type: JournalEntryType.GAME_START });
     get().addJournalEntry({ text: BIOME_MESSAGES['S'], type: JournalEntryType.NARRATIVE, color: BIOME_COLORS['S'] });
@@ -168,7 +179,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, advanceTime, addJournalEntry, enterRefuge, visitedRefuges } = get();
+    const { map, playerPos, playerStatus, weather, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -247,6 +258,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     set({ playerPos: newPos });
     advanceTime(timeCost);
+
+    // Event Trigger Logic
+    triggerRandomEvent();
+    if (get().activeEvent) return; // Stop further processing if an event is triggered
     
     if (Math.random() < 0.15) {
         const { gameTime, weather, currentBiome } = get();
@@ -288,6 +303,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         if (state.actionMenuState.isOpen) {
             return { actionMenuState: { ...state.actionMenuState, isOpen: false } };
         }
+        if (state.isCraftingOpen) return {}; // Can't open inventory while crafting
         const isOpen = !state.isInventoryOpen;
         return { isInventoryOpen: isOpen, inventorySelectedIndex: 0 };
     });
@@ -428,7 +444,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     if (!isLooted && !refugeJustSearched) {
         options.push("Cerca nei dintorni");
     }
-    options.push("Banco di Lavoro (WIP)", "Gestisci Inventario", "Esci dal Rifugio");
+    options.push("Banco di Lavoro", "Gestisci Inventario", "Esci dal Rifugio");
 
     set({
       isInRefuge: true,
@@ -496,7 +512,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const isNight = get().gameTime.hour >= 20 || get().gameTime.hour < 6;
       const newOptions = [
         isNight ? "Dormi fino all'alba" : "Aspetta un'ora",
-        "Banco di Lavoro (WIP)", "Gestisci Inventario", "Esci dal Rifugio"
+        "Banco di Lavoro", "Gestisci Inventario", "Esci dal Rifugio"
       ];
       set(state => ({
         refugeMenuState: { ...state.refugeMenuState, options: newOptions, selectedIndex: 0 }
@@ -505,7 +521,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   confirmRefugeMenuSelection: () => {
     get().clearRefugeActionMessage();
-    const { refugeMenuState, gameTime, addJournalEntry, leaveRefuge, toggleInventory, advanceTime, searchRefuge } = get();
+    const { refugeMenuState, gameTime, addJournalEntry, leaveRefuge, toggleInventory, advanceTime, searchRefuge, toggleCrafting } = get();
     const selectedAction = refugeMenuState.options[refugeMenuState.selectedIndex];
     const { satiety, hydration } = useCharacterStore.getState();
 
@@ -544,10 +560,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       case "Cerca nei dintorni":
           searchRefuge();
           return;
-      case "Banco di Lavoro (WIP)":
-        const wipMessage = "Questa funzione non è ancora disponibile.";
-        addJournalEntry({ text: wipMessage, type: JournalEntryType.SYSTEM_WARNING });
-        set({ refugeActionMessage: wipMessage });
+      case "Banco di Lavoro":
+        toggleCrafting();
         break;
       case "Gestisci Inventario":
         toggleInventory();
@@ -567,11 +581,254 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         if (!isLooted && !refugeJustSearched) {
             newOptions.push("Cerca nei dintorni");
         }
-        newOptions.push("Banco di Lavoro (WIP)", "Gestisci Inventario", "Esci dal Rifugio");
+        newOptions.push("Banco di Lavoro", "Gestisci Inventario", "Esci dal Rifugio");
         
         set(state => ({
             refugeMenuState: { ...state.refugeMenuState, options: newOptions }
         }));
+    }
+  },
+
+  triggerRandomEvent: () => {
+    const { currentBiome, eventHistory } = get();
+    if (Math.random() > EVENT_TRIGGER_PROBABILITY) return;
+
+    const allEvents = useEventDatabaseStore.getState().events;
+    // Map biome characters to their full names for event filtering
+    const biomeCharToName: Record<string, string> = { 
+        '.': 'Pianura', 
+        'F': 'Foresta',
+        'V': 'Villaggio'
+    };
+    const currentBiomeName = biomeCharToName[currentBiome] || currentBiome;
+
+    const possibleEvents = allEvents.filter(event => 
+        event.biomes.includes(currentBiomeName) &&
+        (!event.isUnique || !eventHistory.includes(event.id))
+    );
+    
+    if (possibleEvents.length > 0) {
+        const event = possibleEvents[Math.floor(Math.random() * possibleEvents.length)];
+        set({ activeEvent: event, gameState: GameState.EVENT_SCREEN, eventResolutionText: null });
+        get().addJournalEntry({ text: `EVENTO: ${event.title}`, type: JournalEntryType.EVENT });
+    }
+  },
+
+  dismissEventResolution: () => {
+    const activeEventId = get().activeEvent?.id;
+    if (!activeEventId) { // Failsafe
+         set({
+            activeEvent: null,
+            eventResolutionText: null,
+            gameState: GameState.IN_GAME,
+        });
+        return;
+    }
+    set(state => ({
+        eventHistory: [...state.eventHistory, activeEventId],
+        activeEvent: null,
+        eventResolutionText: null,
+        gameState: GameState.IN_GAME,
+    }));
+  },
+
+  resolveEventChoice: (choiceIndex: number) => {
+    const { activeEvent, addJournalEntry, advanceTime } = get();
+    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal } = useCharacterStore.getState();
+    const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
+
+    if (!activeEvent) return;
+
+    const choice = activeEvent.choices[choiceIndex];
+    if (!choice) return;
+
+    addJournalEntry({ text: `Hai scelto: "${choice.text}"`, type: JournalEntryType.NARRATIVE });
+
+    let resolutionSummary: string[] = [];
+
+    const applyResult = (result: EventResult): string | null => {
+      let message: string | null = null;
+      switch (result.type) {
+          case 'addItem':
+              addItem(result.value.itemId, result.value.quantity);
+              const item = itemDatabase[result.value.itemId];
+              if (item) {
+                const text = `Hai ottenuto: ${item.name} x${result.value.quantity}.`;
+                addJournalEntry({ text, type: JournalEntryType.ITEM_ACQUIRED });
+                message = text;
+              }
+              break;
+          case 'removeItem':
+              removeItem(result.value.itemId, result.value.quantity);
+              const removedItem = itemDatabase[result.value.itemId];
+               if (removedItem) {
+                  const text = `Hai perso: ${removedItem.name} x${result.value.quantity}.`;
+                  addJournalEntry({ text, type: JournalEntryType.ACTION_FAILURE });
+                  message = text;
+               }
+              break;
+          case 'addXp':
+              addXp(result.value);
+              const textXp = `Hai guadagnato ${result.value} XP.`;
+              addJournalEntry({ text: textXp, type: JournalEntryType.XP_GAIN });
+              message = textXp;
+              break;
+          case 'takeDamage':
+              takeDamage(result.value);
+              const textDmg = `Subisci ${result.value} danni.`;
+              addJournalEntry({ text: textDmg, type: JournalEntryType.COMBAT });
+              message = textDmg;
+              break;
+          case 'advanceTime':
+              advanceTime(result.value, true);
+              const textTime = `Passano ${result.value} minuti.`;
+              addJournalEntry({ text: textTime, type: JournalEntryType.NARRATIVE });
+              message = textTime;
+              break;
+          case 'journalEntry':
+              if (result.text) {
+                addJournalEntry({ text: result.text, type: JournalEntryType.NARRATIVE });
+                message = result.text;
+              }
+              break;
+          case 'alignmentChange':
+              changeAlignment(result.value.type, result.value.amount);
+              const textAl = `La tua bussola morale si sposta verso ${result.value.type}.`;
+               addJournalEntry({ text: textAl, type: JournalEntryType.NARRATIVE, color: '#facc15' });
+               message = textAl;
+              break;
+          case 'statusChange':
+              const textStatus = `Sei ora in stato: ${result.value}.`;
+              addJournalEntry({ text: textStatus, type: JournalEntryType.SYSTEM_WARNING });
+              message = textStatus;
+              break;
+           case 'statBoost':
+              const textStat = `La tua statistica ${result.value.stat} è aumentata!`;
+              addJournalEntry({ text: textStat, type: JournalEntryType.XP_GAIN });
+              message = textStat;
+              break;
+          case 'revealMapPOI':
+               const textPoi = "Hai scoperto un nuovo punto di interesse sulla mappa!";
+               addJournalEntry({ text: textPoi, type: JournalEntryType.NARRATIVE, color: '#60a5fa' });
+               message = textPoi;
+              break;
+          case 'heal':
+              heal(result.value);
+              const textHeal = `Recuperi ${result.value} HP.`;
+              addJournalEntry({ text: textHeal, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+              message = textHeal;
+              break;
+          case 'special':
+              const textSpecial = `Effetto speciale: ${result.value.effect || 'attivato'}.`;
+              addJournalEntry({ text: textSpecial, type: JournalEntryType.NARRATIVE, color: '#a78bfa'});
+              message = textSpecial;
+              break;
+      }
+      return message;
+    };
+    
+    choice.outcomes.forEach(outcome => {
+        if (outcome.type === 'direct' && outcome.results) {
+            outcome.results.forEach(result => {
+                const msg = applyResult(result);
+                if (msg) resolutionSummary.push(msg);
+            });
+        } else if (outcome.type === 'skillCheck' && outcome.skill && outcome.dc) {
+            const skillCheck = performSkillCheck(outcome.skill, outcome.dc);
+            let journalText = `Prova di ${outcome.skill} (CD ${skillCheck.dc}): ${skillCheck.roll} (d20) + ${skillCheck.bonus} (mod) = ${skillCheck.total}. `;
+            
+            if (skillCheck.success) {
+                journalText += "SUCCESSO.";
+                addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+                if (outcome.successText) {
+                  resolutionSummary.push(outcome.successText);
+                  addJournalEntry({ text: outcome.successText, type: JournalEntryType.NARRATIVE });
+                }
+                outcome.success?.forEach(result => {
+                  const msg = applyResult(result);
+                  if (msg && !outcome.successText) resolutionSummary.push(msg);
+                });
+            } else {
+                journalText += "FALLIMENTO.";
+                addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_FAILURE });
+                if (outcome.failureText) {
+                  resolutionSummary.push(outcome.failureText);
+                  addJournalEntry({ text: outcome.failureText, type: JournalEntryType.NARRATIVE });
+                }
+                outcome.failure?.forEach(result => {
+                  const msg = applyResult(result);
+                  if (msg && !outcome.failureText) resolutionSummary.push(msg);
+                });
+            }
+        }
+    });
+    
+    set({ eventResolutionText: resolutionSummary.join('\n') });
+  },
+
+  toggleCrafting: () => {
+    set(state => {
+        if (state.isInventoryOpen) return {};
+        return {
+            isCraftingOpen: !state.isCraftingOpen,
+            craftingMenuState: { selectedIndex: 0 }
+        };
+    });
+  },
+
+  navigateCraftingMenu: (direction: number) => {
+    const recipes = useRecipeDatabaseStore.getState().recipes;
+    if (recipes.length === 0) return;
+    set(state => {
+        let newIndex = state.craftingMenuState.selectedIndex + direction;
+        if (newIndex < 0) newIndex = recipes.length - 1;
+        if (newIndex >= recipes.length) newIndex = 0;
+        return { craftingMenuState: { selectedIndex: newIndex } };
+    });
+  },
+
+  performCrafting: () => {
+    const { craftingMenuState, addJournalEntry, advanceTime } = get();
+    const { inventory, removeItem, addItem, performSkillCheck } = useCharacterStore.getState();
+    const { recipes } = useRecipeDatabaseStore.getState();
+    const { itemDatabase } = useItemDatabaseStore.getState();
+
+    const selectedRecipe = recipes[craftingMenuState.selectedIndex];
+    if (!selectedRecipe) return;
+
+    // Check ingredients
+    for (const ingredient of selectedRecipe.ingredients) {
+        const playerItem = inventory.find(i => i.itemId === ingredient.itemId);
+        if (!playerItem || playerItem.quantity < ingredient.quantity) {
+            addJournalEntry({ text: `Creazione fallita: mancano gli ingredienti. (${itemDatabase[ingredient.itemId]?.name})`, type: JournalEntryType.ACTION_FAILURE });
+            return;
+        }
+    }
+    
+    // Perform skill check
+    const skillCheck = performSkillCheck(selectedRecipe.skill, selectedRecipe.dc);
+    let journalText = `Prova di ${selectedRecipe.skill} (CD ${skillCheck.dc}): ${skillCheck.roll} (d20) + ${skillCheck.bonus} (mod) = ${skillCheck.total}. `;
+    
+    advanceTime(selectedRecipe.timeCost, true);
+
+    if (skillCheck.success) {
+        journalText += "SUCCESSO.";
+        // Consume ingredients
+        selectedRecipe.ingredients.forEach(ing => removeItem(ing.itemId, ing.quantity));
+        // Add result
+        addItem(selectedRecipe.result.itemId, selectedRecipe.result.quantity);
+        const resultItem = itemDatabase[selectedRecipe.result.itemId];
+        journalText += ` Hai creato: ${resultItem.name} x${selectedRecipe.result.quantity}.`;
+        addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+    } else {
+        journalText += "FALLIMENTO.";
+        // Consume half of the ingredients on failure (rounded down)
+        selectedRecipe.ingredients.forEach(ing => {
+            const quantityToRemove = Math.max(1, Math.floor(ing.quantity / 2));
+            removeItem(ing.itemId, quantityToRemove);
+        });
+        journalText += " Hai sprecato parte dei materiali nel tentativo.";
+        addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_FAILURE });
     }
   }
 

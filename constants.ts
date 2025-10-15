@@ -84,6 +84,7 @@ export const JOURNAL_ENTRY_COLORS: Record<JournalEntryType, string> = {
   [JournalEntryType.SYSTEM_WARNING]: '#fbbf24', // Giallo Brillante (amber-400)
   [JournalEntryType.COMBAT]: '#ef4444', // Rosso (red-500)
   [JournalEntryType.XP_GAIN]: '#f59e0b', // Oro/Giallo Scuro (amber-500)
+  [JournalEntryType.EVENT]: '#a78bfa', // Viola (violet-400)
 };
 
 export const MOUNTAIN_MESSAGES = [

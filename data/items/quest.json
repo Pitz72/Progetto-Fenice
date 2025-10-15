@@ -60,6 +60,26 @@
     "rarity": "quest"
   },
   {
+    "id": "gold_coin",
+    "name": "Moneta d'Oro",
+    "description": "Una vecchia moneta d'oro, ancora brillante. Un piccolo tesoro del mondo passato.",
+    "type": "quest",
+    "weight": 0.1,
+    "value": 100,
+    "stackable": false,
+    "rarity": "quest"
+  },
+   {
+    "id": "precious_stone",
+    "name": "Pietra Preziosa",
+    "description": "Una piccola gemma grezza, probabilmente un rubino o un granato. Scintilla anche nella penombra.",
+    "type": "quest",
+    "weight": 0.1,
+    "value": 150,
+    "stackable": false,
+    "rarity": "quest"
+  },
+  {
     "id": "gold_bar",
     "name": "Lingotto d'Oro",
     "description": "Un piccolo ma pesante lingotto d'oro, trovato nel caveau di una banca. Un tesoro di inestimabile valore nel vecchio mondo, e forse anche in questo.",

@@ -12,28 +12,37 @@ import GameScreen from './components/GameScreen';
 import CharacterCreationScreen from './components/CharacterCreationScreen';
 import InventoryScreen from './components/InventoryScreen';
 import RefugeScreen from './components/RefugeScreen';
+import EventScreen from './components/EventScreen';
+import CraftingScreen from './components/CraftingScreen';
 import { useItemDatabaseStore } from './data/itemDatabase';
+import { useEventDatabaseStore } from './data/eventDatabase';
+import { useRecipeDatabaseStore } from './data/recipeDatabase';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
   const isInventoryOpen = useGameStore((state) => state.isInventoryOpen);
   const isInRefuge = useGameStore((state) => state.isInRefuge);
+  const isCraftingOpen = useGameStore((state) => state.isCraftingOpen);
   const setMap = useGameStore((state) => state.setMap);
   const initCharacter = useCharacterStore((state) => state.initCharacter);
   const scaleStyle = useGameScale();
 
-  const { loadDatabase, isLoaded } = useItemDatabaseStore();
+  const { loadDatabase: loadItemDatabase, isLoaded: itemsLoaded } = useItemDatabaseStore();
+  const { loadDatabase: loadEventDatabase, isLoaded: eventsLoaded } = useEventDatabaseStore();
+  const { loadDatabase: loadRecipeDatabase, isLoaded: recipesLoaded } = useRecipeDatabaseStore();
 
   useEffect(() => {
-    loadDatabase();
-  }, [loadDatabase]);
+    loadItemDatabase();
+    loadEventDatabase();
+    loadRecipeDatabase();
+  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase]);
 
   useEffect(() => {
-    if (isLoaded) {
+    if (itemsLoaded && eventsLoaded && recipesLoaded) {
       setMap();
       initCharacter();
     }
-  }, [isLoaded, setMap, initCharacter]);
+  }, [itemsLoaded, eventsLoaded, recipesLoaded, setMap, initCharacter]);
 
   const renderContent = () => {
     switch (gameState) {
@@ -52,12 +61,15 @@ const App: React.FC = () => {
         return <OptionsScreen />;
       case GameState.CHARACTER_CREATION:
         return <CharacterCreationScreen />;
+      case GameState.EVENT_SCREEN:
+        return <EventScreen />;
       case GameState.IN_GAME:
         return (
           <>
             <GameScreen />
             {isInventoryOpen && <InventoryScreen />}
-            {isInRefuge && !isInventoryOpen && <RefugeScreen />}
+            {isInRefuge && !isInventoryOpen && !isCraftingOpen && <RefugeScreen />}
+            {isCraftingOpen && <CraftingScreen />}
           </>
         );
       default:

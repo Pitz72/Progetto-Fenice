@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
-import { GameState, Stat } from '../types';
+import { GameState, Stat, PlayerStatusCondition } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import CanvasMap from './CanvasMap';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -9,6 +9,12 @@ import { WEATHER_DATA } from '../store/gameStore';
 import { JOURNAL_ENTRY_COLORS } from '../constants';
 import Panel from './Panel';
 import AlignmentPanel from './AlignmentPanel';
+
+const STATUS_COLORS: Record<PlayerStatusCondition, string> = {
+    'FERITO': '#ef4444', // red-500
+    'MALATO': '#f97316', // orange-500
+    'AVVELENATO': '#a855f7', // purple-500
+};
 
 // --- Left Column Panels ---
 const SurvivalPanel: React.FC = () => {
@@ -19,13 +25,15 @@ const SurvivalPanel: React.FC = () => {
 
     const isCritical = (stat: Stat) => stat.current / stat.max <= 0.25;
 
+    const statusColor = status ? STATUS_COLORS[status] : undefined;
+
     return (
         <Panel title="SOPRAVVIVENZA">
             <div>
                 <div className={isCritical(hp) ? 'text-red-500 animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
                 <div className={isCritical(satiety) ? 'text-red-500 animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
                 <div className={isCritical(hydration) ? 'text-red-500 animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
-                <div>Status: {status || 'Normale'}</div>
+                <div style={{ color: statusColor }}>Status: {status || 'Normale'}</div>
             </div>
         </Panel>
     );

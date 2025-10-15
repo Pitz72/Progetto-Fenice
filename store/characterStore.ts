@@ -11,6 +11,7 @@ import {
   Skill,
   Alignment,
   JournalEntryType,
+  PlayerStatusCondition,
 } from '../types';
 import { SKILLS, XP_PER_LEVEL } from '../constants';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -96,7 +97,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         const skillDef = SKILLS[skill];
         if (!skillDef) return 0;
         
-        const { alignment, level, skills } = get();
+        const { alignment, level, skills, status } = get();
         const attributeModifier = get().getAttributeModifier(skillDef.attribute);
         const proficiencyBonus = skills[skill].proficient ? Math.floor((level - 1) / 4) + 2 : 0;
         
@@ -115,7 +116,16 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             }
         }
         
-        return attributeModifier + proficiencyBonus + alignmentBonus;
+        // --- Status Penalty ---
+        let statusPenalty = 0;
+        if (status === 'FERITO') {
+            const physicalSkills: SkillName[] = ['atletica', 'acrobazia', 'furtivita', 'rapiditaDiMano'];
+            if (physicalSkills.includes(skill)) {
+                statusPenalty = -2;
+            }
+        }
+
+        return attributeModifier + proficiencyBonus + alignmentBonus + statusPenalty;
     },
 
     performSkillCheck: (skill, dc) => {
@@ -292,8 +302,20 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             let hpLossFromSurvival = 0;
             if (newSatiety === 0) hpLossFromSurvival += (minutes / 60) * 2;
             if (newHydration === 0) hpLossFromSurvival += (minutes / 60) * 3;
+            
+            // Status-based damage
+            let hpLossFromStatus = 0;
+            if (state.status === 'MALATO') hpLossFromStatus = (minutes / 60) * 0.5; // Slow drain
+            if (state.status === 'AVVELENATO') hpLossFromStatus = (minutes / 60) * 2; // Fast drain
 
-            const newHp = Math.max(0, state.hp.current - hpLossFromSurvival);
+            if (hpLossFromStatus > 0) {
+                 useGameStore.getState().addJournalEntry({
+                    text: `Il tuo stato di ${state.status} ti indebolisce... (-${Math.round(hpLossFromStatus)} HP)`,
+                    type: JournalEntryType.COMBAT
+                });
+            }
+
+            const newHp = Math.max(0, state.hp.current - hpLossFromSurvival - hpLossFromStatus);
             
             return {
                 satiety: { ...state.satiety, current: newSatiety },

@@ -392,10 +392,17 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                   let effectMessages: string[] = [];
                   itemDetails.effects.forEach(effect => {
                       switch(effect.type) {
-                          case 'heal': charState.heal(effect.value); effectMessages.push(`Recuperi ${effect.value} HP.`); break;
-                          case 'satiety': charState.restoreSatiety(effect.value); effectMessages.push(`Recuperi ${effect.value} sazietà.`); break;
-                          case 'hydration': charState.restoreHydration(effect.value); effectMessages.push(`Recuperi ${effect.value} idratazione.`); break;
-                          // ... other effects
+                          case 'heal': charState.heal(effect.value as number); effectMessages.push(`Recuperi ${effect.value} HP.`); break;
+                          case 'satiety': charState.restoreSatiety(effect.value as number); effectMessages.push(`Recuperi ${effect.value} sazietà.`); break;
+                          case 'hydration': charState.restoreHydration(effect.value as number); effectMessages.push(`Recuperi ${effect.value} idratazione.`); break;
+                          case 'cureStatus':
+                            if (charState.status === effect.value) {
+                                charState.setStatus(null);
+                                effectMessages.push(`Ti senti meglio. Lo stato ${effect.value} è svanito.`);
+                            } else {
+                                effectMessages.push(`Non ha avuto alcun effetto...`);
+                            }
+                            break;
                           default: effectMessages.push(`Senti un effetto strano...`); break;
                       }
                   });
@@ -1050,7 +1057,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         if (item.type === 'consumable' && item.effects) {
             item.effects.forEach(effect => {
                 if (effect.type === 'heal') {
-                    charState.heal(effect.value);
+                    charState.heal(effect.value as number);
                     addCombatLog(`Recuperi ${effect.value} HP.`, '#4ade80');
                 }
             });

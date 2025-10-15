@@ -271,6 +271,8 @@ export type SkillName =
   | 'addestrareAnimali' | 'intuizione' | 'medicina' | 'percezione' | 'sopravvivenza'
   | 'inganno' | 'intimidire' | 'persuasione' | 'spettacolo';
 
+export type PlayerStatusCondition = 'FERITO' | 'MALATO' | 'AVVELENATO';
+
 export interface Attributes {
   for: number;
   des: number;
@@ -329,7 +331,7 @@ export interface CharacterState {
     equippedWeapon: string | null;
     equippedArmor: string | null;
     alignment: Alignment;
-    status: string | null; // e.g., 'POISONED', 'SAD', 'WOUNDED', 'ESAUSTO'
+    status: PlayerStatusCondition | null;
     levelUpPending: boolean;
     knownRecipes: string[];
 
@@ -353,7 +355,7 @@ export interface CharacterState {
     restoreSatiety: (amount: number) => void;
     restoreHydration: (amount: number) => void;
     changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
-    setStatus: (newStatus: string | null) => void;
+    setStatus: (newStatus: PlayerStatusCondition | null) => void;
     boostAttribute: (attribute: AttributeName, amount: number) => void;
     learnRecipe: (recipeId: string) => void;
     getPlayerAC: () => number;
@@ -367,11 +369,11 @@ export type ArmorSlot = 'head' | 'chest' | 'legs';
 export type ItemEffectType = 
     | 'heal' | 'satiety' | 'hydration' | 'light' | 'trap' | 'container' 
     | 'vision' | 'repair' | 'shelter' | 'random' | 'antirad' | 'power' 
-    | 'fishing' | 'smoke' | 'communication' | 'fire';
+    | 'fishing' | 'smoke' | 'communication' | 'fire' | 'cureStatus';
 
 export interface ItemEffect {
     type: ItemEffectType;
-    value: number;
+    value: number | string;
 }
 
 export interface IItem {

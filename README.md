@@ -13,7 +13,7 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.7.1)
+### Caratteristiche Attuali (v0.7.3)
 
 Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting e Combattimento) pienamente implementati e integrati.
 
@@ -34,12 +34,13 @@ Il mondo è vivo grazie a un sistema di eventi a tre livelli che garantisce vari
 *   **Incontri Globali:** Sfide di sopravvivenza e combattimenti semplificati che possono verificarsi ovunque, mantenendo alta la tensione.
 *   **Eventi Lore:** Incontri rari e unici che approfondiscono la trama e il conflitto interiore del protagonista.
 
-#### Sviluppo del Personaggio
+#### Sviluppo del Personaggio e Scelte Morali
 *   **Progressione tramite XP:** I Punti Esperienza si guadagnano da ogni azione: esplorare, superare eventi, vincere combattimenti.
 *   **Level Up Strategico:** Una schermata dedicata permette di aumentare un attributo e acquisire una nuova competenza in un'abilità, personalizzando la crescita del personaggio.
 *   **Bussola Morale con Effetti:** Un sistema di allineamento (Lena/Elian) traccia le decisioni morali. Raggiungere una forte inclinazione verso la compassione o il pragmatismo sblocca **bonus passivi permanenti** a determinate abilità.
+*   **Stati Psicologici:** Le scelte narrative più importanti possono alterare lo stato emotivo del personaggio, fornendo un feedback immersivo sulle conseguenze delle sue azioni.
 
-#### Gestione Oggetti e Crafting Dinamico
+#### Gestione Oggetti e Crafting Progressivo
 *   **Database Modulare:** Un database scalabile di oggetti (armi, armature, consumabili, materiali) caricato dinamicamente.
 *   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali.
 *   **Sistema di Crafting Progressivo:** Le ricette di crafting non sono disponibili dall'inizio. Il giocatore deve **trovare "Manuali di Crafting"** durante l'esplorazione per apprendere nuove formule, rendendo la scoperta una parte fondamentale della progressione.

@@ -105,9 +105,9 @@
         "outcomes": [{
           "type": "skillCheck", "skill": "sopravvivenza", "dc": 14,
           "successText": "Usando un lungo ramo per tenere a bada la sua testa, riesci ad aprire la tagliola. Il lupo, sorpreso, ti fissa per un istante, poi si allontana zoppicando, senza attaccarti.",
-          "failureText": "Mentre ti avvicini, il lupo, in un impeto di dolore e paura, si divincola e riesce a morderti prima di liberarsi e fuggire.",
+          "failureText": "Mentre ti avvicini, il lupo, in un impeto di dolore e paura, si divincola e riesce a morderti prima di liberarsi e fuggire. La ferita è profonda.",
           "success": [{ "type": "addXp", "value": 40 }, { "type": "special", "value": { "effect": "wolf_gratitude" } }],
-          "failure": [{ "type": "takeDamage", "value": 15 }, { "type": "statusChange", "value": "WOUNDED" }, { "type": "addXp", "value": 10 }]
+          "failure": [{ "type": "takeDamage", "value": 15 }, { "type": "statusChange", "value": "FERITO" }, { "type": "addXp", "value": 10 }]
         }]
       }
     ]
@@ -124,9 +124,9 @@
         "outcomes": [{
           "type": "skillCheck", "skill": "sopravvivenza", "dc": 11,
           "successText": "Il tuo istinto da sopravvissuto ha la meglio. Individui una piccola grotta e ti ci infili giusto in tempo per evitare il peggio della tempesta.",
-          "failureText": "Non trovi alcun riparo adeguato. Sei esposto alla furia degli elementi, subendo danni dal freddo e rischiando di ammalarti.",
+          "failureText": "Non trovi alcun riparo adeguato. Sei esposto alla furia degli elementi, subendo danni dal freddo e iniziando a sentirti febbricitante.",
           "success": [{ "type": "addXp", "value": 20 }],
-          "failure": [{ "type": "takeDamage", "value": 10 }, { "type": "statusChange", "value": "SICK" }, { "type": "addXp", "value": 5 }]
+          "failure": [{ "type": "takeDamage", "value": 10 }, { "type": "statusChange", "value": "MALATO" }, { "type": "addXp", "value": 5 }]
         }]
       },
       {
@@ -216,7 +216,7 @@
           "successText": "Correndo a perdifiato, riesci a passare attraverso lo sciame subendo solo qualche puntura minore.",
           "failureText": "Lo sciame ti avvolge. Le punture bruciano e ti lasciano disorientato e indebolito.",
           "success": [{ "type": "takeDamage", "value": 3 }, { "type": "addXp", "value": 15 }],
-          "failure": [{ "type": "takeDamage", "value": 10 }, { "type": "statusChange", "value": "SICK" }, { "type": "addXp", "value": 5 }]
+          "failure": [{ "type": "takeDamage", "value": 10 }, { "type": "statusChange", "value": "MALATO" }, { "type": "addXp", "value": 5 }]
         }]
       },
       {
@@ -337,7 +337,7 @@
             { "type": "addItem", "value": { "itemId": "medkit_advanced", "quantity": 1 } },
             { "type": "addXp", "value": 100 }
           ],
-          "failure": [{ "type": "takeDamage", "value": 40 }, { "type": "statusChange", "value": "WOUNDED" }, { "type": "addXp", "value": 20 }]
+          "failure": [{ "type": "takeDamage", "value": 40 }, { "type": "statusChange", "value": "FERITO" }, { "type": "addXp", "value": 20 }]
         }]
       },
       {

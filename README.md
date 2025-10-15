@@ -13,47 +13,50 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.4.6)
+### Caratteristiche Attuali (v0.5.4)
 
-La versione attuale del prototipo include un ciclo di gameplay completo e strategico, con le seguenti meccaniche:
+Il prototipo vanta un ciclo di gameplay robusto e completo, con le seguenti meccaniche interconnesse:
 
 #### Esplorazione e Mondo di Gioco
-*   **Mappa Vasta:** Un'ampia mappa di gioco con diversi biomi (Pianure, Foreste, Villaggi, Città) che influenzano il movimento.
-*   **Messaggi Atmosferici:** Messaggi descrittivi contestuali basati su bioma, ora del giorno e meteo per aumentare l'immersione.
+*   **Mappa Vasta:** Un'ampia mappa di gioco con diversi biomi (Pianure, Foreste, Villaggi, Città) che influenzano il movimento e gli incontri.
+*   **Messaggi Atmosferici:** Messaggi descrittivi contestuali basati su bioma, ora del giorno e meteo aumentano l'immersione.
 *   **Diario di Viaggio Dettagliato:** Un log cronologico di tutte le azioni e gli eventi, con timestamp e codifica a colori per una facile lettura.
 
 #### Meccaniche di Sopravvivenza Avanzate
-*   **Statistiche Vitali:** Gestione di HP, Sazietà e Idratazione, che diminuiscono con il tempo e le azioni.
-*   **Sistema Temporale e Meteo:** Un orologio di gioco e un sistema meteo dinamico che influenzano i costi di movimento e il consumo di risorse.
-*   **Rifugi Strategici:** Luoghi sicuri a **visita singola** che offrono opzioni di riposo (diurno/notturno), ricerca di oggetti tramite skill check e accesso al banco di lavoro.
-*   **Riposo Rapido:** Un'azione da campo (tasto 'R') con un cooldown di 24 ore per un recupero di emergenza.
+*   **Gestione Risorse Critica:** Statistiche di HP, Sazietà e Idratazione con un tasso di consumo bilanciato per rendere la ricerca di cibo e acqua una priorità costante.
+*   **Sistema Temporale e Meteo:** Un orologio di gioco e un sistema meteo dinamico che influenzano movimento, consumo di risorse e pericoli ambientali.
+*   **Pericoli Notturni:** Esplorare di notte comporta il rischio di subire danni a ogni passo, rendendo la ricerca di un riparo una decisione strategica.
+*   **Rifugi a Visita Singola:** Luoghi sicuri che offrono riposo, ricerca di oggetti tramite skill check e crafting, ma che possono essere utilizzati una sola volta.
+*   **Riposo Rapido:** Un'azione da campo con cooldown di 24 ore per un recupero di emergenza.
 
-#### Sistema di Eventi Dinamici
-*   **Incontri Casuali:** Esplorando, il giocatore può incappare in eventi casuali che presentano scenari unici e scelte significative.
-*   **Eventi Specifici per Bioma:** Ogni bioma (Pianura, Foresta, Villaggio, Città) ha un set dedicato di eventi a tema, garantendo varietà e rigiocabilità.
-*   **Eventi Unici (Easter Egg):** Incontri rari e irripetibili che svelano dettagli cruciali sulla lore del mondo di gioco.
+#### Sistema di Eventi Stratificato
+*   **Eventi di Bioma:** Ogni area ha un set dedicato di eventi a tema, garantendo varietà e coerenza narrativa.
+*   **Incontri Globali:** Sfide di sopravvivenza e combattimenti semplificati che possono verificarsi ovunque, mantenendo alta la tensione.
+*   **Eventi Lore:** Incontri rari e unici che approfondiscono la trama principale e il conflitto interiore del protagonista.
+*   **Logica di Attivazione Dinamica:** Il gioco bilancia la frequenza tra eventi narrativi e sfide di sopravvivenza per un'esperienza varia e imprevedibile.
 
-#### Gestione Oggetti e Risorse
-*   **Database Modulare:** Un database scalabile e robusto di centinaia di oggetti, caricato dinamicamente da file JSON esterni.
-*   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali per usare, equipaggiare e scartare oggetti.
-*   **Sistema di Crafting:** Nei rifugi, il giocatore può accedere a un "Banco di Lavoro" per creare nuovi oggetti (es. bende migliorate, armi di fortuna) a partire dai materiali raccolti, basandosi su test di abilità specifici.
+#### Gestione Oggetti e Crafting
+*   **Database Modulare:** Un database scalabile di centinaia di oggetti (armi, armature, consumabili, materiali) caricato dinamicamente da file JSON.
+*   **Inventario e Equipaggiamento:** Un sistema di inventario completo e navigabile da tastiera, con menu di azione contestuali.
+*   **Sistema di Crafting:** Nei rifugi, il giocatore può usare il "Banco di Lavoro" per creare nuovi oggetti a partire dai materiali raccolti, basandosi su test di abilità specifici.
 
 #### Sviluppo del Personaggio
-*   **Creazione Casuale:** La partita inizia con una generazione casuale delle statistiche del personaggio.
-*   **Sistema di Skill Check:** Le azioni complesse (cercare, creare, superare ostacoli) sono risolte tramite un sistema di test di abilità (d20 + modificatori vs CD) che aggiunge un elemento di rischio.
-*   **Bussola Morale:** Un sistema di allineamento (Lena/Elian) che traccia le decisioni morali del giocatore, orientandolo verso la compassione o il pragmatismo.
+*   **Creazione Personaggio:** La partita inizia con una generazione casuale delle statistiche del personaggio, garantendo rigiocabilità.
+*   **Progressione tramite XP:** I Punti Esperienza si guadagnano esplorando, superando eventi (con bonus maggiori per i successi) e completando azioni.
+*   **Level Up Strategico:** Alla pressione del tasto 'L', il giocatore accede a una schermata dedicata per aumentare permanentemente un attributo e acquisire una nuova competenza in un'abilità.
+*   **Sistema di Skill Check:** Le azioni complesse sono risolte tramite un sistema di test di abilità (d20 + modificatori vs CD) che aggiunge un elemento di rischio e ricompensa.
+*   **Bussola Morale con Effetti:** Un sistema di allineamento (Lena/Elian) traccia le decisioni morali. Raggiungere una forte inclinazione verso la compassione o il pragmatismo sblocca bonus passivi a determinate abilità, collegando direttamente le scelte narrative ai vantaggi meccanici.
 
 ### Come Giocare
 
 L'interazione avviene interamente tramite tastiera:
 
-*   **Movimento:** Tasti `W, A, S, D` o `Frecce Direzionali`.
-*   **Inventario:** Tasto `I` per aprire e chiudere.
-*   **Riposo Rapido:** Tasto `R` per tentare un riposo sul campo.
-*   **Interazione:** Tasto `Invio` per confermare le azioni, `ESC` per annullare o tornare indietro.
+*   **Movimento/Navigazione:** Tasti `W, A, S, D` o `Frecce Direzionali`.
+*   **Inventario:** Tasto `I`.
+*   **Riposo Rapido:** Tasto `R`.
+*   **Level Up:** Tasto `L` (quando disponibile).
+*   **Interazione:** Tasto `Invio` per confermare, `ESC` per annullare/indietro.
 
 ### Stato del Progetto
 
-Il progetto ha ora un ciclo di gameplay strategico e completo: **esplora -> gestisci risorse -> incontra eventi -> crea nuovi oggetti**. L'architettura del software è stata resa stabile e scalabile, risolvendo i problemi iniziali e garantendo una base solida per le future implementazioni.
-
-I prossimi passi si concentreranno sull'introduzione dei sistemi di combattimento, incontri con PNG, dialoghi e sulla creazione di una trama principale con quest strutturate.
+Il progetto ha raggiunto la piena maturità delle sue meccaniche di base. Il ciclo di gameplay **esplora -> sopravvivi -> incontra eventi -> fai scelte morali -> sali di livello -> crea oggetti** è completo, robusto e bilanciato. La base tecnica e di contenuto è solida e pronta per l'implementazione delle prossime fasi: sistema di combattimento a turni, incontri con PNG, dialoghi e lo sviluppo della trama principale.

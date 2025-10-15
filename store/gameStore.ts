@@ -263,6 +263,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     set({ playerPos: newPos });
     advanceTime(timeCost);
+    useCharacterStore.getState().gainExplorationXp(); // Gain XP for moving
 
     // Event Trigger Logic
     triggerRandomEvent();
@@ -593,13 +594,31 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const { currentBiome, eventHistory } = get();
     if (Math.random() > EVENT_TRIGGER_PROBABILITY) return;
 
-    const { biomeEvents, globalEncounters } = useEventDatabaseStore.getState();
+    const { biomeEvents, globalEncounters, loreEvents } = useEventDatabaseStore.getState();
 
-    // Filter biome-specific events
     const biomeCharToName: Record<string, string> = {
-        '.': 'Pianura', 'F': 'Foresta', 'V': 'Villaggio', 'C': 'Città',
+        '.': 'Pianura', 'F': 'Foresta', 'V': 'Villaggio', 'C': 'Città', '~': 'Acqua'
     };
     const currentBiomeName = biomeCharToName[currentBiome] || currentBiome;
+
+    // --- LORE EVENT TRIGGER LOGIC ---
+    const LORE_EVENT_PROBABILITY = 0.15; // 15% chance to trigger a lore event if one is available
+    if (Math.random() < LORE_EVENT_PROBABILITY) {
+      const possibleLoreEvents = loreEvents.filter(event => 
+          event.biomes.includes(currentBiomeName) &&
+          (!event.isUnique || !eventHistory.includes(event.id))
+      );
+
+      if (possibleLoreEvents.length > 0) {
+        const eventToTrigger = possibleLoreEvents[Math.floor(Math.random() * possibleLoreEvents.length)];
+        set({ activeEvent: eventToTrigger, gameState: GameState.EVENT_SCREEN, eventResolutionText: null });
+        get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
+        return; // Lore event triggered, exit function
+      }
+    }
+    
+    // --- STANDARD EVENT TRIGGER LOGIC (Fallback) ---
+    // Filter biome-specific events
     const possibleBiomeEvents = biomeEvents.filter(event => 
         event.biomes.includes(currentBiomeName) &&
         (!event.isUnique || !eventHistory.includes(event.id))
@@ -851,6 +870,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         journalText += " Hai sprecato parte dei materiali nel tentativo.";
         addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_FAILURE });
     }
-  }
+  },
+  
+  openLevelUpScreen: () => {
+    if (useCharacterStore.getState().levelUpPending) {
+        set({ gameState: GameState.LEVEL_UP_SCREEN });
+    } else {
+        get().addJournalEntry({ text: "Non hai ancora abbastanza esperienza per salire di livello.", type: JournalEntryType.SYSTEM_WARNING });
+    }
+  },
 
 }));

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { GameEvent } from '../types';
 
-async function loadEvents(): Promise<{ biomeEvents: GameEvent[], globalEncounters: GameEvent[] }> {
+async function loadEvents(): Promise<{ biomeEvents: GameEvent[], globalEncounters: GameEvent[], loreEvents: GameEvent[] }> {
     const biomeFiles = [
         './data/events/plains.json',
         './data/events/forest.json',
@@ -9,6 +9,7 @@ async function loadEvents(): Promise<{ biomeEvents: GameEvent[], globalEncounter
         './data/events/city.json'
     ];
     const encounterFile = './data/events/encounters.json';
+    const loreFile = './data/events/lore.json';
 
     try {
         const biomeResponses = await Promise.all(biomeFiles.map(file => fetch(file)));
@@ -21,12 +22,16 @@ async function loadEvents(): Promise<{ biomeEvents: GameEvent[], globalEncounter
         const encounterResponse = await fetch(encounterFile);
         if (!encounterResponse.ok) throw new Error(`Failed to fetch ${encounterResponse.url}: ${encounterResponse.statusText}`);
         const globalEncounters: GameEvent[] = await encounterResponse.json();
+        
+        const loreResponse = await fetch(loreFile);
+        if (!loreResponse.ok) throw new Error(`Failed to fetch ${loreResponse.url}: ${loreResponse.statusText}`);
+        const loreEvents: GameEvent[] = await loreResponse.json();
 
-        return { biomeEvents, globalEncounters };
+        return { biomeEvents, globalEncounters, loreEvents };
 
     } catch (error) {
         console.error("Error loading event database:", error);
-        return { biomeEvents: [], globalEncounters: [] };
+        return { biomeEvents: [], globalEncounters: [], loreEvents: [] };
     }
 }
 
@@ -35,6 +40,7 @@ interface EventDatabaseState {
     isLoaded: boolean;
     biomeEvents: GameEvent[];
     globalEncounters: GameEvent[];
+    loreEvents: GameEvent[];
     loadDatabase: () => Promise<void>;
 }
 
@@ -42,9 +48,10 @@ export const useEventDatabaseStore = create<EventDatabaseState>((set, get) => ({
     isLoaded: false,
     biomeEvents: [],
     globalEncounters: [],
+    loreEvents: [],
     loadDatabase: async () => {
         if (get().isLoaded) return;
-        const { biomeEvents, globalEncounters } = await loadEvents();
-        set({ biomeEvents, globalEncounters, isLoaded: true });
+        const { biomeEvents, globalEncounters, loreEvents } = await loadEvents();
+        set({ biomeEvents, globalEncounters, loreEvents, isLoaded: true });
     }
 }));

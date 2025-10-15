@@ -14,6 +14,7 @@ import InventoryScreen from './components/InventoryScreen';
 import RefugeScreen from './components/RefugeScreen';
 import EventScreen from './components/EventScreen';
 import CraftingScreen from './components/CraftingScreen';
+import LevelUpScreen from './components/LevelUpScreen';
 import { useItemDatabaseStore } from './data/itemDatabase';
 import { useEventDatabaseStore } from './data/eventDatabase';
 import { useRecipeDatabaseStore } from './data/recipeDatabase';
@@ -63,6 +64,8 @@ const App: React.FC = () => {
         return <CharacterCreationScreen />;
       case GameState.EVENT_SCREEN:
         return <EventScreen />;
+      case GameState.LEVEL_UP_SCREEN:
+        return <LevelUpScreen />;
       case GameState.IN_GAME:
         return (
           <>

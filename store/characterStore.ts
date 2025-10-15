@@ -10,9 +10,11 @@ import {
   Stat,
   Skill,
   Alignment,
+  JournalEntryType,
 } from '../types';
 import { SKILLS, XP_PER_LEVEL } from '../constants';
 import { useItemDatabaseStore } from '../data/itemDatabase';
+import { useGameStore } from './gameStore';
 
 const BASE_STAT_VALUE = 100;
 
@@ -51,6 +53,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     equippedArmor: null,
     alignment: { ...initialAlignment },
     status: null,
+    levelUpPending: false,
 
     // --- Actions ---
     initCharacter: (newAttributes) => {
@@ -67,6 +70,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             skills: { ...initialSkills },
             alignment: { ...initialAlignment },
             status: null,
+            levelUpPending: false,
             inventory: [ // Updated starting gear
                 { itemId: 'CONS_002', quantity: 3 },         // Bottiglia d'acqua
                 { itemId: 'CONS_001', quantity: 3 },         // Razione di cibo
@@ -88,10 +92,27 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     getSkillBonus: (skill) => {
         const skillDef = SKILLS[skill];
         if (!skillDef) return 0;
+        
+        const { alignment, level, skills } = get();
         const attributeModifier = get().getAttributeModifier(skillDef.attribute);
-        // Proficiency bonus like in D&D 5e: +2 at level 1-4, +3 at 5-8, etc.
-        const proficiencyBonus = get().skills[skill].proficient ? Math.floor((get().level - 1) / 4) + 2 : 0;
-        return attributeModifier + proficiencyBonus;
+        const proficiencyBonus = skills[skill].proficient ? Math.floor((level - 1) / 4) + 2 : 0;
+        
+        // --- Moral Compass Bonus ---
+        let alignmentBonus = 0;
+        const alignmentDifference = alignment.lena - alignment.elian;
+        const ALIGNMENT_THRESHOLD = 5;
+
+        if (alignmentDifference > ALIGNMENT_THRESHOLD) { // Lena Dominant
+            if (skill === 'persuasione' || skill === 'intuizione') {
+                alignmentBonus = 2;
+            }
+        } else if (alignmentDifference < -ALIGNMENT_THRESHOLD) { // Elian Dominant
+            if (skill === 'sopravvivenza' || skill === 'intimidire') {
+                alignmentBonus = 2;
+            }
+        }
+        
+        return attributeModifier + proficiencyBonus + alignmentBonus;
     },
 
     performSkillCheck: (skill, dc) => {
@@ -102,28 +123,58 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         return { skill, roll, bonus, total, dc, success };
     },
 
-    addXp: (amount) => {
-        set(state => ({ xp: { ...state.xp, current: state.xp.current + amount } }));
-        if (get().xp.current >= get().xp.next) {
-            get().levelUp();
-        }
+    gainExplorationXp: () => {
+        get().addXp(1);
     },
 
-    levelUp: () => {
+    addXp: (amount) => {
+        if (get().levelUpPending) {
+             set(state => ({ xp: { ...state.xp, current: state.xp.current + amount } }));
+             return;
+        }
         set(state => {
-            if (state.xp.current < state.xp.next) return {};
-            
+            const newXp = state.xp.current + amount;
+            if (newXp >= state.xp.next) {
+                return { 
+                    xp: { ...state.xp, current: newXp },
+                    levelUpPending: true 
+                };
+            }
+            return { xp: { ...state.xp, current: newXp } };
+        });
+    },
+
+    applyLevelUp: (choices) => {
+        set(state => {
+            if (!state.levelUpPending) return {};
+
             const newLevel = state.level + 1;
-            const newNextXp = XP_PER_LEVEL[newLevel + 1] || state.xp.next;
+            const xpForNextLevel = XP_PER_LEVEL[newLevel + 1] || state.xp.next;
+            const remainingXp = state.xp.current - state.xp.next;
             
             const constitutionModifier = get().getAttributeModifier('cos');
-            const hpIncrease = 5 + constitutionModifier; // Rebalanced HP gain
+            const hpIncrease = 5 + constitutionModifier;
             const newMaxHp = state.hp.max + hpIncrease;
+
+            const newAttributes = { ...state.attributes };
+            newAttributes[choices.attribute] += 1;
+
+            const newSkills = { ...state.skills };
+            newSkills[choices.skill].proficient = true;
+            
+            // FIX: JournalEntryType was not defined, it has been imported from ../types.
+            useGameStore.getState().addJournalEntry({
+                text: `Sei salito al livello ${newLevel}! Le tue abilità migliorano.`,
+                type: JournalEntryType.XP_GAIN
+            });
 
             return {
                 level: newLevel,
-                xp: { ...state.xp, current: state.xp.current - state.xp.next, next: newNextXp },
-                hp: { max: newMaxHp, current: newMaxHp } // Full heal on level up
+                xp: { current: remainingXp, next: xpForNextLevel },
+                hp: { max: newMaxHp, current: newMaxHp }, // Full heal on level up
+                attributes: newAttributes,
+                skills: newSkills,
+                levelUpPending: remainingXp >= xpForNextLevel, // Check if another level up is pending
             };
         });
     },
@@ -154,13 +205,11 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             if (!existingItem) return {};
 
             if (existingItem.quantity > quantity) {
-                // Riduci la quantità
                 const newInventory = state.inventory.map(i =>
                     i.itemId === itemId ? { ...i, quantity: i.quantity - quantity } : i
                 );
                 return { inventory: newInventory };
             } else {
-                // Rimuovi completamente l'oggetto
                 const newInventory = state.inventory.filter(i => i.itemId !== itemId);
                 return { inventory: newInventory };
             }
@@ -172,7 +221,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         if (!itemInInventory) return;
         
         const isEquipped = get().equippedWeapon === itemId || get().equippedArmor === itemId;
-        // Se l'oggetto è equipaggiato e la quantità da scartare è l'intera quantità posseduta
         if (isEquipped && itemInInventory.quantity <= quantity) {
             get().unequipItem(useItemDatabaseStore.getState().itemDatabase[itemId]?.type as 'weapon' | 'armor');
         }
@@ -186,7 +234,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             if (!itemDetails || (itemDetails.type !== 'weapon' && itemDetails.type !== 'armor')) {
                 return state;
             }
-            // Item remains in inventory, just set the equipped ID.
             if (itemDetails.type === 'weapon') {
                 return { equippedWeapon: itemId };
             }
@@ -216,7 +263,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     },
     
     calculateSurvivalCost: (minutes) => {
-        // Rates per hour
         let satietyDecay = 3.0; 
         let hydrationDecay = 4.5;
         
@@ -228,7 +274,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     updateSurvivalStats: (minutes, weather) => {
         set(state => {
-            // Rates per hour - INCREASED FOR DIFFICULTY
             let satietyDecay = 3.0; 
             let hydrationDecay = 4.5;
 
@@ -243,9 +288,8 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             const newHydration = Math.max(0, state.hydration.current - hydrationLoss);
             
             let hpLossFromSurvival = 0;
-            // INCREASED HP PENALTY
-            if (newSatiety === 0) hpLossFromSurvival += (minutes / 60) * 2; // 2 HP loss per hour of starvation
-            if (newHydration === 0) hpLossFromSurvival += (minutes / 60) * 3; // 3 HP loss per hour of dehydration
+            if (newSatiety === 0) hpLossFromSurvival += (minutes / 60) * 2;
+            if (newHydration === 0) hpLossFromSurvival += (minutes / 60) * 3;
 
             const newHp = Math.max(0, state.hp.current - hpLossFromSurvival);
             
@@ -275,12 +319,37 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         }));
     },
     changeAlignment: (type, amount) => {
+        const oldAlignment = get().alignment;
+        const oldDiff = oldAlignment.lena - oldAlignment.elian;
+        
         set(state => ({
             alignment: {
                 ...state.alignment,
                 [type]: state.alignment[type] + amount,
             }
         }));
+
+        const newAlignment = get().alignment;
+        const newDiff = newAlignment.lena - newAlignment.elian;
+        const THRESHOLD = 5;
+        const { addJournalEntry } = useGameStore.getState();
+
+        // Check for crossing into Lena's territory
+        if (oldDiff <= THRESHOLD && newDiff > THRESHOLD) {
+            addJournalEntry({ text: "La tua compassione ti guida. Ottieni un bonus a Persuasione e Intuizione.", type: JournalEntryType.XP_GAIN });
+        }
+        // Check for crossing into Elian's territory
+        else if (oldDiff >= -THRESHOLD && newDiff < -THRESHOLD) {
+             addJournalEntry({ text: "Il tuo pragmatismo ti tempra. Ottieni un bonus a Sopravvivenza e Intimidire.", type: JournalEntryType.XP_GAIN });
+        }
+        // Check for returning to neutral from Lena
+        else if (oldDiff > THRESHOLD && newDiff <= THRESHOLD) {
+             addJournalEntry({ text: "Il tuo percorso è ora più equilibrato. I bonus di allineamento sono svaniti.", type: JournalEntryType.SYSTEM_WARNING });
+        }
+        // Check for returning to neutral from Elian
+        else if (oldDiff < -THRESHOLD && newDiff >= -THRESHOLD) {
+             addJournalEntry({ text: "Il tuo percorso è ora più equilibrato. I bonus di allineamento sono svaniti.", type: JournalEntryType.SYSTEM_WARNING });
+        }
     },
     setStatus: (newStatus) => set({ status: newStatus }),
     boostAttribute: (attribute, amount) => {

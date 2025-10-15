@@ -70,12 +70,9 @@ const CommandsPanel: React.FC = () => (
     <div className="space-y-1.5">
       <div className="flex justify-between"><span>[WASD/↑↓←→]</span> <span>Movimento/Navigazione</span></div>
       <div className="flex justify-between"><span>[I]</span> <span>Inventario</span></div>
-      <div className="flex justify-between"><span>[TAB]</span> <span>Scheda Personaggio</span></div>
-      <div className="flex justify-between"><span>[ESC]</span> <span>Menu/Indietro</span></div>
       <div className="flex justify-between"><span>[R]</span> <span>Riposo Breve</span></div>
-      <div className="flex justify-between"><span>[L]</span> <span>Level up</span></div>
-      <div className="flex justify-between"><span>[F5]</span> <span>Salvataggio Rapido</span></div>
-      <div className="flex justify-between"><span>[F9]</span> <span>Caricamento Rapido</span></div>
+      <div className="flex justify-between"><span>[L]</span> <span>Level Up</span></div>
+      <div className="flex justify-between"><span>[ESC]</span> <span>Menu/Indietro</span></div>
     </div>
   </Panel>
 );
@@ -145,6 +142,7 @@ const StatsPanel: React.FC = () => {
     const xp = useCharacterStore((state) => state.xp);
     const attributes = useCharacterStore((state) => state.attributes);
     const getAttributeModifier = useCharacterStore((state) => state.getAttributeModifier);
+    const levelUpPending = useCharacterStore((state) => state.levelUpPending);
     
     const renderModifier = (attr: 'for' | 'des' | 'cos' | 'int' | 'sag' | 'car') => {
         const mod = getAttributeModifier(attr);
@@ -155,7 +153,10 @@ const StatsPanel: React.FC = () => {
         <Panel title="STATISTICHE">
             <div className="space-y-2">
                 <div>Livello: {level}</div>
-                <div>XP: {xp.current} / {xp.next}</div>
+                <div>
+                    XP: {xp.current} / {xp.next}
+                    {levelUpPending && <span className="text-yellow-400 animate-yellow-flash ml-2">*</span>}
+                </div>
                 <div className="border-t border-green-400/20 my-1"></div>
                 <div className="grid grid-cols-2 gap-x-4">
                     <div className="flex justify-between"><span>FOR:</span><span>{attributes.for} {renderModifier('for')}</span></div>
@@ -210,7 +211,7 @@ const TravelJournalPanel: React.FC = () => {
 
 
 const GameScreen: React.FC = () => {
-  const { setGameState, movePlayer, isInventoryOpen, toggleInventory, performQuickRest, isInRefuge } = useGameStore();
+  const { setGameState, movePlayer, isInventoryOpen, toggleInventory, performQuickRest, isInRefuge, openLevelUpScreen } = useGameStore();
 
   const handleExit = useCallback(() => {
     setGameState(GameState.MAIN_MENU);
@@ -234,6 +235,8 @@ const GameScreen: React.FC = () => {
       I: toggleInventory,
       r: handleQuickRest,
       R: handleQuickRest,
+      l: openLevelUpScreen,
+      L: openLevelUpScreen,
       ArrowUp: () => handleMove(0, -1),
       w: () => handleMove(0, -1),
       ArrowDown: () => handleMove(0, 1),
@@ -248,7 +251,7 @@ const GameScreen: React.FC = () => {
       map['Escape'] = handleExit;
     }
     return map;
-  }, [toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit]);
+  }, [toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit, openLevelUpScreen]);
   
   useKeyboardInput(keyHandlerMap);
 

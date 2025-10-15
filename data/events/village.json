@@ -7,12 +7,14 @@
         "type": "skillCheck", "skill": "investigare", "dc": 13,
         "successText": "Tra ingranaggi arrugginiti, trovi una piccola cassetta degli attrezzi da meccanico di ottima fattura.",
         "failureText": "I meccanismi sono un groviglio incomprensibile di metallo corroso. Non trovi nulla di utile.",
-        "success": [{ "type": "addItem", "value": { "itemId": "mechanic_toolkit", "quantity": 1 } }]
+        "success": [{ "type": "addItem", "value": { "itemId": "mechanic_toolkit", "quantity": 1 } }, { "type": "addXp", "value": 30 }],
+        "failure": [{ "type": "addXp", "value": 10 }]
       }] },
       { "text": "Cerca nel granaio adiacente", "outcomes": [{
         "type": "direct", "results": [
           { "type": "journalEntry", "text": "Sotto un telo cerato, trovi alcuni sacchi di grano secco ancora commestibili." },
-          { "type": "addItem", "value": { "itemId": "grain_sack", "quantity": 2 } }
+          { "type": "addItem", "value": { "itemId": "grain_sack", "quantity": 2 } },
+          { "type": "addXp", "value": 20 }
         ]
       }] }
     ]
@@ -24,14 +26,16 @@
       { "text": "Cerca tra i pacchi non consegnati", "outcomes": [{
         "type": "direct", "results": [
           { "type": "journalEntry", "text": "La maggior parte dei pacchi è rovinata, ma ne trovi uno piccolo e pesante. Dentro c'è un set di coltelli da lancio." },
-          { "type": "addItem", "value": { "itemId": "throwing_knives", "quantity": 3 } }
+          { "type": "addItem", "value": { "itemId": "throwing_knives", "quantity": 3 } },
+          { "type": "addXp", "value": 25 }
         ]
       }] },
       { "text": "Leggi alcune delle lettere", "outcomes": [{
         "type": "skillCheck", "skill": "investigare", "dc": 11,
         "successText": "Una lettera attira la tua attenzione: un abitante scrive di una 'scorta di famiglia nascosta sotto il vecchio pozzo'.",
         "failureText": "Le lettere sono per lo più illeggibili, l'inchiostro sbavato.",
-        "success": [{ "type": "special", "value": { "effect": "lore_clue", "clueId": "village_well_cache" } }]
+        "success": [{ "type": "special", "value": { "effect": "lore_clue", "clueId": "village_well_cache" } }, { "type": "addXp", "value": 30 }],
+        "failure": [{ "type": "addXp", "value": 10 }]
       }] }
     ]
   },
@@ -45,274 +49,17 @@
         "failureText": "Trovi solo boccette vuote e scatole strappate. Qualcuno ha fatto pulizia.",
         "success": [
           { "type": "addItem", "value": { "itemId": "MED_PAINKILLER", "quantity": 1 } },
-          { "type": "addItem", "value": { "itemId": "antibiotics_expired", "quantity": 1 } }
-        ]
+          { "type": "addItem", "value": { "itemId": "antibiotics_expired", "quantity": 1 } },
+          { "type": "addXp", "value": 25 }
+        ],
+        "failure": [{ "type": "addXp", "value": 10 }]
       }] },
       { "text": "Leggi gli appunti sulla scrivania", "outcomes": [{
         "type": "direct", "results": [
           { "type": "journalEntry", "text": "Trovi il diario del dottore. Le ultime pagine descrivono i sintomi di una strana malattia. Impari qualcosa sulle minacce biologiche." },
-          { "type": "special", "value": { "effect": "learn_disease_symptoms" } }
+          { "type": "special", "value": { "effect": "learn_disease_symptoms" } },
+          { "type": "addXp", "value": 20 }
         ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_scrawled_warning", "title": "Messaggio sul Muro", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Un graffito su un muro avverte che l'acqua del pozzo del villaggio è avvelenata.",
-    "choices": [
-      { "text": "Indaga per verificarne la veridicità", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 12,
-        "successText": "Scopri segni di una banda che pattuglia quella zona. L'avviso era per tenere lontani i curiosi.",
-        "failureText": "Non trovi indizi sufficienti per confermare o smentire l'avviso.",
-        "success": [{ "type": "special", "value": { "effect": "mark_danger_zone" } }]
-      }] },
-      { "text": "Ignora l'avviso", "outcomes": [{ "type": "direct", "results": [{ "type": "journalEntry", "text": "Decidi di non fidarti di un graffito e prosegui." }] }] }
-    ]
-  },
-  {
-    "id": "village_old_church", "title": "Santuario Silenzioso", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Le porte di una piccola chiesa di paese sono spalancate.",
-    "choices": [
-      { "text": "Cerca nella cassetta delle offerte", "outcomes": [{
-        "type": "skillCheck", "skill": "rapiditaDiMano", "dc": 11,
-        "successText": "La cassetta è stata forzata, ma chi l'ha fatto ha tralasciato alcune vecchie monete e un piccolo medaglione d'argento.",
-        "failureText": "La cassetta è completamente vuota e sfondata.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "old_coins", "quantity": 10 } },
-          { "type": "addItem", "value": { "itemId": "silver_medallion", "quantity": 1 } }
-        ]
-      }] },
-      { "text": "Leggi il registro parrocchiale", "outcomes": [{
-        "type": "direct", "results": [
-          { "type": "journalEntry", "text": "Il registro contiene una lista frettolosa dei nomi degli abitanti. Un triste memento di un mondo perduto." },
-          { "type": "special", "value": { "effect": "lore_clue", "clueId": "village_roster" } }
-        ]
-      }] },
-      { "text": "Riposati sui banchi", "outcomes": [{
-        "type": "direct", "results": [
-          { "type": "journalEntry", "text": "Il silenzio quasi sacro del luogo ti dona un senso di pace. Ti senti ristorato." },
-          { "type": "heal", "value": 10 }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_general_store", "title": "L'Emporio Svuotato", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "L'insegna di un vecchio emporio è ancora visibile. Gli scaffali sono vuoti, ma potresti trovare qualcosa.",
-    "choices": [
-      { "text": "Perquisisci dietro il bancone", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 12,
-        "successText": "Sotto un'asse del pavimento allentata, trovi la scorta personale del negoziante: una bottiglia di liquore forte e una scatola di sigari.",
-        "failureText": "Dietro il bancone c'è solo un cassetto vuoto. Qualcuno ti ha preceduto.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "strong_liquor", "quantity": 1 } },
-          { "type": "addItem", "value": { "itemId": "cigars_box", "quantity": 1 } }
-        ]
-      }] },
-      { "text": "Forza la porta del magazzino", "outcomes": [{
-        "type": "skillCheck", "skill": "atletica", "dc": 11,
-        "successText": "Forzi la porta e, dietro a sacchi ammuffiti, trovi una cassa intatta di cibo in scatola e dei prodotti per la pulizia.",
-        "failureText": "La porta del magazzino è bloccata da detriti troppo pesanti da spostare.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 3 } },
-          { "type": "addItem", "value": { "itemId": "cleaning_supplies", "quantity": 1 } }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_school_building", "title": "Edificio Scolastico", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Un edificio scolastico abbandonato si erge silenzioso. Puoi esplorarlo in cerca di risorse utili.",
-    "choices": [
-      { "text": "Cerca nell'infermeria", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 10,
-        "successText": "Trovi un armadietto medico con delle bende e del disinfettante.",
-        "failureText": "L'infermeria è stata completamente saccheggiata.",
-        "success": [{ "type": "addItem", "value": { "itemId": "CONS_003", "quantity": 2 } }]
-      }] },
-      { "text": "Leggi la lavagna", "outcomes": [{
-        "type": "direct", "results": [
-          { "type": "journalEntry", "text": "Sulla lavagna, un'ultima lezione di storia interrotta a metà. Un'immagine malinconica." },
-          { "type": "special", "value": { "effect": "lore_clue", "clueId": "last_lesson" } }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_locked_house", "title": "Casa con Porta Chiusa", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Una casetta di campagna con la porta chiusa a chiave. Le finestre sono barricate dall'interno.",
-    "choices": [
-      { "text": "Forza la porta", "outcomes": [{
-        "type": "skillCheck", "skill": "atletica", "dc": 12,
-        "successText": "La porta cede. Dentro trovi una dispensa con qualche riserva.",
-        "failureText": "La serratura regge e ti affatichi inutilmente.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 2 } },
-          { "type": "addItem", "value": { "itemId": "CONS_002", "quantity": 2 } }
-        ]
-      }] },
-      { "text": "Cerca un ingresso secondario", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 11,
-        "successText": "Trovi una finestrella sul retro mal chiusa. Riesci a entrare.",
-        "failureText": "Le entrate sono tutte ben chiuse o barricate.",
-        "failure": [{ "type": "advanceTime", "value": 20 }]
-      }] }
-    ]
-  },
-  {
-    "id": "village_playground", "title": "Parco Giochi Abbandonato", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Altalene arrugginite e uno scivolo rotto scricchiolano al vento. C'è una panchina con qualcosa sotto.",
-    "choices": [
-      { "text": "Controlla sotto la panchina", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 10,
-        "successText": "Trovi un piccolo zaino con dentro snack energetici e una torcia.",
-        "failureText": "Non trovi nulla di utile, solo spazzatura.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "energy_bar", "quantity": 2 } },
-          { "type": "addItem", "value": { "itemId": "flashlight", "quantity": 1 } }
-        ]
-      }] },
-      { "text": "Ispeziona il capanno degli attrezzi", "outcomes": [{
-        "type": "skillCheck", "skill": "atletica", "dc": 11,
-        "successText": "Rompi il lucchetto arrugginito e trovi strumenti e materiali utili.",
-        "failureText": "Il lucchetto non cede e fai rumore inutile.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "tool_hammer", "quantity": 1 } },
-          { "type": "addItem", "value": { "itemId": "nails_box", "quantity": 1 } }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_community_board", "title": "Bacheca della Comunità", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Una bacheca con vecchi avvisi. Alcuni fogli sono ancora leggibili.",
-    "choices": [
-      { "text": "Leggi gli avvisi", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 10,
-        "successText": "Tra gli avvisi c'è una mappa disegnata a mano con segnati alcuni rifugi e posti pericolosi.",
-        "failureText": "Gli avvisi sono troppo deteriorati per essere utili.",
-        "success": [{ "type": "special", "value": { "effect": "reveal_local_pois" } }]
-      }] },
-      { "text": "Cerca dietro la bacheca", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 11,
-        "successText": "Trovi una cassetta di pronto soccorso nascosta.",
-        "failureText": "Non c'è nulla oltre a ragnatele e polvere.",
-        "success": [{ "type": "addItem", "value": { "itemId": "first_aid_kit", "quantity": 1 } }]
-      }] }
-    ]
-  },
-  {
-    "id": "village_vegetable_garden", "title": "Orto Dimenticato", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Dietro una casa abbandonata c'è un piccolo orto. Qualcosa ancora cresce tra le erbacce.",
-    "choices": [
-      { "text": "Raccogli quello che puoi", "outcomes": [{
-        "type": "direct", "results": [
-          { "type": "journalEntry", "text": "Raccogli alcune verdure ancora commestibili." },
-          { "type": "addItem", "value": { "itemId": "carrot", "quantity": 2 } },
-          { "type": "addItem", "value": { "itemId": "potato", "quantity": 2 } }
-        ]
-      }] },
-      { "text": "Cerca attrezzi da giardinaggio", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 11,
-        "successText": "Trovi un piccolo set di attrezzi utili.",
-        "failureText": "Il capanno degli attrezzi è vuoto.",
-        "success": [{ "type": "addItem", "value": { "itemId": "garden_tools", "quantity": 1 } }]
-      }] }
-    ]
-  },
-  {
-    "id": "village_water_pump", "title": "Pompa dell'Acqua", "isUnique": false, "biomes": ["Villaggio"],
-    "description": "Una vecchia pompa a mano in una piazzetta. Forse funziona ancora.",
-    "choices": [
-      { "text": "Aziona la pompa", "outcomes": [{
-        "type": "skillCheck", "skill": "atletica", "dc": 10,
-        "successText": "Dopo alcuni tentativi, l'acqua inizia a scorrere limpida.",
-        "failureText": "La pompa è bloccata e non si muove.",
-        "success": [{ "type": "addItem", "value": { "itemId": "CONS_002", "quantity": 3 } }]
-      }] },
-      { "text": "Smonta la pompa per ricambi", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 12,
-        "successText": "Recuperi alcune parti metalliche e guarnizioni utili.",
-        "failureText": "Niente di recuperabile senza strumenti migliori.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "scrap_metal", "quantity": 3 } },
-          { "type": "addItem", "value": { "itemId": "rubber_gasket", "quantity": 2 } }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_doghouse", "title": "Cuccia Abbandonata", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Nel giardino di una casa trovi una piccola cuccia di legno. C'è qualcosa dentro.",
-    "choices": [
-      { "text": "Metti la mano dentro", "outcomes": [{
-        "type": "skillCheck", "skill": "acrobazia", "dc": 10,
-        "successText": "Tiri fuori una palla di gomma. Può essere utile come distrazione.",
-        "failureText": "Qualcosa ti morde. Era un animale nascosto!",
-        "success": [{ "type": "addItem", "value": { "itemId": "rubber_ball", "quantity": 1 } }],
-        "failure": [{ "type": "takeDamage", "value": 4 }]
-      }] },
-      { "text": "Solleva la cuccia", "outcomes": [{
-        "type": "skillCheck", "skill": "atletica", "dc": 11,
-        "successText": "Sotto la cuccia trovi un piccolo tesoro: un coltello pieghevole e delle batterie.",
-        "failureText": "Non trovi nulla se non insetti.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "folding_knife", "quantity": 1 } },
-          { "type": "addItem", "value": { "itemId": "batteries_pack", "quantity": 1 } }
-        ]
-      }] }
-    ]
-  },
-  {
-    "id": "village_canned_food_cache", "title": "Nascondiglio di Scatolette", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "Dietro un cassonetto rovesciato, noti una cavità con alcune scatolette conservate al fresco.",
-    "choices": [
-      { "text": "Recupera le scatolette", "outcomes": [{
-        "type": "direct", "results": [
-          { "type": "journalEntry", "text": "Prendi tutte le scatolette rimaste, sono ancora buone." },
-          { "type": "addItem", "value": { "itemId": "CONS_001", "quantity": 3 } }
-        ]
-      }] },
-      { "text": "Controlla se ci sono trappole", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 11,
-        "successText": "Nessuna trappola. Sembra proprio una scorta dimenticata.",
-        "failureText": "Smuovi qualcosa e fai rumore, attirando attenzioni indesiderate.",
-        "failure": [{ "type": "special", "value": { "effect": "attract_raiders" } }]
-      }] }
-    ]
-  },
-  {
-    "id": "village_wind_chimes", "title": "Campanelli a Vento", "isUnique": false, "biomes": ["Villaggio"],
-    "description": "Una casa ha ancora appesi dei campanelli a vento. Suonano a ogni soffio.",
-    "choices": [
-      { "text": "Smontali con cura", "outcomes": [{
-        "type": "skillCheck", "skill": "rapiditaDiMano", "dc": 10,
-        "successText": "Recuperi fili resistenti e piccoli componenti metallici.",
-        "failureText": "Cadono a terra e si rompono.",
-        "success": [
-          { "type": "addItem", "value": { "itemId": "resistant_wire", "quantity": 2 } },
-          { "type": "addItem", "value": { "itemId": "metal_piece", "quantity": 2 } }
-        ]
-      }] },
-      { "text": "Ignorali e prosegui", "outcomes": [{ "type": "direct", "results": [{ "type": "journalEntry", "text": "Non hai tempo da perdere." }] }] }
-    ]
-  },
-  {
-    "id": "village_family_album", "title": "Album di Famiglia", "isUnique": true, "biomes": ["Villaggio"],
-    "description": "In una casa abbandonata trovi un album fotografico pieno di ricordi sbiaditi.",
-    "choices": [
-      { "text": "Sfoglia l'album", "outcomes": [{
-        "type": "skillCheck", "skill": "intuizione", "dc": 10,
-        "successText": "Ti senti rinvigorito dai ricordi di una vita normale. Una spinta emotiva ti fortifica.",
-        "failureText": "La nostalgia ti ferisce. Ti senti più vulnerabile per un po'.",
-        "success": [{ "type": "statBoost", "value": { "stat": "carisma", "amount": 1 } }],
-        "failure": [{ "type": "statusChange", "value": "SAD" }]
-      }] },
-      { "text": "Cerca tasche o scomparti nascosti", "outcomes": [{
-        "type": "skillCheck", "skill": "investigare", "dc": 12,
-        "successText": "Trovi una lettera con indizi su un rifugio poco distante.",
-        "failureText": "Niente di utile nascosto qui.",
-        "success": [{ "type": "special", "value": { "effect": "reveal_refuge" } }]
       }] }
     ]
   }

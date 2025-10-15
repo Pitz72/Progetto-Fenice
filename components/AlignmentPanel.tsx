@@ -6,16 +6,19 @@ const AlignmentPanel: React.FC = () => {
     const alignment = useCharacterStore((state) => state.alignment);
     const { lena, elian } = alignment;
 
-    const total = lena + elian;
-    // Calcola il bilanciamento da -1 (pieno Lena) a +1 (pieno Elian)
-    const balance = total === 0 ? 0 : (elian - lena) / total;
+    const totalPoints = Math.max(1, lena + elian);
+    const balance = totalPoints === 1 ? 0 : (elian - lena) / totalPoints;
     
     // Converte il bilanciamento in una percentuale da 0% (Lena) a 100% (Elian) per il posizionamento
     const positionPercent = ((balance + 1) / 2) * 100;
 
     let dominantAlignment = 'NEUTRALE';
-    if (balance < -0.2) dominantAlignment = 'COMPASSIONEVOLE (LENA)';
-    if (balance > 0.2) dominantAlignment = 'PRAGMATICO (ELIAN)';
+    const alignmentDifference = lena - elian;
+    const ALIGNMENT_THRESHOLD = 5;
+
+    if (alignmentDifference > ALIGNMENT_THRESHOLD) dominantAlignment = 'COMPASSIONEVOLE (LENA)';
+    if (alignmentDifference < -ALIGNMENT_THRESHOLD) dominantAlignment = 'PRAGMATICO (ELIAN)';
+
 
     return (
         <Panel title="BUSSOLA MORALE">

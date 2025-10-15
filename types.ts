@@ -11,6 +11,7 @@ export enum GameState {
   CHARACTER_CREATION,
   IN_GAME,
   EVENT_SCREEN,
+  LEVEL_UP_SCREEN,
 }
 
 export enum JournalEntryType {
@@ -196,6 +197,7 @@ export interface GameStoreState {
   toggleCrafting: () => void;
   navigateCraftingMenu: (direction: number) => void;
   performCrafting: () => void;
+  openLevelUpScreen: () => void;
 }
 
 
@@ -267,6 +269,7 @@ export interface CharacterState {
     equippedArmor: string | null;
     alignment: Alignment;
     status: string | null; // e.g., 'POISONED', 'SAD', 'WOUNDED', 'ESAUSTO'
+    levelUpPending: boolean;
 
     // Actions
     initCharacter: (newAttributes?: Attributes) => void;
@@ -274,7 +277,8 @@ export interface CharacterState {
     getSkillBonus: (skill: SkillName) => number;
     performSkillCheck: (skill: SkillName, dc: number) => SkillCheckResult;
     addXp: (amount: number) => void;
-    levelUp: () => void;
+    gainExplorationXp: () => void;
+    applyLevelUp: (choices: { attribute: AttributeName, skill: SkillName }) => void;
     addItem: (itemId: string, quantity?: number) => void;
     removeItem: (itemId: string, quantity?: number) => void;
     discardItem: (itemId: string, quantity?: number) => void;

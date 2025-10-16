@@ -17,6 +17,7 @@ import { SKILLS, XP_PER_LEVEL } from '../constants';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { useGameStore } from './gameStore';
 import { useRecipeDatabaseStore } from '../data/recipeDatabase';
+import { audioManager } from '../utils/audio';
 
 const BASE_STAT_VALUE = 100;
 
@@ -181,6 +182,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             const newSkills = { ...state.skills };
             newSkills[choices.skill].proficient = true;
             
+            audioManager.playSound('level_up');
             useGameStore.getState().addJournalEntry({
                 text: `Sei salito al livello ${newLevel}! Le tue abilità migliorano.`,
                 type: JournalEntryType.XP_GAIN

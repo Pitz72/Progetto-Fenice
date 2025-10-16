@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GameState } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
+import { audioManager } from '../utils/audio';
 
 type OptionKind = 'multiple' | 'slider';
 
@@ -48,11 +49,21 @@ const OptionsScreen: React.FC = () => {
     const [settings, setSettings] = useState({
         language: 0,
         fullscreen: 0,
-        audio: 0,
-        volume: 7,
+        audio: audioManager.getIsMutedForUI() ? 1 : 0, // 0 = On, 1 = Off
+        volume: audioManager.getVolumeForUI(),
         display: 0,
     });
     const [selectedRow, setSelectedRow] = useState(firstSelectableRow);
+    
+    // Effetti per sincronizzare lo stato della UI con l'AudioManager
+    useEffect(() => {
+        audioManager.setMuted(settings.audio === 1);
+    }, [settings.audio]);
+
+    useEffect(() => {
+        audioManager.setVolume(settings.volume);
+    }, [settings.volume]);
+
 
     const handleArrowUp = useCallback(() => {
       setSelectedRow(currentRow => {
@@ -60,8 +71,16 @@ const OptionsScreen: React.FC = () => {
           while (nextRow >= 0 && OPTIONS_CONFIG[nextRow].type !== 'option') {
               nextRow--;
           }
-          return nextRow < 0 ? OPTIONS_CONFIG.length - 1 - lastSelectableRow : nextRow;
+          if (nextRow < 0) { // Wrap around from top
+             let lastRow = OPTIONS_CONFIG.length - 1;
+             while(lastRow >= 0 && OPTIONS_CONFIG[lastRow].type !== 'option') {
+                lastRow--;
+             }
+             return lastRow;
+          }
+          return nextRow;
       });
+      audioManager.playSound('navigate');
     }, []);
 
     const handleArrowDown = useCallback(() => {
@@ -72,6 +91,7 @@ const OptionsScreen: React.FC = () => {
             }
             return nextRow >= OPTIONS_CONFIG.length ? firstSelectableRow : nextRow;
         });
+        audioManager.playSound('navigate');
     }, []);
 
     const handleChangeOption = useCallback((direction: 'left' | 'right') => {
@@ -82,26 +102,32 @@ const OptionsScreen: React.FC = () => {
 
         setSettings(currentSettings => {
             const newSettings = { ...currentSettings };
-            const key = option.id;
+            const key = option.id as keyof typeof settings;
 
             if (option.kind === 'multiple' && option.values) {
                 const values = option.values;
+                // @ts-ignore
                 const currentIndex = newSettings[key];
                 const newIndex = (currentIndex + delta + values.length) % values.length;
+                 // @ts-ignore
                 newSettings[key] = newIndex;
             } else if (option.kind === 'slider' && option.max) {
+                 // @ts-ignore
                 const currentValue = newSettings[key];
                 const newValue = Math.max(0, Math.min(option.max, currentValue + delta));
+                 // @ts-ignore
                 newSettings[key] = newValue;
             }
             return newSettings;
         });
+        audioManager.playSound('navigate');
     }, [selectedRow]);
 
     const handleArrowLeft = useCallback(() => handleChangeOption('left'), [handleChangeOption]);
     const handleArrowRight = useCallback(() => handleChangeOption('right'), [handleChangeOption]);
     
     const handleExit = useCallback(() => {
+        audioManager.playSound('cancel');
         // Se proveniamo dal menu di pausa, torniamo lì. Altrimenti, al menu principale.
         if (previousGameState === GameState.PAUSE_MENU) {
             setGameState(GameState.PAUSE_MENU);
@@ -142,9 +168,9 @@ const OptionsScreen: React.FC = () => {
                 }
                 if (row.type === 'option' && row.id && row.label) {
                   let valueDisplay;
+                  const key = row.id as keyof typeof settings;
                   if (row.kind === 'multiple' && row.values) {
-                    valueDisplay = `< ${settings[row.id]} >`;
-                    valueDisplay = `< ${row.values[settings[row.id]]} >`;
+                    valueDisplay = `< ${row.values[settings[key]]} >`;
                   } else if (row.kind === 'slider' && row.max) {
                     valueDisplay = <VolumeBar level={settings.volume} max={row.max} />;
                   }

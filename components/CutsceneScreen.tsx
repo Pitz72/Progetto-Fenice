@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { CutscenePage } from '../types';
+import { audioManager } from '../utils/audio';
 
 const CutsceneScreen: React.FC = () => {
     const { activeCutscene, processCutsceneConsequences, endCutscene } = useGameStore();
@@ -50,8 +51,10 @@ const CutsceneScreen: React.FC = () => {
 
         if (currentPage && !currentPage.choices) {
             if (currentPage.nextPage !== null && currentPage.nextPage !== undefined) {
+                audioManager.playSound('navigate');
                 setPageIndex(currentPage.nextPage);
             } else {
+                audioManager.playSound('confirm');
                 endCutscene();
             }
         }
@@ -62,6 +65,7 @@ const CutsceneScreen: React.FC = () => {
 
         const choice = currentPage.choices[choiceIndex];
         if (choice) {
+            audioManager.playSound('confirm');
             setPageIndex(choice.targetPage);
         }
     }, [isTyping, currentPage]);

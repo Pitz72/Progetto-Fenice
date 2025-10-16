@@ -11,6 +11,7 @@ import { useMainQuestDatabaseStore } from '../data/mainQuestDatabase';
 import { useCutsceneDatabaseStore } from '../data/cutsceneDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS, JOURNAL_ENTRY_COLORS } from '../constants';
 import * as N from '../data/combatNarrative';
+import { audioManager } from '../utils/audio';
 
 // --- Save Game System ---
 const SAVE_VERSION = "1.0.0";
@@ -192,6 +193,15 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set(state => ({
         journal: [{ ...entry, time: state.gameTime }, ...state.journal].slice(0, 100) // Keep last 100 entries
     }));
+     // --- Audio Hook ---
+    switch (entry.type) {
+        case JournalEntryType.ITEM_ACQUIRED: audioManager.playSound('item_get'); break;
+        case JournalEntryType.XP_GAIN: audioManager.playSound('xp_gain'); break;
+        case JournalEntryType.ACTION_FAILURE:
+        case JournalEntryType.SYSTEM_ERROR:
+             audioManager.playSound('error');
+             break;
+    }
   },
 
   setMap: () => {
@@ -440,6 +450,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         }
         if (state.isCraftingOpen) return {}; // Can't open inventory while crafting
         const isOpen = !state.isInventoryOpen;
+        audioManager.playSound(isOpen ? 'confirm' : 'cancel');
         return { isInventoryOpen: isOpen, inventorySelectedIndex: 0 };
     });
   },
@@ -453,6 +464,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         if (newIndex >= inventory.length) return { inventorySelectedIndex: 0 };
         return { inventorySelectedIndex: newIndex };
     });
+    audioManager.playSound('navigate');
   },
 
   openActionMenu: () => {
@@ -478,9 +490,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           default: options = ['Esamina', 'Scarta', 'Annulla']; break;
       }
       set({ actionMenuState: { isOpen: true, options, selectedIndex: 0 } });
+      audioManager.playSound('confirm');
   },
 
-  closeActionMenu: () => set({ actionMenuState: { isOpen: false, options: [], selectedIndex: 0 } }),
+  closeActionMenu: () => {
+    set({ actionMenuState: { isOpen: false, options: [], selectedIndex: 0 } });
+    audioManager.playSound('cancel');
+  },
 
   navigateActionMenu: (direction) => {
       set(state => {
@@ -490,6 +506,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           if (newIndex >= options.length) newIndex = 0;
           return { actionMenuState: { ...state.actionMenuState, selectedIndex: newIndex } };
       });
+      audioManager.playSound('navigate');
   },
   
   confirmActionMenuSelection: () => {
@@ -504,6 +521,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const itemDetails = itemDatabase[itemToActOn.itemId];
       if (!itemDetails) { closeActionMenu(); return; }
       
+      audioManager.playSound('confirm');
+
       switch (selectedAction) {
           case 'Usa':
               if (itemDetails.type === 'consumable' && itemDetails.effects) {
@@ -553,7 +572,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   performQuickRest: () => {
     if (get().isInventoryOpen || get().isInRefuge) return;
 
-    const { gameTime, lastRestTime, addJournalEntry, gameFlags, startCutscene, set, advanceTime } = get();
+    // FIX: Removed `set` from get() destructuring. `set` is available in the `create` scope.
+    const { gameTime, lastRestTime, addJournalEntry, gameFlags, startCutscene, advanceTime } = get();
 
     // CUTSCENE TRIGGER CHECK
     if (gameTime.day >= 3 && !gameFlags.has('BEING_WATCHED_PLAYED')) {
@@ -629,6 +649,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       };
     });
     get().addJournalEntry({ text: "Lasci la sicurezza del rifugio.", type: JournalEntryType.NARRATIVE });
+    audioManager.playSound('cancel');
   },
 
   navigateRefugeMenu: (direction) => {
@@ -641,6 +662,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       if (newIndex >= options.length) newIndex = 0;
       return { refugeMenuState: { ...state.refugeMenuState, selectedIndex: newIndex } };
     });
+    audioManager.playSound('navigate');
   },
 
   searchRefuge: () => {
@@ -705,10 +727,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         ) {
             set(state => ({ gameFlags: new Set(state.gameFlags).add('LULLABY_CHOICE_OFFERED_THIS_REST') }));
             set({ gameState: GameState.ASH_LULLABY_CHOICE });
+            audioManager.playSound('confirm');
             return; // Interrupt the normal rest flow
         }
     }
-
+    
+    audioManager.playSound('confirm');
 
     switch(selectedAction) {
       case "Aspetta un'ora": {
@@ -1028,7 +1052,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   toggleCrafting: () => {
     set(state => {
       if (state.isInventoryOpen) return {};
-      return { isCraftingOpen: !state.isCraftingOpen, craftingMenuState: { selectedIndex: 0 }};
+      const isOpening = !state.isCraftingOpen;
+      audioManager.playSound(isOpening ? 'confirm' : 'cancel');
+      return { isCraftingOpen: isOpening, craftingMenuState: { selectedIndex: 0 }};
     });
   },
 
@@ -1044,6 +1070,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       if (newIndex >= displayableRecipes.length) newIndex = 0;
       return { craftingMenuState: { selectedIndex: newIndex } };
     });
+    audioManager.playSound('navigate');
   },
   
   performCrafting: () => {
@@ -1071,6 +1098,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     let journalText = `Tenti di creare: ${recipe.name}. Prova di ${skillCheck.skill} (CD ${skillCheck.dc}): ${skillCheck.roll} + ${skillCheck.bonus} = ${skillCheck.total}. `;
     
     if (skillCheck.success) {
+        audioManager.playSound('confirm');
         journalText += "SUCCESSO.";
         recipe.ingredients.forEach(ing => removeItem(ing.itemId, ing.quantity));
         addItem(recipe.result.itemId, recipe.result.quantity);
@@ -1078,6 +1106,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         journalText += ` Hai creato: ${resultItem.name} x${recipe.result.quantity}.`;
         addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_SUCCESS });
     } else {
+        audioManager.playSound('error');
         journalText += "FALLIMENTO.";
         let lostItemsText: string[] = [];
         recipe.ingredients.forEach(ing => {
@@ -1093,6 +1122,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   openLevelUpScreen: () => {
       if (useCharacterStore.getState().levelUpPending) {
+          audioManager.playSound('confirm');
           set({ gameState: GameState.LEVEL_UP_SCREEN });
       } else {
           get().addJournalEntry({ text: "Non hai abbastanza XP per salire di livello.", type: JournalEntryType.SYSTEM_WARNING });
@@ -1104,6 +1134,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const enemy = enemyDb[enemyId];
     if (!enemy) return;
 
+    audioManager.playSound('combat_start');
     const combatState: CombatState = {
         enemy: { ...enemy },
         enemyHp: { current: enemy.hp, max: enemy.hp },
@@ -1120,12 +1151,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   endCombat: (result) => {
     const { addJournalEntry, checkMainQuestTriggers } = get();
     if (result === 'win') {
+        audioManager.playSound('victory');
         set(state => ({ totalCombatWins: state.totalCombatWins + 1 }));
         checkMainQuestTriggers();
-    }
-    if (result === 'flee') {
+    } else if (result === 'flee') {
         addJournalEntry({ text: "Sei fuggito dal combattimento.", type: JournalEntryType.NARRATIVE });
     } else if (result === 'lose') {
+        audioManager.playSound('defeat');
         addJournalEntry({ text: "Sei stato sconfitto...", type: JournalEntryType.SYSTEM_ERROR });
     }
     set({ activeCombat: null, gameState: GameState.IN_GAME });
@@ -1161,6 +1193,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         addLog(`Tiro per colpire: ${attackRoll} + ${attackBonus} = ${totalAttack} vs CA ${combatState.enemy.ac}`, '#a3a3a3');
 
         if (totalAttack >= combatState.enemy.ac) {
+            audioManager.playSound('hit_enemy');
             const baseDamage = weapon?.damage || 2;
             const damage = baseDamage + getAttributeModifier(weapon?.weaponType === 'ranged' ? 'des' : 'for') + Math.floor(Math.random() * 4) - 2;
             newEnemyHp.current = Math.max(0, newEnemyHp.current - damage);
@@ -1175,10 +1208,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         const check = performSkillCheck('percezione', combatState.enemy.tactics.revealDc);
         addLog(`Prova di Percezione (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`);
         if (check.success) {
+            audioManager.playSound('confirm');
             addLog("SUCCESSO! " + combatState.enemy.tactics.description, '#38bdf8');
             revealedTactics = true;
             availableTacticalActions = combatState.enemy.tactics.actions;
         } else {
+            audioManager.playSound('error');
             addLog("FALLIMENTO. Non noti nulla di particolare.", '#ff8c00');
         }
         break;
@@ -1197,7 +1232,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        // FIX: Explicitly type the parameter 't' in the find method to resolve the type inference issue.
+        // FIX: Explicitly typing the `t` parameter in the find method resolves the type inference issue where `t` would otherwise be `unknown`.
         const tactic = combatState.availableTacticalActions.find(
           (t: EnemyTactic) => t.id === action.tacticId
         );
@@ -1211,6 +1246,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             `Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`
           );
           if (check.success) {
+            audioManager.playSound('hit_enemy');
             const bonusDamage = 15;
             addLog(
               `SUCCESSO! Il nemico è sbilanciato e vulnerabile! Infliggi ${bonusDamage} danni extra.`,
@@ -1218,6 +1254,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             );
             newEnemyHp.current = Math.max(0, newEnemyHp.current - bonusDamage);
           } else {
+            audioManager.playSound('error');
             addLog('FALLIMENTO! La tua mossa non riesce.', '#ff8c00');
           }
         }
@@ -1267,6 +1304,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             addEnemyLog(`Tiro per colpire del nemico: ${enemyAttackRoll} + ${enemy.attack.bonus} = ${totalEnemyAttack} vs CA ${playerAC}`, '#a3a3a3');
 
             if (totalEnemyAttack >= playerAC) {
+                audioManager.playSound('hit_player');
                 const damage = enemy.attack.damage + Math.floor(Math.random() * 3) - 1;
                 takeDamage(damage);
                 addEnemyLog(`${getRandom(N.ENEMY_HIT_DESCRIPTIONS)} Subisci ${damage} danni.`, '#ef4444');
@@ -1350,7 +1388,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   processCutsceneConsequences: (consequences: CutsceneConsequence[]) => {
     const { addItem, equipItem } = useCharacterStore.getState();
-    const { addJournalEntry, advanceTime, set } = get();
+    // FIX: Removed `set` from get() destructuring. `set` is available in the `create` scope.
+    const { addJournalEntry, advanceTime } = get();
 
     consequences.forEach(consequence => {
         switch (consequence.type) {
@@ -1461,6 +1500,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           localStorage.setItem(`tspc_save_slot_${slot}`, JSON.stringify(serializableSaveFile));
           localStorage.setItem(LAST_SAVE_SLOT_KEY, slot.toString());
           get().addJournalEntry({ text: `Partita salvata nello slot ${slot}.`, type: JournalEntryType.SYSTEM_WARNING, color: '#f59e0b' });
+          audioManager.playSound('confirm');
           return true;
       } catch (error) {
           console.error("Failed to save game:", error);
@@ -1488,6 +1528,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           localStorage.setItem(LAST_SAVE_SLOT_KEY, slot.toString());
 
           get().addJournalEntry({ text: `Partita caricata dallo slot ${slot}.`, type: JournalEntryType.SYSTEM_WARNING, color: '#f59e0b' });
+          audioManager.playSound('confirm');
           return true;
 
       } catch (error) {

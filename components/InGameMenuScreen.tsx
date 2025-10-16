@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GameState } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
+import { audioManager } from '../utils/audio';
 
 const MENU_ITEMS = [
     "Continua",
@@ -17,10 +18,12 @@ const InGameMenuScreen: React.FC = () => {
 
     const handleNavigate = useCallback((direction: number) => {
         setSelectedIndex(prev => (prev + direction + MENU_ITEMS.length) % MENU_ITEMS.length);
+        audioManager.playSound('navigate');
     }, []);
 
     const handleConfirm = useCallback(() => {
         const selectedItem = MENU_ITEMS[selectedIndex];
+        audioManager.playSound('confirm');
         switch (selectedItem) {
             case "Continua":
                 setGameState(GameState.IN_GAME);
@@ -40,15 +43,20 @@ const InGameMenuScreen: React.FC = () => {
         }
     }, [selectedIndex, setGameState]);
 
+    const handleCloseMenu = useCallback(() => {
+        audioManager.playSound('cancel');
+        setGameState(GameState.IN_GAME);
+    }, [setGameState]);
+
     const handlerMap = useMemo(() => {
         if (gameState !== GameState.PAUSE_MENU) return {};
         return {
             'w': () => handleNavigate(-1), 'ArrowUp': () => handleNavigate(-1),
             's': () => handleNavigate(1), 'ArrowDown': () => handleNavigate(1),
             'Enter': handleConfirm,
-            'Escape': () => setGameState(GameState.IN_GAME),
+            'Escape': handleCloseMenu,
         };
-    }, [gameState, handleNavigate, handleConfirm, setGameState]);
+    }, [gameState, handleNavigate, handleConfirm, handleCloseMenu]);
 
     useKeyboardInput(handlerMap);
 

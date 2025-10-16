@@ -29,6 +29,12 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri
 *   **Integrazione Organica:** Le cutscene sono attivate da azioni specifiche del giocatore (iniziare una nuova partita, riposare in determinate condizioni, raggiungere luoghi chiave), rendendo la progressione della storia un'esperienza fluida e integrata nel gameplay.
 *   **Arco Narrativo Completo:** Questo sistema viene utilizzato per narrare i momenti cruciali della storia, dall'introduzione emotiva fino alla sconvolgente rivelazione finale, completando l'intero arco narrativo del gioco.
 
+#### Sistema Audio Retrò Programmato (PC Speaker)
+*   **Filosofia "No-Audio-Files":** Per un'autenticità massima, il gioco emula il suono dei PC dei primi anni '80, privi di schede audio. Non viene utilizzato alcun file audio pre-registrato; ogni suono è generato in tempo reale tramite la **Web Audio API**.
+*   **Palette Sonora Iconica:** Il sound design si basa su "beep", onde quadre e brevi jingle monofonici per fornire feedback per ogni azione: navigazione dei menu, conferma, errori, acquisizione di oggetti, guadagno di XP e momenti salienti del combattimento (vittoria/sconfitta).
+*   **Sound Design Narrativo:** Anche i momenti narrativi chiave sono supportati da un audio dedicato. L'esempio più importante è la **"Ninnananna della Cenere"**, una melodia da carillon volutamente stonata e inquietante che gioca un ruolo cruciale in una delle cutscene principali.
+*   **Controllo Utente Completo:** La schermata delle opzioni permette di attivare/disattivare l'audio e di regolarne il volume. Le preferenze vengono salvate e mantenute tra le sessioni di gioco.
+
 #### Sistema di Salvataggio e Caricamento Robusto
 *   **Salvataggi Multi-Slot:** Il gioco supporta fino a 5 slot di salvataggio che utilizzano la memoria del browser (`localStorage`) per la persistenza dei dati.
 *   **Accessibilità Completa:** Le schermate di salvataggio e caricamento sono accessibili sia dal menu principale che dal menu di pausa in-game.

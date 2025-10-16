@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { GameState } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
+import { audioManager } from '../utils/audio';
 
 const AshLullabyChoiceScreen: React.FC = () => {
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -16,14 +17,20 @@ const AshLullabyChoiceScreen: React.FC = () => {
 
     const handleNavigate = useCallback((direction: number) => {
         setSelectedIndex(prev => (prev + direction + choices.length) % choices.length);
+        audioManager.playSound('navigate');
     }, [choices.length]);
 
     const handleConfirm = useCallback(() => {
+        audioManager.playSound('confirm');
         if (selectedIndex === 0) { // Apri
             // Set the permanent flag to prevent this event from ever happening again
-            useGameStore.getState().set(state => ({ 
+            // FIX: Changed `useGameStore.getState().set` to `useGameStore.setState`.
+            // `getState()` returns only the state, while `setState` is the correct method
+            // on the store hook to update the state from outside the store definition.
+            useGameStore.setState(state => ({ 
                 gameFlags: new Set(state.gameFlags).add('ASH_LULLABY_PLAYED') 
             }));
+            audioManager.playSound('ash_lullaby');
             startCutscene('CS_ASH_LULLABY');
         } else { // Ignora
             // Just return to the game (the refuge screen will be there)

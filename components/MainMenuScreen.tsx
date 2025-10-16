@@ -5,6 +5,7 @@ import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 // FIX: Imported JournalEntryType to use the correct enum for journal entries.
 import { GameState, JournalEntryType } from '../types';
+import { audioManager } from '../utils/audio';
 
 const MainMenuScreen: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -13,14 +14,17 @@ const MainMenuScreen: React.FC = () => {
 
   const handleArrowUp = useCallback(() => {
     setSelectedIndex((prev) => (prev > 0 ? prev - 1 : MENU_ITEMS.length - 1));
+    audioManager.playSound('navigate');
   }, []);
 
   const handleArrowDown = useCallback(() => {
     setSelectedIndex((prev) => (prev < MENU_ITEMS.length - 1 ? prev + 1 : 0));
+    audioManager.playSound('navigate');
   }, []);
   
   const handleEnter = useCallback(() => {
     const selectedItem = MENU_ITEMS[selectedIndex];
+    audioManager.playSound('confirm');
     
     switch(selectedItem) {
         case "Nuova Partita":

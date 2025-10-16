@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
+import { audioManager } from '../utils/audio';
 
 const EventScreen: React.FC = () => {
     const { activeEvent, resolveEventChoice, eventResolutionText, dismissEventResolution } = useGameStore();
@@ -36,13 +37,18 @@ const EventScreen: React.FC = () => {
             }
             return newIndex;
         });
+        audioManager.playSound('navigate');
     }, [activeEvent, choiceStatus, eventResolutionText]);
 
     const handleConfirm = useCallback(() => {
         if (eventResolutionText) {
             dismissEventResolution();
+            audioManager.playSound('confirm');
         } else if (activeEvent && choiceStatus[selectedIndex]?.met) {
             resolveEventChoice(selectedIndex);
+            audioManager.playSound('confirm');
+        } else {
+            audioManager.playSound('error');
         }
     }, [activeEvent, selectedIndex, resolveEventChoice, choiceStatus, eventResolutionText, dismissEventResolution]);
     

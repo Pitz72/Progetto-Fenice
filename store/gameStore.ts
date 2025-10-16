@@ -198,7 +198,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, currentBiome: previousBiome } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -218,7 +218,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         return;
     }
     
-    // --- REFUGE LOGIC ---
     if (destinationTile === 'R') {
         const isVisited = visitedRefuges.some(pos => pos.x === newPos.x && pos.y === newPos.y);
         if (isVisited) {
@@ -232,7 +231,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     if (!TRAVERSABLE_TILES.has(destinationTile)) return;
     
-    const previousBiome = get().currentBiome;
     if (destinationTile !== previousBiome) {
         const biomeMessage = BIOME_MESSAGES[destinationTile];
         if (biomeMessage) {
@@ -266,7 +264,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         addJournalEntry({ text: `${weather.type} rallenta i tuoi movimenti. (+${weatherPenalty} min)`, type: JournalEntryType.SYSTEM_WARNING });
     }
 
-    // --- Environmental Damage ---
     const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
     if (isNight && Math.random() < 0.20) {
         useCharacterStore.getState().takeDamage(1);
@@ -283,9 +280,45 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     set({ playerPos: newPos });
     advanceTime(timeCost);
-    useCharacterStore.getState().gainExplorationXp(); // Gain XP for moving
+    useCharacterStore.getState().gainExplorationXp();
 
-    // Event & Combat Trigger Logic
+    // --- REVISED EVENT TRIGGER LOGIC ---
+    let eventTriggered = false;
+    const guaranteedEventBiomes = ['F', 'C', 'V'];
+
+    if (guaranteedEventBiomes.includes(destinationTile) && destinationTile !== previousBiome) {
+        const { eventHistory, gameTime: currentTime } = get();
+        const { biomeEvents } = useEventDatabaseStore.getState();
+        const biomeCharToName: Record<string, string> = { 'F': 'Foresta', 'V': 'Villaggio', 'C': 'Città' };
+        const biomeName = biomeCharToName[destinationTile];
+
+        if (biomeName) {
+            const possibleEvents = biomeEvents.filter((e: GameEvent) => e.biomes.includes(biomeName));
+            const unseenUnique = possibleEvents.filter((e: GameEvent) => e.isUnique && !eventHistory.includes(e.id));
+            const repeatable = possibleEvents.filter((e: GameEvent) => !e.isUnique);
+
+            let eventToTrigger: GameEvent | null = null;
+            if (unseenUnique.length > 0) {
+                eventToTrigger = getRandom(unseenUnique);
+            } else if (repeatable.length > 0) {
+                eventToTrigger = getRandom(repeatable);
+            }
+
+            if (eventToTrigger) {
+                set({
+                    activeEvent: eventToTrigger,
+                    gameState: GameState.EVENT_SCREEN,
+                    eventResolutionText: null,
+                    lastEncounterTime: currentTime,
+                });
+                get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
+                eventTriggered = true;
+            }
+        }
+    }
+
+    if (eventTriggered || get().activeCombat) return;
+
     get().triggerEncounter();
     if (get().activeEvent || get().activeCombat) return;
 
@@ -435,7 +468,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       }
       
       closeActionMenu();
-      // Adjust selected index if the item was removed
       if (useCharacterStore.getState().inventory.length <= inventorySelectedIndex) {
           set({ inventorySelectedIndex: Math.max(0, useCharacterStore.getState().inventory.length - 1) });
       }
@@ -543,7 +575,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
       set({ refugeActionMessage: journalText, refugeJustSearched: true });
 
-      // Rebuild menu to remove search option for this visit
       const isNight = get().gameTime.hour >= 20 || get().gameTime.hour < 6;
       const newOptions = [
         isNight ? "Dormi fino all'alba" : "Aspetta un'ora",
@@ -606,7 +637,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
     }
     
-    // After a time-passing action, rebuild menu options
     if (get().isInRefuge) {
         const { gameTime: newGameTime, playerPos, lootedRefuges, refugeJustSearched } = get();
         const isNight = newGameTime.hour >= 20 || newGameTime.hour < 6;
@@ -639,19 +669,15 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     };
     const currentBiomeName = biomeCharToName[currentBiome] || 'Global';
 
-    // --- PRIORITY 1: LORE EVENTS ---
-    // Can a lore event trigger today?
     if (gameTime.day > (lastLoreEventDay || 0)) {
         const { loreEvents } = useEventDatabaseStore.getState();
         
-        // FIX: Explicitly type 'event' as GameEvent to ensure correct type inference.
         const possibleLoreEvents = loreEvents.filter((event: GameEvent) => 
             (event.biomes.includes(currentBiomeName) || event.biomes.includes("Global")) &&
             !eventHistory.includes(event.id)
         );
 
         if (possibleLoreEvents.length > 0) {
-            // FIX: Explicitly type `eventToTrigger` as `GameEvent` to resolve type inference issue.
             const eventToTrigger: GameEvent = getRandom(possibleLoreEvents);
             set({
                 activeEvent: eventToTrigger,
@@ -661,49 +687,41 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                 lastLoreEventDay: gameTime.day,
             });
             get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
-            return; // Lore event triggered, exit.
+            return;
         }
     }
 
-    // --- PRIORITY 2: GENERAL ENCOUNTERS (WITH COOLDOWN) ---
     const isPlains = currentBiome === '.';
-    const cooldownMinutes = isPlains ? 240 : 90; // 4 hours for plains, 1.5 hours for others.
+    const cooldownMinutes = isPlains ? 240 : 90;
 
     if (lastEncounterTime) {
         const currentTimeInMinutes = timeToMinutes(gameTime);
         const lastEncounterTimeInMinutes = timeToMinutes(lastEncounterTime);
         if (currentTimeInMinutes - lastEncounterTimeInMinutes < cooldownMinutes) {
-            return; // Cooldown is active.
+            return;
         }
     }
 
-    // Roll to see IF an encounter happens at all
     const ENCOUNTER_PROBABILITY = 0.20;
     if (Math.random() > ENCOUNTER_PROBABILITY) {
-        return; // No encounter this time.
+        return;
     }
 
-    // If an encounter happens, decide what kind
     const COMBAT_CHANCE = 0.35;
     
     if (Math.random() > COMBAT_CHANCE) {
-        // --- NARRATIVE EVENT ---
         const { biomeEvents, globalEncounters } = useEventDatabaseStore.getState();
         
         const allPossibleEvents = [
-            // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
             ...biomeEvents.filter((e: GameEvent) => e.biomes.includes(currentBiomeName)),
             ...globalEncounters
         ];
 
-        // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
         const unseenUniqueEvents = allPossibleEvents.filter((e: GameEvent) => e.isUnique && !eventHistory.includes(e.id));
-        // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
         const repeatableEvents = allPossibleEvents.filter((e: GameEvent) => !e.isUnique);
 
         let eventToTrigger: GameEvent | null = null;
         
-        // Prioritize unique events to ensure they are all seen eventually
         if (unseenUniqueEvents.length > 0) {
             eventToTrigger = getRandom(unseenUniqueEvents);
         } else if (repeatableEvents.length > 0) {
@@ -720,8 +738,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
         }
     } else {
-        // --- COMBAT ENCOUNTER ---
-        if (currentBiome === 'R' || currentBiome === 'S') return; // No combat in safe zones
+        if (currentBiome === 'R' || currentBiome === 'S') return;
 
         const enemyDb = useEnemyDatabaseStore.getState().enemyDatabase;
         const possibleEnemies = Object.values(enemyDb).filter((enemy: Enemy) => 
@@ -730,16 +747,15 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
         if (possibleEnemies.length > 0) {
             const enemy = getRandom(possibleEnemies);
-            startCombat(enemy.id); // This already sets lastEncounterTime
+            startCombat(enemy.id);
         }
     }
   },
 
   dismissEventResolution: () => {
-    // FIX: Explicitly cast `activeEvent` to `GameEvent | null` to resolve type inference issue.
     const activeEvent = get().activeEvent as GameEvent | null;
     const activeEventId = activeEvent?.id;
-    if (!activeEventId) { // Failsafe
+    if (!activeEventId) {
          set({
             activeEvent: null,
             eventResolutionText: null,
@@ -887,7 +903,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             }
         }
     }
-    set({ eventResolutionText: resolutionSummary.join('\n') });
+    set({ eventResolutionText: resolutionSummary.join('\\n') });
   },
 
   toggleCrafting: () => {
@@ -1000,7 +1016,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const combatState = get().activeCombat;
     if (!combatState || !combatState.playerTurn || combatState.victory) return;
 
-    const { getPlayerAC, performSkillCheck, takeDamage, getAttributeModifier, equippedWeapon, removeItem, addItem, heal, addXp } = useCharacterStore.getState();
+    const { getPlayerAC, performSkillCheck, takeDamage, getAttributeModifier, equippedWeapon, removeItem, heal, addXp } = useCharacterStore.getState();
     const itemDb = useItemDatabaseStore.getState().itemDatabase;
     
     let newLog = [...combatState.log];
@@ -1058,7 +1074,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        const tactic = combatState.enemy.tactics.actions.find(t => t.id === action.tacticId);
+        // FIX: Explicitly type the 't' parameter in the find method to resolve an inference issue where 't' was being treated as 'unknown'.
+        const tactic = combatState.enemy.tactics.actions.find((t: EnemyTactic) => t.id === action.tacticId);
         if(tactic && tactic.skillCheck) {
             addLog(tactic.description);
             const check = performSkillCheck(tactic.skillCheck.skill, tactic.skillCheck.dc);

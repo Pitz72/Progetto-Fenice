@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 // FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence, CharacterState, VisualTheme } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence, CharacterState, VisualTheme, PlayerStatusCondition } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -47,9 +47,12 @@ const migrateSaveData = (saveData: any): SaveFile => {
         console.warn(`Save file version (${saveData.saveVersion}) does not match game version (${SAVE_VERSION}). Trying to load anyway.`);
     }
 
-    // Crucial: JSON stringify/parse converts Sets to Arrays. We must convert it back.
+    // Crucial: JSON stringify/parse converts Sets to Arrays. We must convert them back.
     if (Array.isArray(saveData.gameStoreState.gameFlags)) {
         saveData.gameStoreState.gameFlags = new Set(saveData.gameStoreState.gameFlags);
+    }
+     if (Array.isArray(saveData.characterStoreState.status)) {
+        saveData.characterStoreState.status = new Set(saveData.characterStoreState.status);
     }
 
     return saveData as SaveFile;
@@ -541,8 +544,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                           case 'satiety': charState.restoreSatiety(effect.value as number); effectMessages.push(`Recuperi ${effect.value} sazietà.`); break;
                           case 'hydration': charState.restoreHydration(effect.value as number); effectMessages.push(`Recuperi ${effect.value} idratazione.`); break;
                           case 'cureStatus':
-                            if (charState.status === effect.value) {
-                                charState.setStatus(null);
+                            if (charState.status.has(effect.value as PlayerStatusCondition)) {
+                                charState.removeStatus(effect.value as PlayerStatusCondition);
                                 effectMessages.push(`Ti senti meglio. Lo stato ${effect.value} è svanito.`);
                             } else {
                                 effectMessages.push(`Non ha avuto alcun effetto...`);
@@ -923,7 +926,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   resolveEventChoice: (choiceIndex: number) => {
     const { activeEvent, addJournalEntry, advanceTime } = get();
-    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal, setStatus, boostAttribute } = useCharacterStore.getState();
+    const { addItem, removeItem, addXp, takeDamage, performSkillCheck, changeAlignment, heal, addStatus, boostAttribute } = useCharacterStore.getState();
     const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
 
     if (!activeEvent) return;
@@ -987,7 +990,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                message = textAl;
               break;
           case 'statusChange':
-              setStatus(result.value);
+              addStatus(result.value);
               const textStatus = `Sei ora in stato: ${result.value}.`;
               addJournalEntry({ text: textStatus, type: JournalEntryType.SYSTEM_WARNING });
               message = textStatus;
@@ -1239,7 +1242,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        // FIX: Explicitly typing the 't' parameter in the find method resolves the type inference issue where 't' would otherwise be 'unknown'.
+        // FIX: Explicitly typed 't' as EnemyTactic to resolve property access error.
         const tactic = combatState.availableTacticalActions.find(
           (t: EnemyTactic) => t.id === action.tacticId
         );
@@ -1495,13 +1498,17 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
               characterStoreState: characterStoreState,
           };
           
-          // Convert Set to Array for JSON compatibility
+          // Convert Sets to Arrays for JSON compatibility
           const serializableSaveFile = {
               ...saveFile,
               gameStoreState: {
                   ...saveFile.gameStoreState,
                   gameFlags: Array.from(saveFile.gameStoreState.gameFlags),
               },
+              characterStoreState: {
+                ...saveFile.characterStoreState,
+                status: Array.from(saveFile.characterStoreState.status as Set<any>),
+              }
           };
 
           localStorage.setItem(`tspc_save_slot_${slot}`, JSON.stringify(serializableSaveFile));

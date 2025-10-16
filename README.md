@@ -13,7 +13,7 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.8.5)
+### Caratteristiche Attuali (v0.8.4)
 
 Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting, Combattimento, Trama Principale e Cutscene Cinematiche) pienamente implementati e integrati.
 
@@ -55,9 +55,9 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri
 
 #### Meccaniche di Sopravvivenza Impegnative
 *   **Gestione Risorse Critica:** Statistiche di HP, Sazietà e Idratazione con tassi di consumo bilanciati che rendono la ricerca di cibo e acqua una priorità costante e pressante.
-*   **Sistema Temporale e Meteo Dinamico:** Un orologio di gioco e un sistema meteo che influenzano movimento, consumo di risorse e pericoli ambientali.
+*   **Sistema Temporale e Meteo Dinamico:** Un orologio di gioco e un sistema meteo che influenzano movimento, consumo di risorse e pericoli ambientali. L'interfaccia di gioco ora fornisce un **feedback dinamico e a colori** sugli effetti attuali del meteo, rendendo il suo impatto sul gameplay chiaro e immediato.
 *   **Rifugi Strategici:** Luoghi sicuri a visita singola che offrono riposo, ricerca di oggetti tramite skill check e crafting, trasformandoli in decisioni cruciali e irripetibili.
-*   **Sistema di Stati del Giocatore:** Il personaggio può subire stati negativi come `FERITO` (penalità alle abilità fisiche), `MALATO` (lenta perdita di HP) o `AVVELENATO` (perdita rapida di HP). Questi stati, causati da eventi o combattimenti, richiedono cure specifiche (come antidolorifici o antidoti), aggiungendo un ulteriore livello di gestione del rischio e dell'inventario.
+*   **Sistema di Stati del Giocatore:** Il personaggio può subire **stati multipli contemporaneamente** (es. essere sia `FERITO` che `AVVELENATO`), ognuno con le proprie penalità (`FERITO` peggiora le abilità fisiche, `MALATO` causa una lenta perdita di HP, `AVVELENATO` una perdita rapida). Questi stati, causati da eventi o combattimenti, richiedono cure specifiche (come antidolorifici o antidoti), aggiungendo un ulteriore livello di gestione del rischio e dell'inventario.
 
 #### Sistema di Eventi Stratificato
 Il mondo è vivo grazie a un sistema di incontri intelligente che garantisce varietà, coerenza narrativa e previene la ripetitività.

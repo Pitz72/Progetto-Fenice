@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
-import { GameState, Stat, PlayerStatusCondition } from '../types';
+import { GameState, Stat, PlayerStatusCondition, WeatherType } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import CanvasMap from './CanvasMap';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -25,15 +25,27 @@ const SurvivalPanel: React.FC = () => {
 
     const isCritical = (stat: Stat) => stat.current / stat.max <= 0.25;
 
-    const statusColor = status ? STATUS_COLORS[status] : undefined;
-
     return (
         <Panel title="SOPRAVVIVENZA">
             <div>
                 <div className={isCritical(hp) ? 'text-[var(--text-danger)] animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
                 <div className={isCritical(satiety) ? 'text-[var(--text-danger)] animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
                 <div className={isCritical(hydration) ? 'text-[var(--text-danger)] animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
-                <div style={{ color: statusColor }}>Status: {status || 'Normale'}</div>
+                <div>
+                    Status:
+                    {status.size > 0 ? (
+                        Array.from(status).map((s, index) => (
+                            <React.Fragment key={s}>
+                                <span style={{ color: STATUS_COLORS[s] }}>
+                                    {` ${s}`}
+                                </span>
+                                {index < Array.from(status).length - 1 ? ',' : ''}
+                            </React.Fragment>
+                        ))
+                    ) : (
+                        ' Normale'
+                    )}
+                </div>
             </div>
         </Panel>
     );
@@ -98,6 +110,20 @@ const InfoPanel: React.FC = () => {
     const weatherInfo = WEATHER_DATA[weather.type];
     const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
 
+    const getWeatherEffects = () => {
+        switch (weather.type) {
+            case WeatherType.PIOGGIA:
+                return { text: "Movimento rallentato", color: 'var(--text-accent)' };
+            case WeatherType.TEMPESTA:
+                return { text: "Mov. rallentato, +consumo", color: 'var(--text-danger)' };
+            case WeatherType.NEBBIA:
+                 return { text: "Visibilità ridotta", color: 'var(--text-secondary)' };
+            default:
+                return { text: "Nessun effetto", color: 'var(--text-primary)' };
+        }
+    };
+    const weatherEffects = getWeatherEffects();
+
     return (
         <Panel title="INFORMAZIONI">
             <div className="space-y-2">
@@ -120,7 +146,7 @@ const InfoPanel: React.FC = () => {
                          <div className="text-right">
                         </div>
                     </div>
-                     <div>effetti: Nessun effetto</div>
+                     <div style={{ color: weatherEffects.color }}>Effetti: {weatherEffects.text}</div>
                 </div>
             </div>
         </Panel>

@@ -413,7 +413,7 @@ export interface CharacterState {
     equippedWeapon: string | null;
     equippedArmor: string | null;
     alignment: Alignment;
-    status: PlayerStatusCondition | null;
+    status: Set<PlayerStatusCondition>;
     levelUpPending: boolean;
     knownRecipes: string[];
 
@@ -438,7 +438,8 @@ export interface CharacterState {
     restoreSatiety: (amount: number) => void;
     restoreHydration: (amount: number) => void;
     changeAlignment: (type: 'lena' | 'elian', amount: number) => void;
-    setStatus: (newStatus: PlayerStatusCondition | null) => void;
+    addStatus: (newStatus: PlayerStatusCondition) => void;
+    removeStatus: (statusToRemove: PlayerStatusCondition) => void;
     boostAttribute: (attribute: AttributeName, amount: number) => void;
     learnRecipe: (recipeId: string) => void;
     getPlayerAC: () => number;

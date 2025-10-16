@@ -55,7 +55,8 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     equippedWeapon: null,
     equippedArmor: null,
     alignment: { ...initialAlignment },
-    status: null,
+    // FIX: Explicitly typed the Set to ensure correct type inference downstream.
+    status: new Set<PlayerStatusCondition>(),
     levelUpPending: false,
     knownRecipes: [],
 
@@ -72,7 +73,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             skills: { ...initialSkills },
             alignment: { ...initialAlignment },
-            status: null,
+            status: new Set(),
             levelUpPending: false,
             inventory: [{ itemId: 'carillon_annerito', quantity: 1 }],
             equippedWeapon: null,
@@ -125,7 +126,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         
         // --- Status Penalty ---
         let statusPenalty = 0;
-        if (status === 'FERITO') {
+        if (status.has('FERITO')) {
             const physicalSkills: SkillName[] = ['atletica', 'acrobazia', 'furtivita', 'rapiditaDiMano'];
             if (physicalSkills.includes(skill)) {
                 statusPenalty = -2;
@@ -320,12 +321,19 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             
             // Status-based damage
             let hpLossFromStatus = 0;
-            if (state.status === 'MALATO') hpLossFromStatus = (minutes / 60) * 0.5; // Slow drain
-            if (state.status === 'AVVELENATO') hpLossFromStatus = (minutes / 60) * 2; // Fast drain
-
-            if (hpLossFromStatus > 0) {
-                 useGameStore.getState().addJournalEntry({
-                    text: `Il tuo stato di ${state.status} ti indebolisce... (-${Math.round(hpLossFromStatus)} HP)`,
+            if (state.status.has('MALATO')) {
+                const damage = (minutes / 60) * 0.5; // Slow drain
+                hpLossFromStatus += damage;
+                useGameStore.getState().addJournalEntry({
+                    text: `Il tuo stato di MALATO ti indebolisce... (-${Math.ceil(damage)} HP)`,
+                    type: JournalEntryType.COMBAT
+                });
+            }
+            if (state.status.has('AVVELENATO')) {
+                const damage = (minutes / 60) * 2; // Fast drain
+                hpLossFromStatus += damage;
+                useGameStore.getState().addJournalEntry({
+                    text: `Il tuo stato di AVVELENATO ti consuma... (-${Math.ceil(damage)} HP)`,
                     type: JournalEntryType.COMBAT
                 });
             }
@@ -390,7 +398,14 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
              addJournalEntry({ text: "Il tuo percorso è ora più equilibrato. I bonus di allineamento sono svaniti.", type: JournalEntryType.SYSTEM_WARNING });
         }
     },
-    setStatus: (newStatus) => set({ status: newStatus }),
+    addStatus: (newStatus) => set(state => ({
+        status: new Set(state.status).add(newStatus)
+    })),
+    removeStatus: (statusToRemove) => set(state => {
+        const newStatus = new Set(state.status);
+        newStatus.delete(statusToRemove);
+        return { status: newStatus };
+    }),
     boostAttribute: (attribute, amount) => {
         set(state => ({
             attributes: {

@@ -216,6 +216,8 @@ export interface GameStoreState {
   refugeJustSearched: boolean;
   currentBiome: string;
   lastRestTime: GameTime | null;
+  lastEncounterTime: GameTime | null;
+  lastLoreEventDay: number | null;
   lootedRefuges: Position[];
   visitedRefuges: Position[];
   activeEvent: GameEvent | null;

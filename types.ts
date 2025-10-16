@@ -245,14 +245,13 @@ export interface GameStoreState {
   confirmRefugeMenuSelection: () => void;
   searchRefuge: () => void;
   clearRefugeActionMessage: () => void;
-  triggerRandomEvent: () => void;
+  triggerEncounter: () => void;
   resolveEventChoice: (choiceIndex: number) => void;
   dismissEventResolution: () => void;
   toggleCrafting: () => void;
   navigateCraftingMenu: (direction: number) => void;
   performCrafting: () => void;
   openLevelUpScreen: () => void;
-  triggerRandomCombat: () => void;
   startCombat: (enemyId: string) => void;
   endCombat: (result: 'win' | 'flee' | 'lose') => void;
   playerCombatAction: (

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-// FIX: Added EnemyTactic to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic } from '../types';
+// FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { useEventDatabaseStore } from '../data/eventDatabase';
 import { useRecipeDatabaseStore } from '../data/recipeDatabase';
 import { useEnemyDatabaseStore } from '../data/enemyDatabase';
-import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS } from '../constants';
+import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS, JOURNAL_ENTRY_COLORS } from '../constants';
 import * as N from '../data/combatNarrative';
 
 // --- Constants for Game Logic ---
@@ -152,7 +152,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         currentBiome: 'S',
         lastRestTime: null,
         lastEncounterTime: null,
-        lastLoreEventDay: null,
+        lastLoreEventDay: 0, // Set to 0 to allow lore event on day 1
         lootedRefuges: [],
         visitedRefuges: [],
         activeEvent: null,
@@ -192,7 +192,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, triggerRandomEvent, triggerRandomCombat } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -280,11 +280,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     useCharacterStore.getState().gainExplorationXp(); // Gain XP for moving
 
     // Event & Combat Trigger Logic
-    triggerRandomEvent();
-    if (get().activeEvent) return;
-    
-    triggerRandomCombat();
-    if (get().activeCombat) return;
+    get().triggerEncounter();
+    if (get().activeEvent || get().activeCombat) return;
 
     if (Math.random() < 0.15) {
         const { weather: current_weather, currentBiome } = get();
@@ -621,84 +618,113 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     }
   },
 
-  triggerRandomEvent: () => {
-    const { gameTime, lastEncounterTime, currentBiome, eventHistory, lastLoreEventDay } = get();
-    
-    // --- PACING: Global Cooldown Check ---
-    if (lastEncounterTime) {
-        const currentTimeInMinutes = timeToMinutes(gameTime);
-        const lastEncounterTimeInMinutes = timeToMinutes(lastEncounterTime);
-        if (currentTimeInMinutes - lastEncounterTimeInMinutes < GLOBAL_ENCOUNTER_COOLDOWN_MINUTES) {
-            return; // Cooldown is active
-        }
-    }
-
-    if (Math.random() > EVENT_TRIGGER_PROBABILITY) return;
-
-    const { biomeEvents, globalEncounters, loreEvents } = useEventDatabaseStore.getState();
+  triggerEncounter: () => {
+    const { 
+        gameTime, 
+        lastEncounterTime, 
+        currentBiome, 
+        eventHistory, 
+        lastLoreEventDay,
+        startCombat 
+    } = get();
 
     const biomeCharToName: Record<string, string> = {
         '.': 'Pianura', 'F': 'Foresta', 'V': 'Villaggio', 'C': 'Città', '~': 'Acqua'
     };
-    const currentBiomeName = biomeCharToName[currentBiome] || currentBiome;
+    const currentBiomeName = biomeCharToName[currentBiome] || 'Global';
 
-    // --- PACING: LORE EVENT TRIGGER LOGIC ---
-    const LORE_EVENT_PROBABILITY = 0.15; // 15% chance to trigger a lore event if conditions are met
-    if ((lastLoreEventDay === null || gameTime.day > lastLoreEventDay) && Math.random() < LORE_EVENT_PROBABILITY) {
-      const possibleLoreEvents = loreEvents.filter(event => 
-          event.biomes.includes(currentBiomeName) &&
-          (!event.isUnique || !eventHistory.includes(event.id))
-      );
+    // --- PRIORITY 1: LORE EVENTS ---
+    // Can a lore event trigger today?
+    if (gameTime.day > (lastLoreEventDay || 0)) {
+        const { loreEvents } = useEventDatabaseStore.getState();
+        
+        // FIX: Explicitly type 'event' as GameEvent to ensure correct type inference.
+        const possibleLoreEvents = loreEvents.filter((event: GameEvent) => 
+            (event.biomes.includes(currentBiomeName) || event.biomes.includes("Global")) &&
+            !eventHistory.includes(event.id)
+        );
 
-      if (possibleLoreEvents.length > 0) {
-        const eventToTrigger = possibleLoreEvents[Math.floor(Math.random() * possibleLoreEvents.length)];
-        set({
-            activeEvent: eventToTrigger,
-            gameState: GameState.EVENT_SCREEN,
-            eventResolutionText: null,
-            lastEncounterTime: get().gameTime,
-            lastLoreEventDay: get().gameTime.day,
-        });
-        get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
-        return; // Lore event triggered, exit function
-      }
+        if (possibleLoreEvents.length > 0) {
+            const eventToTrigger = getRandom(possibleLoreEvents);
+            set({
+                activeEvent: eventToTrigger,
+                gameState: GameState.EVENT_SCREEN,
+                eventResolutionText: null,
+                lastEncounterTime: gameTime,
+                lastLoreEventDay: gameTime.day,
+            });
+            get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
+            return; // Lore event triggered, exit.
+        }
     }
-    
-    // --- STANDARD EVENT TRIGGER LOGIC (Fallback) ---
-    // Filter biome-specific events
-    const possibleBiomeEvents = biomeEvents.filter(event => 
-        event.biomes.includes(currentBiomeName) &&
-        (!event.isUnique || !eventHistory.includes(event.id))
-    );
 
-    // Filter global encounters
-    const possibleGlobalEncounters = globalEncounters.filter(event => 
-        !event.isUnique || !eventHistory.includes(event.id)
-    );
-    
-    const hasBiomeEvents = possibleBiomeEvents.length > 0;
-    const hasGlobalEncounters = possibleGlobalEncounters.length > 0;
+    // --- PRIORITY 2: GENERAL ENCOUNTERS (WITH COOLDOWN) ---
+    const isPlains = currentBiome === '.';
+    const cooldownMinutes = isPlains ? 240 : 90; // 4 hours for plains, 1.5 hours for others.
 
-    if (!hasBiomeEvents && !hasGlobalEncounters) return;
-
-    let eventToTrigger: GameEvent | null = null;
-    
-    // Decide which pool to draw from. 50% chance for a biome event if available.
-    const roll = Math.random();
-    if (hasBiomeEvents && (!hasGlobalEncounters || roll < 0.50)) {
-        eventToTrigger = possibleBiomeEvents[Math.floor(Math.random() * possibleBiomeEvents.length)];
-    } else if (hasGlobalEncounters) {
-        eventToTrigger = possibleGlobalEncounters[Math.floor(Math.random() * possibleGlobalEncounters.length)];
+    if (lastEncounterTime) {
+        const currentTimeInMinutes = timeToMinutes(gameTime);
+        const lastEncounterTimeInMinutes = timeToMinutes(lastEncounterTime);
+        if (currentTimeInMinutes - lastEncounterTimeInMinutes < cooldownMinutes) {
+            return; // Cooldown is active.
+        }
     }
+
+    // Roll to see IF an encounter happens at all
+    const ENCOUNTER_PROBABILITY = 0.20;
+    if (Math.random() > ENCOUNTER_PROBABILITY) {
+        return; // No encounter this time.
+    }
+
+    // If an encounter happens, decide what kind
+    const COMBAT_CHANCE = 0.35;
     
-    if (eventToTrigger) {
-        set({
-            activeEvent: eventToTrigger,
-            gameState: GameState.EVENT_SCREEN,
-            eventResolutionText: null,
-            lastEncounterTime: get().gameTime,
-        });
-        get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
+    if (Math.random() > COMBAT_CHANCE) {
+        // --- NARRATIVE EVENT ---
+        const { biomeEvents, globalEncounters } = useEventDatabaseStore.getState();
+        
+        const allPossibleEvents = [
+            // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
+            ...biomeEvents.filter((e: GameEvent) => e.biomes.includes(currentBiomeName)),
+            ...globalEncounters
+        ];
+
+        // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
+        const unseenUniqueEvents = allPossibleEvents.filter((e: GameEvent) => e.isUnique && !eventHistory.includes(e.id));
+        // FIX: Explicitly type 'e' as GameEvent to ensure correct type inference.
+        const repeatableEvents = allPossibleEvents.filter((e: GameEvent) => !e.isUnique);
+
+        let eventToTrigger: GameEvent | null = null;
+        
+        // Prioritize unique events to ensure they are all seen eventually
+        if (unseenUniqueEvents.length > 0) {
+            eventToTrigger = getRandom(unseenUniqueEvents);
+        } else if (repeatableEvents.length > 0) {
+            eventToTrigger = getRandom(repeatableEvents);
+        }
+
+        if (eventToTrigger) {
+            set({
+                activeEvent: eventToTrigger,
+                gameState: GameState.EVENT_SCREEN,
+                eventResolutionText: null,
+                lastEncounterTime: gameTime,
+            });
+            get().addJournalEntry({ text: `EVENTO: ${eventToTrigger.title}`, type: JournalEntryType.EVENT });
+        }
+    } else {
+        // --- COMBAT ENCOUNTER ---
+        if (currentBiome === 'R' || currentBiome === 'S') return; // No combat in safe zones
+
+        const enemyDb = useEnemyDatabaseStore.getState().enemyDatabase;
+        const possibleEnemies = Object.values(enemyDb).filter((enemy: Enemy) => 
+            enemy.biomes.includes("Global") || (currentBiomeName && enemy.biomes.includes(currentBiomeName))
+        );
+
+        if (possibleEnemies.length > 0) {
+            const enemy = getRandom(possibleEnemies);
+            startCombat(enemy.id); // This already sets lastEncounterTime
+        }
     }
   },
 
@@ -806,4 +832,298 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
               break;
           case 'heal':
               heal(result.value);
-              const textHeal = `Recuperi ${result.value} HP
+              const textHeal = `Recuperi ${result.value} HP.`;
+              addJournalEntry({ text: textHeal, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+              message = textHeal;
+              break;
+          case 'special':
+              const textSpecial = result.text || `Si è verificato un evento speciale.`;
+              addJournalEntry({ text: textSpecial, type: JournalEntryType.EVENT });
+              message = textSpecial;
+              break;
+      }
+      return message;
+    };
+
+    for (const outcome of choice.outcomes) {
+        if (outcome.type === 'direct' && outcome.results) {
+            outcome.results.forEach(result => {
+                const msg = applyResult(result);
+                if (msg) resolutionSummary.push(msg);
+            });
+        } else if (outcome.type === 'skillCheck' && outcome.skill && outcome.dc !== undefined) {
+            const skillCheck = performSkillCheck(outcome.skill, outcome.dc);
+            let checkText = `Prova di ${skillCheck.skill} (CD ${skillCheck.dc}): ${skillCheck.roll} (d20) + ${skillCheck.bonus} (mod) = ${skillCheck.total}. `;
+
+            if (skillCheck.success) {
+                checkText += "SUCCESSO. ";
+                addJournalEntry({ text: checkText, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+                if (outcome.successText) resolutionSummary.push(outcome.successText);
+                if (outcome.success) {
+                    outcome.success.forEach(result => {
+                        const msg = applyResult(result);
+                        if (msg) resolutionSummary.push(msg);
+                    });
+                }
+            } else {
+                checkText += "FALLIMENTO. ";
+                addJournalEntry({ text: checkText, type: JournalEntryType.SKILL_CHECK_FAILURE });
+                if (outcome.failureText) resolutionSummary.push(outcome.failureText);
+                if (outcome.failure) {
+                    outcome.failure.forEach(result => {
+                        const msg = applyResult(result);
+                        if (msg) resolutionSummary.push(msg);
+                    });
+                }
+            }
+        }
+    }
+    set({ eventResolutionText: resolutionSummary.join('\n') });
+  },
+
+  toggleCrafting: () => {
+    set(state => {
+      if (state.isInventoryOpen) return {};
+      return { isCraftingOpen: !state.isCraftingOpen, craftingMenuState: { selectedIndex: 0 }};
+    });
+  },
+
+  navigateCraftingMenu: (direction: number) => {
+    const knownRecipes = useCharacterStore.getState().knownRecipes;
+    const allRecipes = useRecipeDatabaseStore.getState().recipes;
+    const displayableRecipes = allRecipes.filter(r => knownRecipes.includes(r.id));
+    if (displayableRecipes.length === 0) return;
+
+    set(state => {
+      let newIndex = state.craftingMenuState.selectedIndex + direction;
+      if (newIndex < 0) newIndex = displayableRecipes.length - 1;
+      if (newIndex >= displayableRecipes.length) newIndex = 0;
+      return { craftingMenuState: { selectedIndex: newIndex } };
+    });
+  },
+  
+  performCrafting: () => {
+    const { craftingMenuState, addJournalEntry, advanceTime } = get();
+    const { inventory, knownRecipes, performSkillCheck, removeItem, addItem } = useCharacterStore.getState();
+    const allRecipes = useRecipeDatabaseStore.getState().recipes;
+    const itemDatabase = useItemDatabaseStore.getState().itemDatabase;
+
+    const displayableRecipes = allRecipes.filter(r => knownRecipes.includes(r.id));
+    const recipe = displayableRecipes[craftingMenuState.selectedIndex];
+    if (!recipe) return;
+
+    const hasIngredients = recipe.ingredients.every(ing => {
+        const playerItem = inventory.find(i => i.itemId === ing.itemId);
+        return playerItem && playerItem.quantity >= ing.quantity;
+    });
+
+    if (!hasIngredients) {
+        addJournalEntry({ text: "Ingredienti insufficienti.", type: JournalEntryType.ACTION_FAILURE });
+        return;
+    }
+
+    advanceTime(recipe.timeCost, true);
+    const skillCheck = performSkillCheck(recipe.skill, recipe.dc);
+    let journalText = `Tenti di creare: ${recipe.name}. Prova di ${skillCheck.skill} (CD ${skillCheck.dc}): ${skillCheck.roll} + ${skillCheck.bonus} = ${skillCheck.total}. `;
+    
+    if (skillCheck.success) {
+        journalText += "SUCCESSO.";
+        recipe.ingredients.forEach(ing => removeItem(ing.itemId, ing.quantity));
+        addItem(recipe.result.itemId, recipe.result.quantity);
+        const resultItem = itemDatabase[recipe.result.itemId];
+        journalText += ` Hai creato: ${resultItem.name} x${recipe.result.quantity}.`;
+        addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_SUCCESS });
+    } else {
+        journalText += "FALLIMENTO.";
+        let lostItemsText: string[] = [];
+        recipe.ingredients.forEach(ing => {
+            const quantityToRemove = Math.max(1, Math.floor(ing.quantity / 2));
+            removeItem(ing.itemId, quantityToRemove);
+            const item = itemDatabase[ing.itemId];
+            lostItemsText.push(`${item.name} x${quantityToRemove}`);
+        });
+        journalText += ` Hai sprecato parte dei materiali: ${lostItemsText.join(', ')}.`;
+        addJournalEntry({ text: journalText, type: JournalEntryType.SKILL_CHECK_FAILURE });
+    }
+  },
+
+  openLevelUpScreen: () => {
+      if (useCharacterStore.getState().levelUpPending) {
+          set({ gameState: GameState.LEVEL_UP_SCREEN });
+      } else {
+          get().addJournalEntry({ text: "Non hai abbastanza XP per salire di livello.", type: JournalEntryType.SYSTEM_WARNING });
+      }
+  },
+
+  startCombat: (enemyId: string) => {
+    const enemyDb = useEnemyDatabaseStore.getState().enemyDatabase;
+    const enemy = enemyDb[enemyId];
+    if (!enemy) return;
+
+    const combatState: CombatState = {
+        enemy: { ...enemy },
+        enemyHp: { current: enemy.hp, max: enemy.hp },
+        playerTurn: true,
+        log: [{ text: `Sei stato attaccato da un ${enemy.name}!`, color: '#facc15' }],
+        revealedTactics: false,
+        availableTacticalActions: [],
+        victory: false
+    };
+
+    set({ activeCombat: combatState, gameState: GameState.COMBAT, lastEncounterTime: get().gameTime });
+  },
+
+  endCombat: (result) => {
+    const { addJournalEntry } = get();
+    if (result === 'flee') {
+        addJournalEntry({ text: "Sei fuggito dal combattimento.", type: JournalEntryType.NARRATIVE });
+    } else if (result === 'lose') {
+        addJournalEntry({ text: "Sei stato sconfitto...", type: JournalEntryType.SYSTEM_ERROR });
+    }
+    set({ activeCombat: null, gameState: GameState.IN_GAME });
+  },
+
+  cleanupCombat: () => {
+    set({ activeCombat: null, gameState: GameState.IN_GAME });
+  },
+
+  playerCombatAction: (action) => {
+    const combatState = get().activeCombat;
+    if (!combatState || !combatState.playerTurn || combatState.victory) return;
+
+    const { getPlayerAC, performSkillCheck, takeDamage, getAttributeModifier, equippedWeapon, removeItem, addItem, heal, addXp } = useCharacterStore.getState();
+    const itemDb = useItemDatabaseStore.getState().itemDatabase;
+    
+    let newLog = [...combatState.log];
+    let newEnemyHp = { ...combatState.enemyHp };
+    let newPlayerTurn = false;
+    let victory = false;
+    let revealedTactics = combatState.revealedTactics;
+    let availableTacticalActions = [...combatState.availableTacticalActions];
+    
+    const addLog = (text: string, color?: string) => newLog.push({ text, color });
+
+    switch (action.type) {
+      case 'attack': {
+        addLog(getRandom(N.PLAYER_ATTACK_DESCRIPTIONS));
+        const attackRoll = Math.floor(Math.random() * 20) + 1;
+        const weapon = equippedWeapon ? itemDb[equippedWeapon] : null;
+        const attackBonus = getAttributeModifier(weapon?.weaponType === 'ranged' ? 'des' : 'for');
+        const totalAttack = attackRoll + attackBonus;
+        addLog(`Tiro per colpire: ${attackRoll} + ${attackBonus} = ${totalAttack} vs CA ${combatState.enemy.ac}`, '#a3a3a3');
+
+        if (totalAttack >= combatState.enemy.ac) {
+            const baseDamage = weapon?.damage || 2;
+            const damage = baseDamage + getAttributeModifier(weapon?.weaponType === 'ranged' ? 'des' : 'for') + Math.floor(Math.random() * 4) - 2;
+            newEnemyHp.current = Math.max(0, newEnemyHp.current - damage);
+            addLog(`${getRandom(N.PLAYER_HIT_DESCRIPTIONS)} Infliggi ${damage} danni.`, '#60BF77');
+        } else {
+            addLog(getRandom(N.PLAYER_MISS_DESCRIPTIONS), '#ff8c00');
+        }
+        break;
+      }
+      case 'analyze': {
+        addLog("Passi il turno a studiare il nemico...");
+        const check = performSkillCheck('percezione', combatState.enemy.tactics.revealDc);
+        addLog(`Prova di Percezione (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`);
+        if (check.success) {
+            addLog("SUCCESSO! " + combatState.enemy.tactics.description, '#38bdf8');
+            revealedTactics = true;
+            availableTacticalActions = combatState.enemy.tactics.actions;
+        } else {
+            addLog("FALLIMENTO. Non noti nulla di particolare.", '#ff8c00');
+        }
+        break;
+      }
+      case 'flee': {
+        addLog("Tenti di fuggire...");
+        const check = performSkillCheck('furtivita', 12);
+        addLog(`Prova di Furtività (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`);
+        if (check.success) {
+            addLog("Riesci a dileguarti nell'ombra!", '#60BF77');
+            get().endCombat('flee');
+            return;
+        } else {
+            addLog("FALLIMENTO. Il nemico ti blocca la strada e approfitta della tua distrazione!", '#ff8c00');
+        }
+        break;
+      }
+      case 'tactic': {
+        const tactic = combatState.enemy.tactics.actions.find(t => t.id === action.tacticId);
+        if(tactic && tactic.skillCheck) {
+            addLog(tactic.description);
+            const check = performSkillCheck(tactic.skillCheck.skill, tactic.skillCheck.dc);
+            addLog(`Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`);
+            if (check.success) {
+                const bonusDamage = 15;
+                addLog(`SUCCESSO! Il nemico è sbilanciato e vulnerabile! Infliggi ${bonusDamage} danni extra.`, '#38bdf8');
+                newEnemyHp.current = Math.max(0, newEnemyHp.current - bonusDamage);
+            } else {
+                addLog("FALLIMENTO! La tua mossa non riesce.", '#ff8c00');
+            }
+        }
+        break;
+      }
+      case 'use_item': {
+          const item = itemDb[action.itemId];
+          if(item) {
+              addLog(`Usi ${item.name}...`);
+              removeItem(action.itemId, 1);
+              if(item.effects) {
+                  item.effects.forEach(effect => {
+                      if (effect.type === 'heal') {
+                          heal(effect.value as number);
+                          addLog(`Recuperi ${effect.value} HP.`, '#60BF77');
+                      }
+                  });
+              }
+          }
+        break;
+      }
+    }
+    
+    if (newEnemyHp.current <= 0) {
+      addLog(getRandom(N.ENEMY_DEATH_DESCRIPTIONS).replace('{enemy}', combatState.enemy.name), '#f59e0b');
+      addXp(combatState.enemy.xp);
+      addLog(`Hai guadagnato ${combatState.enemy.xp} XP.`, JOURNAL_ENTRY_COLORS[JournalEntryType.XP_GAIN]);
+      victory = true;
+      newPlayerTurn = false;
+    }
+
+    set({ activeCombat: { ...combatState, log: newLog, enemyHp: newEnemyHp, playerTurn: newPlayerTurn, victory, revealedTactics, availableTacticalActions } });
+
+    if (!victory && !get().activeCombat?.playerTurn) {
+        setTimeout(() => {
+            const currentCombatState = get().activeCombat;
+            if(!currentCombatState || currentCombatState.victory) return;
+
+            const enemy = currentCombatState.enemy;
+            let enemyLog = [...currentCombatState.log];
+            const addEnemyLog = (text: string, color?: string) => enemyLog.push({ text, color });
+
+            addEnemyLog(getRandom(N.ENEMY_ATTACK_DESCRIPTIONS).replace('{enemy}', enemy.name));
+            const enemyAttackRoll = Math.floor(Math.random() * 20) + 1;
+            const totalEnemyAttack = enemyAttackRoll + enemy.attack.bonus;
+            const playerAC = getPlayerAC();
+            addEnemyLog(`Tiro per colpire del nemico: ${enemyAttackRoll} + ${enemy.attack.bonus} = ${totalEnemyAttack} vs CA ${playerAC}`, '#a3a3a3');
+
+            if (totalEnemyAttack >= playerAC) {
+                const damage = enemy.attack.damage + Math.floor(Math.random() * 3) - 1;
+                takeDamage(damage);
+                addEnemyLog(`${getRandom(N.ENEMY_HIT_DESCRIPTIONS)} Subisci ${damage} danni.`, '#ef4444');
+            } else {
+                addEnemyLog(getRandom(N.ENEMY_MISS_DESCRIPTIONS), '#60BF77');
+            }
+
+            if (useCharacterStore.getState().hp.current <= 0) {
+                addEnemyLog("Sei stato sconfitto...", '#ff0000');
+                get().endCombat('lose');
+            } else {
+                 set(state => ({
+                    activeCombat: { ...state.activeCombat!, log: enemyLog, playerTurn: true }
+                }));
+            }
+        }, 1500);
+    }
+  },
+}));

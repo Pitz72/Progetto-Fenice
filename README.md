@@ -13,7 +13,7 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.7.4)
+### Caratteristiche Attuali (v0.7.5)
 
 Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting e Combattimento) pienamente implementati e integrati.
 
@@ -30,10 +30,12 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri
 *   **Sistema di Stati del Giocatore:** Il personaggio può subire stati negativi come `FERITO` (penalità alle abilità fisiche), `MALATO` (lenta perdita di HP) o `AVVELENATO` (perdita rapida di HP). Questi stati, causati da eventi o combattimenti, richiedono cure specifiche (come antidolorifici o antidoti), aggiungendo un ulteriore livello di gestione del rischio e dell'inventario.
 
 #### Sistema di Eventi Stratificato
-Il mondo è vivo grazie a un sistema di eventi a tre livelli che garantisce varietà e rigiocabilità:
-*   **Eventi di Bioma:** Ogni area ha un set dedicato di incontri narrativi a tema.
-*   **Incontri Globali:** Sfide di sopravvivenza e combattimenti semplificati che possono verificarsi ovunque, mantenendo alta la tensione.
-*   **Eventi Lore:** Incontri rari e unici che approfondiscono la trama e il conflitto interiore del protagonista.
+Il mondo è vivo grazie a un sistema di incontri intelligente che garantisce varietà, coerenza narrativa e previene la ripetitività.
+
+*   **Gestore di Incontri Intelligente:** Un sistema centralizzato gestisce tutti gli eventi e i combattimenti con una chiara gerarchia di priorità per migliorare il ritmo di gioco.
+*   **Priorità agli Eventi di Trama (Lore):** Il sistema garantisce l'attivazione di **un evento di trama al giorno**, assicurando che il giocatore viva l'intera progressione narrativa senza mancare momenti cruciali.
+*   **Cooldown Dinamico:** Per evitare la ripetitività, dopo ogni incontro si attiva un periodo di "tranquillità". Questo cooldown è più lungo nelle vaste pianure (**4 ore di gioco**) e più breve nei biomi densi come foreste e città (**90 minuti**), rendendo l'esplorazione più strategica.
+*   **Progressione Garantita:** Il sistema privilegia l'attivazione di **eventi unici non ancora visti**, assicurando una costante sensazione di scoperta. Gli eventi ripetibili e i combattimenti si attivano solo quando non ci sono nuovi contenuti narrativi da presentare.
 
 #### Sviluppo del Personaggio e Scelte Morali
 *   **Progressione tramite XP:** I Punti Esperienza si guadagnano da ogni azione: esplorare, superare eventi, vincere combattimenti.

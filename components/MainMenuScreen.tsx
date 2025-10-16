@@ -72,7 +72,7 @@ const MainMenuScreen: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
-      <div className="mb-24 text-green-400" style={{ textShadow: '0 0 8px rgba(110, 231, 183, 0.4)'}}>
+      <div className="mb-24 text-[var(--text-primary)]" style={{ textShadow: '0 0 8px var(--shadow-primary)'}}>
           <h2 className="text-4xl tracking-widest">THE SAFE PLACE CHRONICLES</h2>
           <h1 className="text-9xl font-black leading-none">THE ECHO</h1>
           <p className="text-2xl leading-none -mt-4">OF THE</p>
@@ -87,7 +87,7 @@ const MainMenuScreen: React.FC = () => {
             <div
               key={item}
               className={`px-4 py-1 transition-colors duration-100 ${
-                isSelected ? 'bg-green-400 text-black' : 'bg-transparent text-green-400'
+                isSelected ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : 'bg-transparent text-[var(--text-primary)]'
               }`}
             >
               {item}
@@ -96,7 +96,7 @@ const MainMenuScreen: React.FC = () => {
         })}
       </div>
       <div className="mt-auto pb-4">
-        <p className="text-xl text-green-400/70">
+        <p className="text-xl text-[var(--text-primary)]/70">
             (C) 2025 Runtime Radio - gioco di ispirazione retrocomputazionale realizzato tramite supporto LLM
         </p>
       </div>

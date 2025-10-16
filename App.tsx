@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useGameStore } from './store/gameStore';
 import { useCharacterStore } from './store/characterStore';
-import { GameState } from './types';
+import { GameState, VisualTheme } from './types';
 import { useGameScale } from './hooks/useGameScale';
 import BootScreen from './components/BootScreen';
 import MainMenuScreen from './components/MainMenuScreen';
@@ -30,6 +30,7 @@ import SaveLoadScreen from './components/SaveLoadScreen';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
+  const setVisualTheme = useGameStore((state) => state.setVisualTheme);
   const isInventoryOpen = useGameStore((state) => state.isInventoryOpen);
   const isInRefuge = useGameStore((state) => state.isInRefuge);
   const isCraftingOpen = useGameStore((state) => state.isCraftingOpen);
@@ -44,6 +45,14 @@ const App: React.FC = () => {
   const { loadDatabase: loadMainQuestDatabase, isLoaded: mainQuestLoaded } = useMainQuestDatabaseStore();
   const { loadDatabase: loadCutsceneDatabase, isLoaded: cutscenesLoaded } = useCutsceneDatabaseStore();
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('tspc_visual_theme') as VisualTheme | null;
+    if (savedTheme) {
+      setVisualTheme(savedTheme);
+    } else {
+      setVisualTheme('standard'); // Imposta il tema di default se non ce n'è uno salvato
+    }
+  }, [setVisualTheme]);
 
   useEffect(() => {
     loadItemDatabase();
@@ -123,11 +132,10 @@ const App: React.FC = () => {
       {/* Il Monitor Virtuale */}
       <div 
         id="game-container" 
-        className="bg-black text-green-400 overflow-hidden"
+        className="bg-[var(--bg-primary)] overflow-hidden"
         style={{ 
           width: '1920px', 
           height: '1080px',
-          border: '2px solid rgba(110, 231, 183, 0.2)',
           ...scaleStyle
         }}
       >

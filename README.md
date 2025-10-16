@@ -17,6 +17,12 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 
 Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting, Combattimento, Trama Principale e Cutscene Cinematiche) pienamente implementati e integrati.
 
+#### Sistema di Temi Visivi Dinamici
+*   **Personalizzazione Estetica:** Dalla schermata delle Opzioni, il giocatore può scegliere tra diversi stili visivi per personalizzare l'atmosfera del gioco. La scelta viene salvata e mantenuta tra le sessioni.
+*   **Tema Standard:** L'esperienza di default, con un'estetica pulita che richiama i computer degli anni '80, caratterizzata da testo verde brillante su sfondo nero.
+*   **Tema CRT Fosfori Verdi:** Una simulazione ad alta fedeltà di un monitor a tubo catodico d'epoca. Questo tema applica un filtro globale che introduce effetti realistici come **scanline animate** che scorrono sullo schermo, un **effetto di persistenza del fosforo** (glow e ghosting), e una sottile **instabilità dell'immagine** (vignette, flicker e text wobble) per un'immersione totale.
+*   **Tema Alto Contrasto:** Un'opzione focalizzata sull'accessibilità, che utilizza testo bianco puro su sfondo nero puro per garantire la massima leggibilità possibile.
+
 #### Missione Principale ("Main Quest") Narrativa
 *   **Un "Filo di Arianna" Narrativo:** Il gioco ora presenta una trama principale completa in 12 capitoli che fornisce una spina dorsale narrativa all'esperienza di sopravvivenza, trasformandola in un viaggio alla scoperta della verità sul passato del protagonista.
 *   **Motore della Storia:** Un "Motore della Storia" invisibile guida la trama. La storia progredisce automaticamente quando il giocatore soddisfa condizioni specifiche (trigger) legate alle sue azioni.

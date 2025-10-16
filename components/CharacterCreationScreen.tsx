@@ -77,9 +77,9 @@ const CharacterCreationScreen: React.FC = () => {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">
       <h1 className="text-5xl md:text-6xl mb-8 text-center">═══ CREAZIONE PERSONAGGIO ═══</h1>
-      <p className="text-2xl md:text-3xl mb-12 text-center">Generazione statistiche in corso...</p>
+      <p className="text-2xl md:text-3xl mb-12 text-center text-[var(--text-secondary)]">Generazione statistiche in corso...</p>
       
-      <div className="w-full max-w-2xl text-4xl space-y-4 border-2 border-green-400/50 p-8">
+      <div className="w-full max-w-2xl text-4xl space-y-4 border-2 border-[var(--border-primary)] p-8">
         {ATTRIBUTES.map((attr) => {
           const label = ATTRIBUTE_LABELS[attr].padEnd(12, ' ');
           let value: string | number = '...';
@@ -105,7 +105,7 @@ const CharacterCreationScreen: React.FC = () => {
         <div className="mt-12 text-3xl text-center">
             <p className="animate-pulse">
                 Creazione completata. [Premi INVIO per iniziare l'avventura]
-                {cursorVisible && <span className="bg-green-400 w-5 h-7 inline-block ml-2"></span>}
+                {cursorVisible && <span className="bg-[var(--highlight-bg)] w-5 h-7 inline-block ml-2"></span>}
             </p>
         </div>
       )}

@@ -89,9 +89,9 @@ const CutsceneScreen: React.FC = () => {
     return (
         <div className="absolute inset-0 bg-black flex items-center justify-center p-8">
             <div className="w-full max-w-6xl h-full flex flex-col justify-center">
-                <div className="border-y-4 border-double border-green-400/50 py-8">
+                <div className="border-y-4 border-double border-[var(--border-primary)] py-8">
                     <pre className="whitespace-pre-wrap text-4xl leading-relaxed text-center">
-                        {displayedText}{isTyping && <span className="bg-green-400 w-5 h-8 inline-block animate-pulse ml-1"></span>}
+                        {displayedText}{isTyping && <span className="bg-[var(--text-primary)] w-5 h-8 inline-block animate-pulse ml-1"></span>}
                     </pre>
                 </div>
 

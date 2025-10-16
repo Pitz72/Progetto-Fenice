@@ -57,10 +57,10 @@ const InstructionsScreen: React.FC = () => {
       <h1 className="text-5xl md:text-6xl mb-4 text-center">ISTRUZIONI</h1>
       <div 
         ref={textContainerRef}
-        className="w-full h-[70%] border-2 border-green-400 p-4 overflow-y-auto"
+        className="w-full h-[70%] border-2 border-[var(--border-primary)] p-4 overflow-y-auto"
         style={{ scrollbarWidth: 'none' }} // Hide scrollbar for Firefox
       >
-        <pre className="whitespace-pre-wrap leading-relaxed">{displayedText}{isTyping && <span className="bg-green-400 w-4 h-6 inline-block animate-pulse ml-1"></span>}</pre>
+        <pre className="whitespace-pre-wrap leading-relaxed">{displayedText}{isTyping && <span className="bg-[var(--text-primary)] w-4 h-6 inline-block animate-pulse ml-1"></span>}</pre>
       </div>
       <div className="mt-4 text-2xl md:text-3xl text-center w-full flex justify-between px-4">
         <span>[W/A/S/D / Frecce] Scorri</span>

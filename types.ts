@@ -102,6 +102,8 @@ export interface MainQuestChapter {
 
 
 // --- UI & Menu States ---
+export type VisualTheme = 'standard' | 'crt' | 'high_contrast';
+
 export interface ActionMenuState {
     isOpen: boolean;
     options: string[];
@@ -258,6 +260,7 @@ export interface PlayerStatus {
 export interface GameStoreState {
   gameState: GameState;
   previousGameState: GameState | null;
+  visualTheme: VisualTheme;
   map: string[][];
   playerPos: Position;
   gameTime: GameTime;
@@ -294,6 +297,7 @@ export interface GameStoreState {
   
   // Actions
   setGameState: (newState: GameState) => void;
+  setVisualTheme: (theme: VisualTheme) => void;
   addJournalEntry: (entry: { text: string; type: JournalEntryType; color?: string }) => void;
   setMap: () => void;
   advanceTime: (minutes: number, bypassPause?: boolean) => void;

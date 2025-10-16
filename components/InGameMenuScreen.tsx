@@ -62,7 +62,7 @@ const InGameMenuScreen: React.FC = () => {
 
     return (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-8">
-            <div className="w-full max-w-2xl border-8 border-double border-green-400/50 flex flex-col p-6 bg-black">
+            <div className="w-full max-w-2xl border-8 border-double border-[var(--border-primary)] flex flex-col p-6 bg-[var(--bg-primary)]">
                 <h1 className="text-6xl text-center font-bold tracking-widest uppercase mb-8">═══ PAUSA ═══</h1>
                 
                 <div className="w-full max-w-lg mx-auto text-4xl space-y-3">
@@ -70,7 +70,7 @@ const InGameMenuScreen: React.FC = () => {
                         <div
                             key={option}
                             className={`pl-4 py-1 transition-colors duration-100 ${
-                                index === selectedIndex ? 'bg-green-400 text-black' : 'bg-transparent'
+                                index === selectedIndex ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : 'bg-transparent'
                             }`}
                         >
                             {index === selectedIndex && '> '}{option}
@@ -78,7 +78,7 @@ const InGameMenuScreen: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="flex-shrink-0 text-center text-3xl mt-10 border-t-4 border-double border-green-400/50 pt-4">
+                <div className="flex-shrink-0 text-center text-3xl mt-10 border-t-4 border-double border-[var(--border-primary)] pt-4">
                     [W/S / ↑↓] Seleziona | [INVIO] Conferma | [ESC] Continua
                 </div>
             </div>

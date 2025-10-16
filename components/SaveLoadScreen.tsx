@@ -152,38 +152,38 @@ const SaveLoadScreen: React.FC<{ mode: 'save' | 'load' }> = ({ mode }) => {
     return (
         <div className="absolute inset-0 bg-black/95 flex items-center justify-center p-8">
             <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-            <div className="w-full h-full max-w-4xl border-8 border-double border-green-400/50 flex flex-col p-6 bg-black">
+            <div className="w-full h-full max-w-4xl border-8 border-double border-[var(--border-primary)] flex flex-col p-6 bg-[var(--bg-primary)]">
                 <h1 className="text-6xl text-center font-bold tracking-widest uppercase mb-6">═══ {title} ═══</h1>
 
-                {feedbackMessage && <p className="text-3xl text-center text-yellow-400 mb-4">{feedbackMessage}</p>}
+                {feedbackMessage && <p className="text-3xl text-center text-[var(--text-accent)] mb-4">{feedbackMessage}</p>}
                 
                 <div className="w-full flex-grow text-4xl space-y-3">
                     {slots.map((meta, index) => {
                         const isSelected = index === selectedIndex;
                         return (
-                            <div key={index} className={`pl-4 py-2 transition-colors duration-100 ${isSelected ? 'bg-green-400 text-black' : 'border border-green-400/30'}`}>
+                            <div key={index} className={`pl-4 py-2 transition-colors duration-100 ${isSelected ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : 'border border-[var(--border-primary)]'}`}>
                                 <div className="flex justify-between">
                                     <span>{isSelected && '> '}Slot {index + 1}</span>
                                     {meta ? (
-                                        <span className={isSelected ? '' : 'text-green-400/70'}>
+                                        <span className={isSelected ? '' : 'text-[var(--text-secondary)]/80'}>
                                             Giorno {meta.day}, {String(meta.hour).padStart(2, '0')}:{String(meta.minute).padStart(2, '0')} - Liv. {meta.level}
                                         </span>
                                     ) : (
-                                        <span className={isSelected ? '' : 'text-green-400/50'}>-- Vuoto --</span>
+                                        <span className={isSelected ? '' : 'text-[var(--text-secondary)]/50'}>-- Vuoto --</span>
                                     )}
                                 </div>
                             </div>
                         );
                     })}
-                    <div className={`mt-6 pl-4 py-2 ${selectedIndex === NUM_SLOTS ? 'bg-green-400 text-black' : ''}`}>
+                    <div className={`mt-6 pl-4 py-2 ${selectedIndex === NUM_SLOTS ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : ''}`}>
                         {selectedIndex === NUM_SLOTS && '> '}Carica da File...
                     </div>
-                    <div className={`pl-4 py-2 ${selectedIndex === NUM_SLOTS + 1 ? 'bg-green-400 text-black' : ''}`}>
+                    <div className={`pl-4 py-2 ${selectedIndex === NUM_SLOTS + 1 ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : ''}`}>
                         {selectedIndex === NUM_SLOTS + 1 && '> '}Torna Indietro
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 text-center text-3xl mt-6 border-t-4 border-double border-green-400/50 pt-3">
+                <div className="flex-shrink-0 text-center text-3xl mt-6 border-t-4 border-double border-[var(--border-primary)] pt-3">
                     [↑↓] Seleziona | [INVIO] Conferma | [D] Scarica | [ESC] Indietro
                 </div>
             </div>

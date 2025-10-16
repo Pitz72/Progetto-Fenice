@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 // FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence, CharacterState } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence, CharacterState, VisualTheme } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -146,6 +146,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   // --- State ---
   gameState: GameState.INITIAL_BLACK_SCREEN,
   previousGameState: null,
+  visualTheme: 'standard',
   map: [],
   playerPos: { x: 0, y: 0 },
   gameTime: { day: 1, hour: 8, minute: 0 },
@@ -189,6 +190,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     };
   }),
   
+  setVisualTheme: (theme) => {
+    set({ visualTheme: theme });
+    document.documentElement.className = `theme-${theme}`;
+    localStorage.setItem('tspc_visual_theme', theme);
+  },
+
   addJournalEntry: (entry) => {
     set(state => ({
         journal: [{ ...entry, time: state.gameTime }, ...state.journal].slice(0, 100) // Keep last 100 entries
@@ -1232,7 +1239,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        // FIX: Explicitly typing the `t` parameter in the find method resolves the type inference issue where `t` would otherwise be `unknown`.
+        // FIX: Explicitly typing the 't' parameter in the find method resolves the type inference issue where 't' would otherwise be 'unknown'.
         const tactic = combatState.availableTacticalActions.find(
           (t: EnemyTactic) => t.id === action.tacticId
         );

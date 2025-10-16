@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { GameState } from '../types';
+import { GameState, VisualTheme } from '../types';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { audioManager } from '../utils/audio';
 
@@ -29,7 +29,6 @@ const OPTIONS_CONFIG: readonly OptionRow[] = [
 ];
 
 const firstSelectableRow = OPTIONS_CONFIG.findIndex(opt => opt.type === 'option');
-const lastSelectableRow = [...OPTIONS_CONFIG].reverse().findIndex(opt => opt.type === 'option');
 
 const VolumeBar: React.FC<{ level: number, max: number }> = ({ level, max }) => {
   const filled = '█';
@@ -45,13 +44,17 @@ const VolumeBar: React.FC<{ level: number, max: number }> = ({ level, max }) => 
 const OptionsScreen: React.FC = () => {
     const setGameState = useGameStore((state) => state.setGameState);
     const previousGameState = useGameStore((state) => state.previousGameState);
+    const visualTheme = useGameStore(state => state.visualTheme);
+    const setVisualTheme = useGameStore(state => state.setVisualTheme);
+    
+    const themeMap: VisualTheme[] = ['standard', 'crt', 'high_contrast'];
 
     const [settings, setSettings] = useState({
         language: 0,
         fullscreen: 0,
         audio: audioManager.getIsMutedForUI() ? 1 : 0, // 0 = On, 1 = Off
         volume: audioManager.getVolumeForUI(),
-        display: 0,
+        display: themeMap.indexOf(visualTheme),
     });
     const [selectedRow, setSelectedRow] = useState(firstSelectableRow);
     
@@ -63,6 +66,14 @@ const OptionsScreen: React.FC = () => {
     useEffect(() => {
         audioManager.setVolume(settings.volume);
     }, [settings.volume]);
+    
+    // Sincronizza lo stato globale del tema con la selezione locale
+    useEffect(() => {
+        const newTheme = themeMap[settings.display];
+        if (newTheme && newTheme !== visualTheme) {
+            setVisualTheme(newTheme);
+        }
+    }, [settings.display, setVisualTheme, visualTheme, themeMap]);
 
 
     const handleArrowUp = useCallback(() => {
@@ -153,12 +164,12 @@ const OptionsScreen: React.FC = () => {
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4">
             <h1 className="text-5xl md:text-6xl mb-2 text-center">═══ IMPOSTAZIONI ═══</h1>
-            <p className="text-2xl md:text-3xl mb-8 text-center">Configura le opzioni di gioco</p>
+            <p className="text-2xl md:text-3xl mb-8 text-center text-[var(--text-secondary)]">Configura le opzioni di gioco</p>
             
             <div className="w-full max-w-4xl text-3xl space-y-3">
               {OPTIONS_CONFIG.map((row, index) => {
                 const isSelected = index === selectedRow;
-                const optionStyle = `transition-colors duration-100 px-2 ${isSelected ? 'bg-green-400 text-black' : ''}`;
+                const optionStyle = `transition-colors duration-100 px-2 ${isSelected ? 'bg-[var(--highlight-bg)] text-[var(--highlight-text)]' : ''}`;
 
                 if (row.type === 'header') {
                   return <h2 key={index} className="text-4xl pt-4">{row.label}</h2>;

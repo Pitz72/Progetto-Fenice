@@ -30,9 +30,9 @@ const SurvivalPanel: React.FC = () => {
     return (
         <Panel title="SOPRAVVIVENZA">
             <div>
-                <div className={isCritical(hp) ? 'text-red-500 animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
-                <div className={isCritical(satiety) ? 'text-red-500 animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
-                <div className={isCritical(hydration) ? 'text-red-500 animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
+                <div className={isCritical(hp) ? 'text-[var(--text-danger)] animate-pulse' : ''}>HP: {Math.floor(hp.current)}/{hp.max}</div>
+                <div className={isCritical(satiety) ? 'text-[var(--text-danger)] animate-pulse' : ''}>Sazietà: {Math.floor(satiety.current)}/{satiety.max}</div>
+                <div className={isCritical(hydration) ? 'text-[var(--text-danger)] animate-pulse' : ''}>Idratazione: {Math.floor(hydration.current)}/{hydration.max}</div>
                 <div style={{ color: statusColor }}>Status: {status || 'Normale'}</div>
             </div>
         </Panel>
@@ -48,7 +48,7 @@ const InventoryPanel: React.FC = () => {
 
   return (
     <Panel title="INVENTARIO" className="flex-grow">
-      <div className="border border-green-400/30 p-2 h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="border border-[var(--border-primary)] p-2 h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
         {isLoaded && inventory.length > 0 ? (
           <ul className="space-y-1.5">
             {inventory.map((invItem, index) => {
@@ -66,7 +66,7 @@ const InventoryPanel: React.FC = () => {
             })}
           </ul>
         ) : (
-          <div className="text-green-400/50">-- Vuoto --</div>
+          <div className="text-[var(--text-primary)]/50">-- Vuoto --</div>
         )}
       </div>
     </Panel>
@@ -114,7 +114,7 @@ const InfoPanel: React.FC = () => {
                         <span>{formattedTime}</span> 
                         <span>Giorno {gameTime.day}</span>
                     </div>
-                    <div className="border-t border-green-400/20 my-1"></div>
+                    <div className="border-t border-[var(--border-primary)] my-1"></div>
                     <div className="flex justify-between items-center">
                         <span className={weatherInfo.color}>* {weatherInfo.name}</span>
                          <div className="text-right">
@@ -163,9 +163,9 @@ const StatsPanel: React.FC = () => {
                 <div>Livello: {level}</div>
                 <div>
                     XP: {xp.current} / {xp.next}
-                    {levelUpPending && <span className="text-yellow-400 animate-yellow-flash ml-2">*</span>}
+                    {levelUpPending && <span className="text-[var(--text-accent)] animate-yellow-flash ml-2">*</span>}
                 </div>
-                <div className="border-t border-green-400/20 my-1"></div>
+                <div className="border-t border-[var(--border-primary)] my-1"></div>
                 <div className="grid grid-cols-2 gap-x-4">
                     <div className="flex justify-between"><span>FOR:</span><span>{attributes.for} {renderModifier('for')}</span></div>
                     <div className="flex justify-between"><span>DES:</span><span>{attributes.des} {renderModifier('des')}</span></div>
@@ -198,16 +198,16 @@ const TravelJournalPanel: React.FC = () => {
                 {journal.length > 0 ? (
                     journal.map((entry, index) => (
                         <div key={index}>
-                           <span className="text-green-400/60 mr-2">
+                           <span className="text-[var(--text-primary)]/60 mr-2">
                                 [{String(entry.time.hour).padStart(2, '0')}:{String(entry.time.minute).padStart(2, '0')}]
                            </span>
-                           <span style={{ color: entry.color || JOURNAL_ENTRY_COLORS[entry.type] || '#d1d5db' }}>
+                           <span style={{ color: entry.color || JOURNAL_ENTRY_COLORS[entry.type] || 'var(--text-secondary)' }}>
                                 {entry.text}
                            </span>
                         </div>
                     ))
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-green-400/60 text-center">
+                    <div className="h-full flex flex-col items-center justify-center text-[var(--text-primary)]/60 text-center">
                         <p className="text-4xl">Il tuo viaggio inizierà presto...</p>
                         <p className="text-2xl">Le tue avventure saranno registrate qui</p>
                     </div>
@@ -272,7 +272,7 @@ const GameScreen: React.FC = () => {
 
 
   return (
-    <div className="w-full h-full flex p-2 space-x-2 text-green-400" style={{ textShadow: '0 0 5px rgba(110, 231, 183, 0.3)'}}>
+    <div className="w-full h-full flex p-2 space-x-2 text-[var(--text-primary)]">
       {/* Left Column (25%) */}
       <div className="w-1/4 h-full flex flex-col space-y-2">
         <SurvivalPanel />
@@ -285,8 +285,8 @@ const GameScreen: React.FC = () => {
         {/* Top part of Main Content (Map + Right Panels) */}
         <div className="flex-grow flex space-x-2 overflow-hidden">
           {/* Center Column (50% of total width) */}
-          <div className="w-2/3 h-full flex flex-col border border-green-400/30 bg-black/20">
-             <h2 className="text-center bg-green-400/10 py-1 font-bold tracking-widest uppercase text-2xl flex-shrink-0">MAPPA DEL MONDO</h2>
+          <div className="w-2/3 h-full flex flex-col border border-[var(--border-primary)] bg-black/20">
+             <h2 className="text-center bg-[var(--text-primary)]/10 py-1 font-bold tracking-widest uppercase text-2xl flex-shrink-0">MAPPA DEL MONDO</h2>
              <div className="flex-grow relative">
                 <CanvasMap />
              </div>

@@ -2,11 +2,15 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { MENU_ITEMS } from '../constants';
 import { useGameStore } from '../store/gameStore';
+import { useCharacterStore } from '../store/characterStore';
 import { GameState } from '../types';
 
 const MainMenuScreen: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const setGameState = useGameStore((state) => state.setGameState);
+  const setMap = useGameStore((state) => state.setMap);
+  const startCutscene = useGameStore((state) => state.startCutscene);
+  const initCharacter = useCharacterStore((state) => state.initCharacter);
 
   const handleArrowUp = useCallback(() => {
     setSelectedIndex((prev) => (prev > 0 ? prev - 1 : MENU_ITEMS.length - 1));
@@ -18,10 +22,11 @@ const MainMenuScreen: React.FC = () => {
   
   const handleEnter = useCallback(() => {
     const selectedItem = MENU_ITEMS[selectedIndex];
-    console.log(`Selected: ${selectedItem}`);
     
     if (selectedItem === "Nuova Partita") {
-      setGameState(GameState.CHARACTER_CREATION);
+      setMap(); // Resetta il mondo di gioco
+      initCharacter(); // Resetta lo stato del personaggio a vuoto
+      startCutscene('CS_OPENING'); // Avvia la cutscene di apertura
     } else if (selectedItem === "Istruzioni") {
       setGameState(GameState.INSTRUCTIONS_SCREEN);
     } else if (selectedItem === "Storia") {
@@ -33,7 +38,7 @@ const MainMenuScreen: React.FC = () => {
         // For this prototype, we'll just log it.
         console.log("Exiting game...");
     }
-  }, [selectedIndex, setGameState]);
+  }, [selectedIndex, setGameState, setMap, initCharacter, startCutscene]);
 
   const handlerMap = useMemo(() => ({
     ArrowUp: handleArrowUp,

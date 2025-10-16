@@ -59,14 +59,13 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     knownRecipes: [],
 
     // --- Actions ---
-    initCharacter: (newAttributes) => {
-        const attributes = newAttributes || initialAttributes;
-        const maxHp = 100; // Increased starting HP
+    initCharacter: () => {
+        const maxHp = 100; // Base HP for 10 COS
 
         set({
             level: 1,
             xp: { current: 0, next: XP_PER_LEVEL[2] },
-            attributes,
+            attributes: { ...initialAttributes },
             hp: { current: maxHp, max: maxHp },
             satiety: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
             hydration: { current: BASE_STAT_VALUE, max: BASE_STAT_VALUE },
@@ -74,17 +73,24 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
             alignment: { ...initialAlignment },
             status: null,
             levelUpPending: false,
-            inventory: [ // Updated starting gear
-                { itemId: 'CONS_002', quantity: 3 },         // Bottiglia d'acqua
-                { itemId: 'CONS_001', quantity: 3 },         // Razione di cibo
-                { itemId: 'CONS_003', quantity: 2 },         // Bende
-                { itemId: 'MED_PAINKILLER', quantity: 2 }, // Antidolorifici
-                { itemId: 'combat_knife', quantity: 1 },   // Coltello da combattimento
-                { itemId: 'leather_jacket', quantity: 1 }, // Giubbotto di pelle
-            ],
+            inventory: [{ itemId: 'carillon_annerito', quantity: 1 }],
             equippedWeapon: null,
             equippedArmor: null,
-            knownRecipes: ['recipe_makeshift_knife', 'recipe_bandage_adv'], // Start with basic recipes
+            knownRecipes: ['recipe_makeshift_knife', 'recipe_bandage_adv'],
+        });
+    },
+
+    setAttributes: (newAttributes) => {
+        set(state => {
+            const newCos = newAttributes.cos;
+            const cosModifier = Math.floor((newCos - 10) / 2);
+            // Base HP is 100 for 10 COS. Add 10 HP per constitution modifier point.
+            const newMaxHp = 100 + (cosModifier * 10);
+
+            return {
+                attributes: newAttributes,
+                hp: { max: newMaxHp, current: newMaxHp },
+            };
         });
     },
 

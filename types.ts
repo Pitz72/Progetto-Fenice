@@ -10,12 +10,14 @@ export enum GameState {
   INSTRUCTIONS_SCREEN,
   STORY_SCREEN,
   OPTIONS_SCREEN,
+  CUTSCENE,
   CHARACTER_CREATION,
   IN_GAME,
   EVENT_SCREEN,
   LEVEL_UP_SCREEN,
   COMBAT,
   MAIN_QUEST,
+  ASH_LULLABY_CHOICE,
 }
 
 export enum JournalEntryType {
@@ -112,6 +114,31 @@ export interface RefugeMenuState {
 export interface CraftingMenuState {
     selectedIndex: number;
 }
+
+// --- Cutscene System ---
+export interface CutsceneConsequence {
+    type: 'setFlag' | 'addItem' | 'equipItem' | 'performModifiedRest';
+    payload?: any;
+}
+
+export interface CutsceneChoice {
+    text: string;
+    targetPage: number;
+}
+
+export interface CutscenePage {
+    text: string;
+    choices?: CutsceneChoice[];
+    consequences?: CutsceneConsequence[];
+    nextPage?: number | null;
+}
+
+export interface Cutscene {
+    id: string;
+    title: string;
+    pages: CutscenePage[];
+}
+
 
 // --- Event System ---
 export type EventResultType = 
@@ -257,6 +284,9 @@ export interface GameStoreState {
   totalSteps: number;
   totalCombatWins: number;
   activeMainQuestEvent: MainQuestChapter | null;
+  // Cutscene State
+  activeCutscene: Cutscene | null;
+  gameFlags: Set<string>;
   
   // Actions
   setGameState: (newState: GameState) => void;
@@ -295,6 +325,10 @@ export interface GameStoreState {
   cleanupCombat: () => void;
   checkMainQuestTriggers: () => void;
   resolveMainQuest: () => void;
+  startCutscene: (id: string) => void;
+  processCutsceneConsequences: (consequences: CutsceneConsequence[]) => void;
+  endCutscene: () => void;
+  checkCutsceneTriggers: () => void;
 }
 
 
@@ -372,7 +406,8 @@ export interface CharacterState {
     knownRecipes: string[];
 
     // Actions
-    initCharacter: (newAttributes?: Attributes) => void;
+    initCharacter: () => void;
+    setAttributes: (newAttributes: Attributes) => void;
     getAttributeModifier: (attribute: AttributeName) => number;
     getSkillBonus: (skill: SkillName) => number;
     performSkillCheck: (skill: SkillName, dc: number) => SkillCheckResult;

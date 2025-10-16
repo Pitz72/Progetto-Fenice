@@ -13,15 +13,21 @@ Il gioco è costruito con una filosofia "keyboard-only", per replicare il feelin
 *   **Stile:** TailwindCSS per un layout rapido e coerente
 *   **Rendering Mappa:** HTML Canvas per una visualizzazione fluida e performante del mondo di gioco
 
-### Caratteristiche Attuali (v0.8.0)
+### Caratteristiche Attuali (v0.8.5)
 
-Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting, Combattimento e una Trama Principale) pienamente implementati e integrati.
+Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri fondamentali (Esplorazione, Sopravvivenza, Scelte Narrative, Progressione, Crafting, Combattimento, Trama Principale e Cutscene Cinematiche) pienamente implementati e integrati.
 
 #### Missione Principale ("Main Quest") Narrativa
 *   **Un "Filo di Arianna" Narrativo:** Il gioco ora presenta una trama principale completa in 12 capitoli che fornisce una spina dorsale narrativa all'esperienza di sopravvivenza, trasformandola in un viaggio alla scoperta della verità sul passato del protagonista.
 *   **Motore della Storia:** Un "Motore della Storia" invisibile guida la trama. La storia progredisce automaticamente quando il giocatore soddisfa condizioni specifiche (trigger) legate alle sue azioni.
 *   **Progressione Organica:** I trigger sono legati alle meccaniche di base: esplorare per una certa distanza, sopravvivere per un numero di giorni, raggiungere luoghi specifici sulla mappa o entrare in un'area chiave per la prima volta.
 *   **Esperienza Immersiva:** Quando un capitolo viene sbloccato, il gioco si mette in pausa e presenta la storia in un'interfaccia dedicata a schermo intero, concentrando l'attenzione del giocatore sulla rivelazione narrativa prima di tornare al gameplay.
+
+#### Sistema di Cutscene Cinematiche Testuali
+*   **Momenti Chiave:** Per i momenti narrativi più importanti, il gioco utilizza un sistema di cutscene testuali a schermo intero, ispirato alle avventure classiche, per massimizzare l'impatto emotivo.
+*   **Motore Narrativo Flessibile:** Il sistema supporta sia sequenze lineari (con un effetto "macchina da scrivere" per il ritmo) sia momenti con scelte multiple che possono avere conseguenze permanenti sullo stato del gioco.
+*   **Integrazione Organica:** Le cutscene sono attivate da azioni specifiche del giocatore (iniziare una nuova partita, riposare in determinate condizioni, raggiungere luoghi chiave), rendendo la progressione della storia un'esperienza fluida e integrata nel gameplay.
+*   **Arco Narrativo Completo:** Questo sistema viene utilizzato per narrare i momenti cruciali della storia, dall'introduzione emotiva fino alla sconvolgente rivelazione finale, completando l'intero arco narrativo del gioco.
 
 #### Esplorazione e Mondo di Gioco
 *   **Mappa Vasta e Diversificata:** Un'ampia mappa con biomi unici (Pianure, Foreste, Villaggi, Città) che influenzano movimento, incontri e risorse.
@@ -73,4 +79,4 @@ L'interazione avviene interamente tramite tastiera:
 
 ### Stato del Progetto
 
-Il prototipo ha raggiunto la piena maturità delle sue meccaniche di base. Il ciclo di gameplay **esplora -> sopravvivi -> incontra eventi -> combatti -> fai scelte morali -> sali di livello -> crea oggetti** è completo, robusto e bilanciato. La base tecnica e di contenuto è solida e pronta per l'implementazione di incontri con PNG, dialoghi e lo sviluppo della trama principale.
+Il prototipo ha raggiunto la **piena completezza narrativa**. Tutte le meccaniche fondamentali sono implementate e il ciclo di gameplay **esplora -> sopravvivi -> incontra eventi -> combatti -> fai scelte morali -> sali di livello -> crea oggetti -> vivi una storia completa** è robusto, bilanciato e giocabile dall'inizio alla fine. Il progetto è ora una solida base pronta per eventuali rifiniture, bilanciamenti e l'aggiunta di contenuti secondari.

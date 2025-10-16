@@ -12,6 +12,18 @@
     "rarity": "common"
   },
   {
+    "id": "armor_rags",
+    "name": "Stracci",
+    "description": "Strati di tessuto logoro e sporco. Offrono una protezione quasi nulla, ma tengono lontano il freddo peggiore.",
+    "type": "armor",
+    "slot": "chest",
+    "defense": 1,
+    "weight": 1.0,
+    "value": 1,
+    "stackable": false,
+    "rarity": "common"
+  },
+  {
     "id": "kevlar_vest",
     "name": "Giubbotto Antiproiettile",
     "description": "Un giubbotto tattico con inserti in kevlar. Offre un'eccellente protezione contro proiettili e attacchi perforanti.",

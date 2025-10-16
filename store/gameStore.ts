@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 // FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -8,6 +8,7 @@ import { useEventDatabaseStore } from '../data/eventDatabase';
 import { useRecipeDatabaseStore } from '../data/recipeDatabase';
 import { useEnemyDatabaseStore } from '../data/enemyDatabase';
 import { useMainQuestDatabaseStore } from '../data/mainQuestDatabase';
+import { useCutsceneDatabaseStore } from '../data/cutsceneDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS, JOURNAL_ENTRY_COLORS } from '../constants';
 import * as N from '../data/combatNarrative';
 
@@ -129,6 +130,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   totalSteps: 0,
   totalCombatWins: 0,
   activeMainQuestEvent: null,
+  activeCutscene: null,
+  gameFlags: new Set(),
 
 
   // --- Actions ---
@@ -173,6 +176,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         totalSteps: 0,
         totalCombatWins: 0,
         activeMainQuestEvent: null,
+        gameFlags: new Set(),
+        activeCutscene: null,
     });
     get().addJournalEntry({ text: "Benvenuto in The Safe Place. La tua avventura inizia ora.", type: JournalEntryType.GAME_START });
     get().addJournalEntry({ text: BIOME_MESSAGES['S'], type: JournalEntryType.NARRATIVE, color: BIOME_COLORS['S'] });
@@ -213,7 +218,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, currentBiome: previousBiome, checkMainQuestTriggers } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, currentBiome: previousBiome, checkMainQuestTriggers, checkCutsceneTriggers } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -298,6 +303,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     useCharacterStore.getState().gainExplorationXp();
     
     checkMainQuestTriggers();
+    if (get().gameState !== GameState.IN_GAME) return;
+
+    checkCutsceneTriggers();
     if (get().gameState !== GameState.IN_GAME) return;
 
     // --- REVISED EVENT TRIGGER LOGIC ---
@@ -494,7 +502,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   performQuickRest: () => {
     if (get().isInventoryOpen || get().isInRefuge) return;
 
-    const { gameTime, lastRestTime, addJournalEntry } = get();
+    const { gameTime, lastRestTime, addJournalEntry, gameFlags, startCutscene, set, advanceTime } = get();
+
+    // CUTSCENE TRIGGER CHECK
+    if (gameTime.day >= 3 && !gameFlags.has('BEING_WATCHED_PLAYED')) {
+        set(state => ({ gameFlags: new Set(state.gameFlags).add('BEING_WATCHED_PLAYED') }));
+        startCutscene('CS_BEING_WATCHED');
+        return; // Stop here, the cutscene will handle the rest action.
+    }
 
     if (lastRestTime) {
         const currentTimeInMinutes = timeToMinutes(gameTime);
@@ -510,7 +525,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     addJournalEntry({ text: "Ti fermi per riposare per un'ora.", type: JournalEntryType.NARRATIVE });
     
-    get().advanceTime(restDurationMinutes, true);
+    advanceTime(restDurationMinutes, true);
     set({ lastRestTime: get().gameTime });
 
     useCharacterStore.getState().heal(hpRecoveryAmount);
@@ -550,13 +565,18 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   leaveRefuge: () => {
-    set(state => ({
-      isInRefuge: false,
-      refugeMenuState: { isOpen: false, options: [], selectedIndex: 0 },
-      visitedRefuges: [...state.visitedRefuges, state.playerPos],
-      refugeActionMessage: null,
-      refugeJustSearched: false,
-    }));
+    set(state => {
+      const newFlags = new Set(state.gameFlags);
+      newFlags.delete('LULLABY_CHOICE_OFFERED_THIS_REST');
+      return {
+        isInRefuge: false,
+        refugeMenuState: { isOpen: false, options: [], selectedIndex: 0 },
+        visitedRefuges: [...state.visitedRefuges, state.playerPos],
+        refugeActionMessage: null,
+        refugeJustSearched: false,
+        gameFlags: newFlags,
+      };
+    });
     get().addJournalEntry({ text: "Lasci la sicurezza del rifugio.", type: JournalEntryType.NARRATIVE });
   },
 
@@ -618,6 +638,26 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const { refugeMenuState, gameTime, addJournalEntry, leaveRefuge, toggleInventory, advanceTime, searchRefuge, toggleCrafting } = get();
     const selectedAction = refugeMenuState.options[refugeMenuState.selectedIndex];
     const { satiety, hydration } = useCharacterStore.getState();
+
+     // --- Ash Lullaby Cutscene Trigger Check ---
+    if (selectedAction === "Aspetta un'ora" || selectedAction === "Dormi fino all'alba") {
+        const { mainQuestStage, playerPos, gameFlags } = get();
+        const hasMusicBox = useCharacterStore.getState().inventory.some(i => i.itemId === 'carillon_annerito');
+        const MAP_EASTERN_HALF_X = 80;
+
+        if (
+            mainQuestStage >= 10 &&
+            playerPos.x > MAP_EASTERN_HALF_X &&
+            !gameFlags.has('ASH_LULLABY_PLAYED') &&
+            !gameFlags.has('LULLABY_CHOICE_OFFERED_THIS_REST') &&
+            hasMusicBox
+        ) {
+            set(state => ({ gameFlags: new Set(state.gameFlags).add('LULLABY_CHOICE_OFFERED_THIS_REST') }));
+            set({ gameState: GameState.ASH_LULLABY_CHOICE });
+            return; // Interrupt the normal rest flow
+        }
+    }
+
 
     switch(selectedAction) {
       case "Aspetta un'ora": {
@@ -1106,19 +1146,29 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        // FIX: Explicitly type the 't' parameter in the find method to resolve an inference issue where 't' was being treated as 'unknown'.
-        const tactic = combatState.availableTacticalActions.find((t: EnemyTactic) => t.id === action.tacticId);
-        if(tactic && tactic.skillCheck) {
-            addLog(tactic.description);
-            const check = performSkillCheck(tactic.skillCheck.skill, tactic.skillCheck.dc);
-            addLog(`Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`);
-            if (check.success) {
-                const bonusDamage = 15;
-                addLog(`SUCCESSO! Il nemico è sbilanciato e vulnerabile! Infliggi ${bonusDamage} danni extra.`, '#38bdf8');
-                newEnemyHp.current = Math.max(0, newEnemyHp.current - bonusDamage);
-            } else {
-                addLog("FALLIMENTO! La tua mossa non riesce.", '#ff8c00');
-            }
+        // FIX: Explicitly typing the 't' parameter as EnemyTactic resolves the "Property 'id' does not exist on type 'unknown'" error.
+        const tactic = combatState.availableTacticalActions.find(
+          (t: EnemyTactic) => t.id === action.tacticId,
+        );
+        if (tactic && tactic.skillCheck) {
+          addLog(tactic.description);
+          const check = performSkillCheck(
+            tactic.skillCheck.skill,
+            tactic.skillCheck.dc,
+          );
+          addLog(
+            `Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`,
+          );
+          if (check.success) {
+            const bonusDamage = 15;
+            addLog(
+              `SUCCESSO! Il nemico è sbilanciato e vulnerabile! Infliggi ${bonusDamage} danni extra.`,
+              '#38bdf8',
+            );
+            newEnemyHp.current = Math.max(0, newEnemyHp.current - bonusDamage);
+          } else {
+            addLog('FALLIMENTO! La tua mossa non riesce.', '#ff8c00');
+          }
         }
         break;
       }
@@ -1162,7 +1212,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             addEnemyLog(getRandom(N.ENEMY_ATTACK_DESCRIPTIONS).replace('{enemy}', enemy.name));
             const enemyAttackRoll = Math.floor(Math.random() * 20) + 1;
             const totalEnemyAttack = enemyAttackRoll + enemy.attack.bonus;
-            const playerAC = getPlayerAC();
+            const playerAC = useCharacterStore.getState().getPlayerAC();
             addEnemyLog(`Tiro per colpire del nemico: ${enemyAttackRoll} + ${enemy.attack.bonus} = ${totalEnemyAttack} vs CA ${playerAC}`, '#a3a3a3');
 
             if (totalEnemyAttack >= playerAC) {
@@ -1234,5 +1284,92 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         gameState: GameState.IN_GAME,
     }));
   },
+  
+  // --- Cutscene Actions ---
+  startCutscene: (id: string) => {
+    const { cutscenes } = useCutsceneDatabaseStore.getState();
+    const scene = cutscenes[id];
+    if (scene) {
+        set({
+            activeCutscene: scene,
+            gameState: GameState.CUTSCENE,
+        });
+    }
+  },
 
+  processCutsceneConsequences: (consequences: CutsceneConsequence[]) => {
+    const { addItem, equipItem } = useCharacterStore.getState();
+    const { addJournalEntry, advanceTime, set } = get();
+
+    consequences.forEach(consequence => {
+        switch (consequence.type) {
+            case 'addItem':
+                addItem(consequence.payload.itemId, consequence.payload.quantity);
+                break;
+            case 'equipItem':
+                equipItem(consequence.payload);
+                break;
+            case 'setFlag':
+                set(state => ({ gameFlags: new Set(state.gameFlags).add(consequence.payload) }));
+                break;
+            case 'performModifiedRest': {
+                const restDurationMinutes = 60;
+                const hpRecoveryAmount = 10; // Reduced recovery
+                addJournalEntry({ text: "Il sonno è leggero, agitato.", type: JournalEntryType.NARRATIVE });
+                advanceTime(restDurationMinutes, true);
+                set({ lastRestTime: get().gameTime });
+                useCharacterStore.getState().heal(hpRecoveryAmount);
+                addJournalEntry({ text: `Un breve e inquieto riposo ti ha concesso solo ${hpRecoveryAmount} HP.`, type: JournalEntryType.SYSTEM_WARNING });
+                break;
+            }
+        }
+    });
+  },
+
+  endCutscene: () => {
+    const currentSceneId = get().activeCutscene?.id;
+    let nextState = GameState.IN_GAME;
+
+    if (currentSceneId === 'CS_OPENING') {
+        nextState = GameState.CHARACTER_CREATION;
+    }
+    
+    set({
+        activeCutscene: null,
+        gameState: nextState,
+    });
+  },
+
+  checkCutsceneTriggers: () => {
+    const { playerPos, map, gameFlags, startCutscene } = get();
+
+    // Trigger for CS_RIVER_INTRO
+    if (!gameFlags.has('RIVER_INTRO_PLAYED')) {
+        const searchRadius = 2;
+        let riverFound = false;
+        
+        for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+            for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                const checkY = playerPos.y + dy;
+                const checkX = playerPos.x + dx;
+
+                // Bounds check
+                if (
+                    checkY >= 0 && checkY < map.length &&
+                    checkX >= 0 && checkX < map[checkY].length &&
+                    map[checkY][checkX] === '~'
+                ) {
+                    riverFound = true;
+                    break;
+                }
+            }
+            if (riverFound) break;
+        }
+
+        if (riverFound) {
+            startCutscene('CS_RIVER_INTRO');
+            set(state => ({ gameFlags: new Set(state.gameFlags).add('RIVER_INTRO_PLAYED') }));
+        }
+    }
+  },
 }));

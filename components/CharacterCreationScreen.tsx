@@ -16,7 +16,7 @@ const rollStat = (): number => {
 
 const CharacterCreationScreen: React.FC = () => {
   const setGameState = useGameStore((state) => state.setGameState);
-  const initCharacter = useCharacterStore((state) => state.initCharacter);
+  const setAttributes = useCharacterStore((state) => state.setAttributes);
 
   const [rolledStats, setRolledStats] = useState<Partial<Attributes>>({});
   const [currentAttribute, setCurrentAttribute] = useState<AttributeName | null>(null);
@@ -63,10 +63,10 @@ const CharacterCreationScreen: React.FC = () => {
 
   const startGame = useCallback(() => {
     if (isComplete) {
-      initCharacter(rolledStats as Attributes);
+      setAttributes(rolledStats as Attributes);
       setGameState(GameState.IN_GAME);
     }
-  }, [isComplete, rolledStats, initCharacter, setGameState]);
+  }, [isComplete, rolledStats, setAttributes, setGameState]);
 
   const handlerMap = useMemo(() => ({
     Enter: startGame,

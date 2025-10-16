@@ -21,7 +21,10 @@ import { useEventDatabaseStore } from './data/eventDatabase';
 import { useRecipeDatabaseStore } from './data/recipeDatabase';
 import { useEnemyDatabaseStore } from './data/enemyDatabase';
 import { useMainQuestDatabaseStore } from './data/mainQuestDatabase';
+import { useCutsceneDatabaseStore } from './data/cutsceneDatabase';
 import MainQuestScreen from './components/MainQuestScreen';
+import CutsceneScreen from './components/CutsceneScreen';
+import AshLullabyChoiceScreen from './components/AshLullabyChoiceScreen';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
@@ -37,6 +40,7 @@ const App: React.FC = () => {
   const { loadDatabase: loadRecipeDatabase, isLoaded: recipesLoaded } = useRecipeDatabaseStore();
   const { loadDatabase: loadEnemyDatabase, isLoaded: enemiesLoaded } = useEnemyDatabaseStore();
   const { loadDatabase: loadMainQuestDatabase, isLoaded: mainQuestLoaded } = useMainQuestDatabaseStore();
+  const { loadDatabase: loadCutsceneDatabase, isLoaded: cutscenesLoaded } = useCutsceneDatabaseStore();
 
 
   useEffect(() => {
@@ -45,14 +49,13 @@ const App: React.FC = () => {
     loadRecipeDatabase();
     loadEnemyDatabase();
     loadMainQuestDatabase();
-  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase, loadEnemyDatabase, loadMainQuestDatabase]);
+    loadCutsceneDatabase();
+  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase, loadEnemyDatabase, loadMainQuestDatabase, loadCutsceneDatabase]);
 
   useEffect(() => {
-    if (itemsLoaded && eventsLoaded && recipesLoaded && enemiesLoaded && mainQuestLoaded) {
-      setMap();
-      initCharacter();
-    }
-  }, [itemsLoaded, eventsLoaded, recipesLoaded, enemiesLoaded, mainQuestLoaded, setMap, initCharacter]);
+    // The game should not automatically start a new game on load.
+    // This will be handled by the "New Game" option in the main menu.
+  }, [itemsLoaded, eventsLoaded, recipesLoaded, enemiesLoaded, mainQuestLoaded, cutscenesLoaded, setMap, initCharacter]);
 
   const renderContent = () => {
     switch (gameState) {
@@ -69,6 +72,8 @@ const App: React.FC = () => {
         return <StoryScreen />;
       case GameState.OPTIONS_SCREEN:
         return <OptionsScreen />;
+      case GameState.CUTSCENE:
+        return <CutsceneScreen />;
       case GameState.CHARACTER_CREATION:
         return <CharacterCreationScreen />;
       case GameState.EVENT_SCREEN:
@@ -77,6 +82,8 @@ const App: React.FC = () => {
         return <LevelUpScreen />;
        case GameState.MAIN_QUEST:
         return <MainQuestScreen />;
+      case GameState.ASH_LULLABY_CHOICE:
+        return <AshLullabyChoiceScreen />;
       case GameState.COMBAT:
         return (
           <>

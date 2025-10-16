@@ -12,6 +12,18 @@
     "rarity": "uncommon"
   },
   {
+    "id": "weapon_knife_rusty",
+    "name": "Coltello Arrugginito",
+    "description": "Un vecchio coltello da lavoro, la lama intaccata dalla ruggine ma ancora affilata. Meglio di niente.",
+    "type": "weapon",
+    "weaponType": "melee",
+    "damage": 5,
+    "weight": 0.4,
+    "value": 10,
+    "stackable": false,
+    "rarity": "common"
+  },
+  {
     "id": "folding_knife",
     "name": "Coltello Pieghevole",
     "description": "Un piccolo e pratico coltello, utile sia come attrezzo che come arma di difesa dell'ultimo minuto.",

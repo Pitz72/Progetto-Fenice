@@ -1,5 +1,15 @@
 [
   {
+    "id": "fathers_letter",
+    "name": "Lettera del Padre",
+    "description": "Le ultime parole di tuo padre, scritte su un foglio di carta sgualcito. Un testamento, una condanna, una speranza.",
+    "type": "quest",
+    "weight": 0.1,
+    "value": 0,
+    "stackable": false,
+    "rarity": "quest"
+  },
+  {
     "id": "manual_field_medicine",
     "name": "Manuale: Medicina da Campo",
     "description": "Un manuale illustrato che insegna tecniche di primo soccorso avanzate, inclusa la creazione di bende migliorate.",
@@ -157,6 +167,16 @@
     "description": "Una vecchia e arrugginita chiave. Chissà cosa potrebbe aprire.",
     "type": "quest",
     "weight": 0.1,
+    "value": 0,
+    "stackable": false,
+    "rarity": "quest"
+  },
+  {
+    "id": "carillon_annerito",
+    "name": "Carillon Annerito",
+    "description": "Un piccolo carillon di legno, annerito dalla fuliggine. Un'etichetta sbiadita sul fondo riporta un avvertimento scritto da tuo padre: 'Non aprirlo mai. Il suo suono... attira i ricordi sbagliati'.",
+    "type": "quest",
+    "weight": 0.5,
     "value": 0,
     "stackable": false,
     "rarity": "quest"

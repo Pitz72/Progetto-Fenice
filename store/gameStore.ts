@@ -90,6 +90,12 @@ const pickNextWeather = (current: WeatherType): WeatherType => {
     return transitions[0].to; // Fallback
 };
 
+// FIX: Added a type for the player combat action payload to fix type inference errors.
+type PlayerCombatActionPayload =
+  | { type: 'attack' | 'analyze' | 'flee' }
+  | { type: 'tactic'; tacticId: string }
+  | { type: 'use_item'; itemId: string };
+
 export const useGameStore = create<GameStoreState>((set, get) => ({
   // --- State ---
   gameState: GameState.INITIAL_BLACK_SCREEN,
@@ -645,7 +651,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         );
 
         if (possibleLoreEvents.length > 0) {
-            const eventToTrigger = getRandom(possibleLoreEvents);
+            // FIX: Explicitly type `eventToTrigger` as `GameEvent` to resolve type inference issue.
+            const eventToTrigger: GameEvent = getRandom(possibleLoreEvents);
             set({
                 activeEvent: eventToTrigger,
                 gameState: GameState.EVENT_SCREEN,
@@ -729,7 +736,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   dismissEventResolution: () => {
-    const activeEventId = get().activeEvent?.id;
+    // FIX: Explicitly cast `activeEvent` to `GameEvent | null` to resolve type inference issue.
+    const activeEvent = get().activeEvent as GameEvent | null;
+    const activeEventId = activeEvent?.id;
     if (!activeEventId) { // Failsafe
          set({
             activeEvent: null,
@@ -987,7 +996,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set({ activeCombat: null, gameState: GameState.IN_GAME });
   },
 
-  playerCombatAction: (action) => {
+  playerCombatAction: (action: PlayerCombatActionPayload) => {
     const combatState = get().activeCombat;
     if (!combatState || !combatState.playerTurn || combatState.victory) return;
 

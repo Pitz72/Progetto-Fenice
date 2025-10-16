@@ -3,13 +3,12 @@ import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { MENU_ITEMS } from '../constants';
 import { useGameStore } from '../store/gameStore';
 import { useCharacterStore } from '../store/characterStore';
-import { GameState } from '../types';
+// FIX: Imported JournalEntryType to use the correct enum for journal entries.
+import { GameState, JournalEntryType } from '../types';
 
 const MainMenuScreen: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const setGameState = useGameStore((state) => state.setGameState);
-  const setMap = useGameStore((state) => state.setMap);
-  const startCutscene = useGameStore((state) => state.startCutscene);
+  const { setGameState, setMap, startCutscene, loadGame, addJournalEntry } = useGameStore();
   const initCharacter = useCharacterStore((state) => state.initCharacter);
 
   const handleArrowUp = useCallback(() => {
@@ -23,22 +22,41 @@ const MainMenuScreen: React.FC = () => {
   const handleEnter = useCallback(() => {
     const selectedItem = MENU_ITEMS[selectedIndex];
     
-    if (selectedItem === "Nuova Partita") {
-      setMap(); // Resetta il mondo di gioco
-      initCharacter(); // Resetta lo stato del personaggio a vuoto
-      startCutscene('CS_OPENING'); // Avvia la cutscene di apertura
-    } else if (selectedItem === "Istruzioni") {
-      setGameState(GameState.INSTRUCTIONS_SCREEN);
-    } else if (selectedItem === "Storia") {
-      setGameState(GameState.STORY_SCREEN);
-    } else if (selectedItem === "Opzioni") {
-      setGameState(GameState.OPTIONS_SCREEN);
-    } else if (selectedItem === "Esci") {
-        // In a real app, you might close the window or go to a goodbye screen.
-        // For this prototype, we'll just log it.
-        console.log("Exiting game...");
+    switch(selectedItem) {
+        case "Nuova Partita":
+            setMap(); // Resetta il mondo di gioco
+            initCharacter(); // Resetta lo stato del personaggio a vuoto
+            startCutscene('CS_OPENING'); // Avvia la cutscene di apertura
+            break;
+        case "Continua Partita": {
+            const lastSaveSlot = localStorage.getItem('tspc_last_save_slot');
+            if (lastSaveSlot) {
+                loadGame(parseInt(lastSaveSlot, 10));
+            } else {
+                // FIX: Used the correct enum JournalEntryType for the journal entry type.
+                addJournalEntry({ text: "Nessun salvataggio precedente trovato.", type: JournalEntryType.SYSTEM_ERROR });
+            }
+            break;
+        }
+        case "Carica Partita":
+            setGameState(GameState.LOAD_GAME);
+            break;
+        case "Istruzioni":
+            setGameState(GameState.INSTRUCTIONS_SCREEN);
+            break;
+        case "Storia":
+            setGameState(GameState.STORY_SCREEN);
+            break;
+        case "Opzioni":
+            setGameState(GameState.OPTIONS_SCREEN);
+            break;
+        case "Esci":
+            // In a real app, you might close the window or go to a goodbye screen.
+            // For this prototype, we'll just log it.
+            console.log("Exiting game...");
+            break;
     }
-  }, [selectedIndex, setGameState, setMap, initCharacter, startCutscene]);
+  }, [selectedIndex, setGameState, setMap, initCharacter, startCutscene, loadGame, addJournalEntry]);
 
   const handlerMap = useMemo(() => ({
     ArrowUp: handleArrowUp,

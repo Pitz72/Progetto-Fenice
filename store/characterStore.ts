@@ -425,4 +425,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         const armorBonus = armor?.defense || 0;
         return 10 + dexMod + armorBonus;
     },
+    restoreState: (newState) => {
+        set(newState);
+    }
 }));

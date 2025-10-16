@@ -29,6 +29,12 @@ Il prototipo vanta un ciclo di gameplay robusto e completo, con tutti i pilastri
 *   **Integrazione Organica:** Le cutscene sono attivate da azioni specifiche del giocatore (iniziare una nuova partita, riposare in determinate condizioni, raggiungere luoghi chiave), rendendo la progressione della storia un'esperienza fluida e integrata nel gameplay.
 *   **Arco Narrativo Completo:** Questo sistema viene utilizzato per narrare i momenti cruciali della storia, dall'introduzione emotiva fino alla sconvolgente rivelazione finale, completando l'intero arco narrativo del gioco.
 
+#### Sistema di Salvataggio e Caricamento Robusto
+*   **Salvataggi Multi-Slot:** Il gioco supporta fino a 5 slot di salvataggio che utilizzano la memoria del browser (`localStorage`) per la persistenza dei dati.
+*   **Accessibilità Completa:** Le schermate di salvataggio e caricamento sono accessibili sia dal menu principale che dal menu di pausa in-game.
+*   **Import/Export dei Salvataggi:** Il giocatore ha la possibilità di scaricare fisicamente i propri file di salvataggio (in formato `.json`) e di caricarli nuovamente nel gioco. Questa funzione garantisce la portabilità dei progressi tra diverse sessioni o browser.
+*   **Compatibilità Futura:** Ogni file di salvataggio include un numero di versione. Il sistema è progettato con una logica di "migrazione" per tentare di rendere compatibili i vecchi salvataggi con le future versioni del gioco.
+
 #### Esplorazione e Mondo di Gioco
 *   **Mappa Vasta e Diversificata:** Un'ampia mappa con biomi unici (Pianure, Foreste, Villaggi, Città) che influenzano movimento, incontri e risorse.
 *   **Immersione Atmosferica:** Messaggi descrittivi contestuali basati su bioma, ora del giorno e meteo aumentano l'immersione.

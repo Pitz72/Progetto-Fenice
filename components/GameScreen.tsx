@@ -82,7 +82,7 @@ const CommandsPanel: React.FC = () => (
       <div className="flex justify-between"><span>[L]</span> <span>Level Up</span></div>
       <div className="flex justify-between"><span>[ESC]</span> <span>Menu/Indietro</span></div>
     </div>
-  </Panel>
+  </CommandsPanel>
 );
 
 
@@ -222,8 +222,8 @@ const GameScreen: React.FC = () => {
   const { setGameState, movePlayer, isInventoryOpen, toggleInventory, performQuickRest, isInRefuge, openLevelUpScreen } = useGameStore();
   const gameState = useGameStore((state) => state.gameState);
 
-  const handleExit = useCallback(() => {
-    setGameState(GameState.MAIN_MENU);
+  const handleOpenPauseMenu = useCallback(() => {
+    setGameState(GameState.PAUSE_MENU);
   }, [setGameState]);
 
   const handleMove = useCallback((dx: number, dy: number) => {
@@ -239,6 +239,8 @@ const GameScreen: React.FC = () => {
   }, [isInventoryOpen, isInRefuge, performQuickRest]);
 
   const keyHandlerMap = useMemo(() => {
+    // Questo gestore dovrebbe essere attivo solo nello stato di gioco principale
+    // per evitare che gli input trapelino in modali come Combattimento, Eventi, ecc.
     if (gameState !== GameState.IN_GAME) {
       return {};
     }
@@ -261,10 +263,10 @@ const GameScreen: React.FC = () => {
     };
 
     if (!isInventoryOpen && !isInRefuge) {
-      map['Escape'] = handleExit;
+      map['Escape'] = handleOpenPauseMenu;
     }
     return map;
-  }, [gameState, toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleExit, openLevelUpScreen]);
+  }, [gameState, toggleInventory, handleQuickRest, handleMove, isInventoryOpen, isInRefuge, handleOpenPauseMenu, openLevelUpScreen]);
   
   useKeyboardInput(keyHandlerMap);
 

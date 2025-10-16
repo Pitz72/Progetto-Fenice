@@ -43,6 +43,7 @@ const VolumeBar: React.FC<{ level: number, max: number }> = ({ level, max }) => 
 
 const OptionsScreen: React.FC = () => {
     const setGameState = useGameStore((state) => state.setGameState);
+    const previousGameState = useGameStore((state) => state.previousGameState);
 
     const [settings, setSettings] = useState({
         language: 0,
@@ -101,8 +102,13 @@ const OptionsScreen: React.FC = () => {
     const handleArrowRight = useCallback(() => handleChangeOption('right'), [handleChangeOption]);
     
     const handleExit = useCallback(() => {
-        setGameState(GameState.MAIN_MENU);
-    }, [setGameState]);
+        // Se proveniamo dal menu di pausa, torniamo lì. Altrimenti, al menu principale.
+        if (previousGameState === GameState.PAUSE_MENU) {
+            setGameState(GameState.PAUSE_MENU);
+        } else {
+            setGameState(GameState.MAIN_MENU);
+        }
+    }, [setGameState, previousGameState]);
 
     const handlerMap = useMemo(() => ({
         ArrowUp: handleArrowUp,
@@ -155,7 +161,7 @@ const OptionsScreen: React.FC = () => {
             </div>
 
             <div className="mt-auto text-2xl md:text-3xl text-center">
-                [W/S/↑↓] Muovi | [A/D/←→] Cambia | [ESC] Torna al Menu
+                [W/S/↑↓] Muovi | [A/D/←→] Cambia | [ESC] Torna Indietro
             </div>
         </div>
     );

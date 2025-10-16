@@ -25,6 +25,8 @@ import { useCutsceneDatabaseStore } from './data/cutsceneDatabase';
 import MainQuestScreen from './components/MainQuestScreen';
 import CutsceneScreen from './components/CutsceneScreen';
 import AshLullabyChoiceScreen from './components/AshLullabyChoiceScreen';
+import InGameMenuScreen from './components/InGameMenuScreen';
+import SaveLoadScreen from './components/SaveLoadScreen';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
@@ -72,6 +74,10 @@ const App: React.FC = () => {
         return <StoryScreen />;
       case GameState.OPTIONS_SCREEN:
         return <OptionsScreen />;
+      case GameState.SAVE_GAME:
+        return <SaveLoadScreen mode="save" />;
+      case GameState.LOAD_GAME:
+        return <SaveLoadScreen mode="load" />;
       case GameState.CUTSCENE:
         return <CutsceneScreen />;
       case GameState.CHARACTER_CREATION:
@@ -89,6 +95,13 @@ const App: React.FC = () => {
           <>
             <GameScreen />
             <CombatScreen />
+          </>
+        );
+       case GameState.PAUSE_MENU:
+         return (
+          <>
+            <GameScreen />
+            <InGameMenuScreen />
           </>
         );
       case GameState.IN_GAME:

@@ -13,6 +13,9 @@ export enum GameState {
   CUTSCENE,
   CHARACTER_CREATION,
   IN_GAME,
+  PAUSE_MENU,
+  SAVE_GAME,
+  LOAD_GAME,
   EVENT_SCREEN,
   LEVEL_UP_SCREEN,
   COMBAT,
@@ -254,6 +257,7 @@ export interface PlayerStatus {
 
 export interface GameStoreState {
   gameState: GameState;
+  previousGameState: GameState | null;
   map: string[][];
   playerPos: Position;
   gameTime: GameTime;
@@ -329,6 +333,10 @@ export interface GameStoreState {
   processCutsceneConsequences: (consequences: CutsceneConsequence[]) => void;
   endCutscene: () => void;
   checkCutsceneTriggers: () => void;
+  // Save/Load System
+  saveGame: (slot: number) => boolean;
+  loadGame: (slot: number) => boolean;
+  restoreState: (state: Partial<GameStoreState>) => void;
 }
 
 
@@ -430,6 +438,8 @@ export interface CharacterState {
     boostAttribute: (attribute: AttributeName, amount: number) => void;
     learnRecipe: (recipeId: string) => void;
     getPlayerAC: () => number;
+    // Save/Load System
+    restoreState: (state: Partial<CharacterState>) => void;
 }
 
 // --- Item System ---

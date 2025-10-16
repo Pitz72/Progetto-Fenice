@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 // FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter, Cutscene, CutsceneConsequence, CharacterState } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
@@ -11,6 +11,49 @@ import { useMainQuestDatabaseStore } from '../data/mainQuestDatabase';
 import { useCutsceneDatabaseStore } from '../data/cutsceneDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS, JOURNAL_ENTRY_COLORS } from '../constants';
 import * as N from '../data/combatNarrative';
+
+// --- Save Game System ---
+const SAVE_VERSION = "1.0.0";
+const LAST_SAVE_SLOT_KEY = 'tspc_last_save_slot';
+
+interface SaveFile {
+    saveVersion: string;
+    timestamp: number;
+    metadata: {
+        level: number;
+        day: number;
+        hour: number;
+        minute: number;
+    };
+    gameStoreState: Omit<GameStoreState, 'saveGame' | 'loadGame' | 'restoreState'>;
+    characterStoreState: Omit<CharacterState, 'restoreState'>;
+}
+
+// This function will be expanded in the future to handle old save versions.
+const migrateSaveData = (saveData: any): SaveFile => {
+    if (!saveData.saveVersion) {
+        throw new Error("Invalid save file: missing version.");
+    }
+
+    // Example of a future migration:
+    // if (saveData.saveVersion < "1.1.0") {
+    //   // Apply changes to upgrade from <1.1.0 to 1.1.0
+    //   saveData.characterStoreState.newStat = { current: 100, max: 100 };
+    //   saveData.saveVersion = "1.1.0";
+    // }
+
+    if (saveData.saveVersion !== SAVE_VERSION) {
+        console.warn(`Save file version (${saveData.saveVersion}) does not match game version (${SAVE_VERSION}). Trying to load anyway.`);
+    }
+
+    // Crucial: JSON stringify/parse converts Sets to Arrays. We must convert it back.
+    if (Array.isArray(saveData.gameStoreState.gameFlags)) {
+        saveData.gameStoreState.gameFlags = new Set(saveData.gameStoreState.gameFlags);
+    }
+
+    return saveData as SaveFile;
+};
+
 
 // --- Constants for Game Logic ---
 const TRAVERSABLE_TILES = new Set(['.', 'R', 'C', 'V', 'F', 'S', 'E', '~']);
@@ -101,6 +144,7 @@ type PlayerCombatActionPayload =
 export const useGameStore = create<GameStoreState>((set, get) => ({
   // --- State ---
   gameState: GameState.INITIAL_BLACK_SCREEN,
+  previousGameState: null,
   map: [],
   playerPos: { x: 0, y: 0 },
   gameTime: { day: 1, hour: 8, minute: 0 },
@@ -135,7 +179,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
 
   // --- Actions ---
-  setGameState: (newState) => set({ gameState: newState }),
+  setGameState: (newState) => set(state => {
+    // Non aggiornare lo stato precedente se il nuovo stato è identico
+    if (state.gameState === newState) return { gameState: newState };
+    return { 
+        previousGameState: state.gameState, 
+        gameState: newState 
+    };
+  }),
   
   addJournalEntry: (entry) => {
     set(state => ({
@@ -1146,24 +1197,24 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         break;
       }
       case 'tactic': {
-        // FIX: Explicitly typing the 't' parameter as EnemyTactic resolves the "Property 'id' does not exist on type 'unknown'" error.
+        // FIX: Explicitly type the parameter 't' in the find method to resolve the type inference issue.
         const tactic = combatState.availableTacticalActions.find(
-          (t: EnemyTactic) => t.id === action.tacticId,
+          (t: EnemyTactic) => t.id === action.tacticId
         );
         if (tactic && tactic.skillCheck) {
           addLog(tactic.description);
           const check = performSkillCheck(
             tactic.skillCheck.skill,
-            tactic.skillCheck.dc,
+            tactic.skillCheck.dc
           );
           addLog(
-            `Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`,
+            `Prova di ${check.skill} (CD ${check.dc}): ${check.roll} + ${check.bonus} = ${check.total}.`
           );
           if (check.success) {
             const bonusDamage = 15;
             addLog(
               `SUCCESSO! Il nemico è sbilanciato e vulnerabile! Infliggi ${bonusDamage} danni extra.`,
-              '#38bdf8',
+              '#38bdf8'
             );
             newEnemyHp.current = Math.max(0, newEnemyHp.current - bonusDamage);
           } else {
@@ -1371,5 +1422,82 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             set(state => ({ gameFlags: new Set(state.gameFlags).add('RIVER_INTRO_PLAYED') }));
         }
     }
+  },
+
+  // --- Save/Load System ---
+  saveGame: (slot) => {
+      try {
+          const gameStoreState = { ...get() };
+          const characterStoreState = { ...useCharacterStore.getState() };
+
+          // Remove non-serializable/transient parts of the state
+          delete (gameStoreState as any).saveGame;
+          delete (gameStoreState as any).loadGame;
+          delete (gameStoreState as any).restoreState;
+          delete (characterStoreState as any).restoreState;
+          
+          const saveFile: SaveFile = {
+              saveVersion: SAVE_VERSION,
+              timestamp: Date.now(),
+              metadata: {
+                  level: characterStoreState.level,
+                  day: gameStoreState.gameTime.day,
+                  hour: gameStoreState.gameTime.hour,
+                  minute: gameStoreState.gameTime.minute,
+              },
+              gameStoreState: gameStoreState,
+              characterStoreState: characterStoreState,
+          };
+          
+          // Convert Set to Array for JSON compatibility
+          const serializableSaveFile = {
+              ...saveFile,
+              gameStoreState: {
+                  ...saveFile.gameStoreState,
+                  gameFlags: Array.from(saveFile.gameStoreState.gameFlags),
+              },
+          };
+
+          localStorage.setItem(`tspc_save_slot_${slot}`, JSON.stringify(serializableSaveFile));
+          localStorage.setItem(LAST_SAVE_SLOT_KEY, slot.toString());
+          get().addJournalEntry({ text: `Partita salvata nello slot ${slot}.`, type: JournalEntryType.SYSTEM_WARNING, color: '#f59e0b' });
+          return true;
+      } catch (error) {
+          console.error("Failed to save game:", error);
+          get().addJournalEntry({ text: "ERRORE: Impossibile salvare la partita.", type: JournalEntryType.SYSTEM_ERROR });
+          return false;
+      }
+  },
+
+  loadGame: (slot) => {
+      try {
+          const savedDataString = localStorage.getItem(`tspc_save_slot_${slot}`);
+          if (!savedDataString) {
+              get().addJournalEntry({ text: `Slot di salvataggio ${slot} è vuoto.`, type: JournalEntryType.SYSTEM_ERROR });
+              return false;
+          }
+
+          const parsedData = JSON.parse(savedDataString);
+          const migratedData = migrateSaveData(parsedData);
+
+          useCharacterStore.getState().restoreState(migratedData.characterStoreState);
+          get().restoreState(migratedData.gameStoreState);
+          
+          // After restoring state, explicitly set the game state to IN_GAME
+          set({ gameState: GameState.IN_GAME });
+          localStorage.setItem(LAST_SAVE_SLOT_KEY, slot.toString());
+
+          get().addJournalEntry({ text: `Partita caricata dallo slot ${slot}.`, type: JournalEntryType.SYSTEM_WARNING, color: '#f59e0b' });
+          return true;
+
+      } catch (error) {
+          console.error("Failed to load game:", error);
+          get().addJournalEntry({ text: `ERRORE: File di salvataggio corrotto o non compatibile.`, type: JournalEntryType.SYSTEM_ERROR });
+          return false;
+      }
+  },
+
+  restoreState: (newState) => {
+      set(newState);
   },
 }));

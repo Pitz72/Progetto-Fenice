@@ -15,6 +15,7 @@ export enum GameState {
   EVENT_SCREEN,
   LEVEL_UP_SCREEN,
   COMBAT,
+  MAIN_QUEST,
 }
 
 export enum JournalEntryType {
@@ -67,6 +68,33 @@ export interface WeatherState {
   type: WeatherType;
   duration: number; // in minutes
 }
+
+// --- Main Quest System ---
+export type QuestTriggerType =
+  | 'stepsTaken'
+  | 'daysSurvived'
+  | 'levelReached'
+  | 'combatWins'
+  | 'firstRefugeEntry'
+  | 'reachLocation'
+  | 'reachEnd';
+
+export type QuestTrigger =
+  | { type: 'stepsTaken'; value: number }
+  | { type: 'daysSurvived'; value: number }
+  | { type: 'levelReached'; value: number }
+  | { type: 'combatWins'; value: number }
+  | { type: 'firstRefugeEntry' }
+  | { type: 'reachLocation'; value: Position }
+  | { type: 'reachEnd' };
+
+export interface MainQuestChapter {
+  stage: number;
+  title: string;
+  text: string;
+  trigger: QuestTrigger;
+}
+
 
 // --- UI & Menu States ---
 export interface ActionMenuState {
@@ -224,6 +252,11 @@ export interface GameStoreState {
   eventHistory: string[];
   eventResolutionText: string | null;
   activeCombat: CombatState | null;
+  // Main Quest State
+  mainQuestStage: number;
+  totalSteps: number;
+  totalCombatWins: number;
+  activeMainQuestEvent: MainQuestChapter | null;
   
   // Actions
   setGameState: (newState: GameState) => void;
@@ -260,6 +293,8 @@ export interface GameStoreState {
             { type: 'use_item', itemId: string }
   ) => void;
   cleanupCombat: () => void;
+  checkMainQuestTriggers: () => void;
+  resolveMainQuest: () => void;
 }
 
 

@@ -14,12 +14,12 @@ const LevelUpScreen: React.FC = () => {
     const [attributeIndex, setAttributeIndex] = useState(0);
     const [skillIndex, setSkillIndex] = useState(0);
 
-    const nonProficientSkills = useMemo(() => 
-        Object.entries(skills)
-            // FIX: Explicitly typing `details` as `Skill` because TypeScript failed to infer it correctly.
+    const nonProficientSkills = useMemo(() => {
+        // FIX: Rewrote to use a block body with an explicit return. This can prevent some linters from misinterpreting the comma in the dependency array as a comma operator.
+        return Object.entries(skills)
             .filter(([, details]: [string, Skill]) => !details.proficient)
-            .map(([skillName]) => skillName as SkillName)
-    , [skills]);
+            .map(([skillName]) => skillName as SkillName);
+    }, [skills]);
 
     useEffect(() => {
         if (!levelUpPending) {

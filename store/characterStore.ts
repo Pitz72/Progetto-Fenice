@@ -180,7 +180,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
                 type: JournalEntryType.XP_GAIN
             });
 
-            return {
+            const newState = {
                 level: newLevel,
                 xp: { current: remainingXp, next: xpForNextLevel },
                 hp: { max: newMaxHp, current: newMaxHp }, // Full heal on level up
@@ -188,6 +188,13 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
                 skills: newSkills,
                 levelUpPending: remainingXp >= xpForNextLevel, // Check if another level up is pending
             };
+
+            // Cannot call check triggers inside set state, so we do it after
+            Promise.resolve().then(() => {
+                useGameStore.getState().checkMainQuestTriggers();
+            });
+
+            return newState;
         });
     },
 

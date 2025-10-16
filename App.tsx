@@ -20,6 +20,8 @@ import { useItemDatabaseStore } from './data/itemDatabase';
 import { useEventDatabaseStore } from './data/eventDatabase';
 import { useRecipeDatabaseStore } from './data/recipeDatabase';
 import { useEnemyDatabaseStore } from './data/enemyDatabase';
+import { useMainQuestDatabaseStore } from './data/mainQuestDatabase';
+import MainQuestScreen from './components/MainQuestScreen';
 
 const App: React.FC = () => {
   const gameState = useGameStore((state) => state.gameState);
@@ -34,6 +36,7 @@ const App: React.FC = () => {
   const { loadDatabase: loadEventDatabase, isLoaded: eventsLoaded } = useEventDatabaseStore();
   const { loadDatabase: loadRecipeDatabase, isLoaded: recipesLoaded } = useRecipeDatabaseStore();
   const { loadDatabase: loadEnemyDatabase, isLoaded: enemiesLoaded } = useEnemyDatabaseStore();
+  const { loadDatabase: loadMainQuestDatabase, isLoaded: mainQuestLoaded } = useMainQuestDatabaseStore();
 
 
   useEffect(() => {
@@ -41,14 +44,15 @@ const App: React.FC = () => {
     loadEventDatabase();
     loadRecipeDatabase();
     loadEnemyDatabase();
-  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase, loadEnemyDatabase]);
+    loadMainQuestDatabase();
+  }, [loadItemDatabase, loadEventDatabase, loadRecipeDatabase, loadEnemyDatabase, loadMainQuestDatabase]);
 
   useEffect(() => {
-    if (itemsLoaded && eventsLoaded && recipesLoaded && enemiesLoaded) {
+    if (itemsLoaded && eventsLoaded && recipesLoaded && enemiesLoaded && mainQuestLoaded) {
       setMap();
       initCharacter();
     }
-  }, [itemsLoaded, eventsLoaded, recipesLoaded, enemiesLoaded, setMap, initCharacter]);
+  }, [itemsLoaded, eventsLoaded, recipesLoaded, enemiesLoaded, mainQuestLoaded, setMap, initCharacter]);
 
   const renderContent = () => {
     switch (gameState) {
@@ -71,6 +75,8 @@ const App: React.FC = () => {
         return <EventScreen />;
       case GameState.LEVEL_UP_SCREEN:
         return <LevelUpScreen />;
+       case GameState.MAIN_QUEST:
+        return <MainQuestScreen />;
       case GameState.COMBAT:
         return (
           <>

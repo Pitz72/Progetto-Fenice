@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 // FIX: Added EnemyTactic and Enemy to the import list to be used for explicit typing.
-import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy } from '../types';
+import { GameState, GameStoreState, TileInfo, WeatherType, WeatherState, JournalEntry, ActionMenuState, JournalEntryType, GameTime, RefugeMenuState, Position, EventResult, CraftingMenuState, GameEvent, AttributeName, CombatState, EnemyTactic, Enemy, MainQuestChapter } from '../types';
 import { MAP_DATA } from '../data/mapData';
 import { useCharacterStore } from './characterStore';
 import { useItemDatabaseStore } from '../data/itemDatabase';
 import { useEventDatabaseStore } from '../data/eventDatabase';
 import { useRecipeDatabaseStore } from '../data/recipeDatabase';
 import { useEnemyDatabaseStore } from '../data/enemyDatabase';
+import { useMainQuestDatabaseStore } from '../data/mainQuestDatabase';
 import { MOUNTAIN_MESSAGES, BIOME_MESSAGES, ATMOSPHERIC_MESSAGES, BIOME_COLORS, JOURNAL_ENTRY_COLORS } from '../constants';
 import * as N from '../data/combatNarrative';
 
@@ -124,6 +125,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   eventHistory: [],
   eventResolutionText: null,
   activeCombat: null,
+  mainQuestStage: 1,
+  totalSteps: 0,
+  totalCombatWins: 0,
+  activeMainQuestEvent: null,
 
 
   // --- Actions ---
@@ -164,6 +169,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         activeEvent: null,
         eventHistory: [],
         activeCombat: null,
+        mainQuestStage: 1,
+        totalSteps: 0,
+        totalCombatWins: 0,
+        activeMainQuestEvent: null,
     });
     get().addJournalEntry({ text: "Benvenuto in The Safe Place. La tua avventura inizia ora.", type: JournalEntryType.GAME_START });
     get().addJournalEntry({ text: BIOME_MESSAGES['S'], type: JournalEntryType.NARRATIVE, color: BIOME_COLORS['S'] });
@@ -171,6 +180,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   advanceTime: (minutes: number, bypassPause: boolean = false) => {
     if ((get().isInventoryOpen || get().isInRefuge) && !bypassPause) return;
+    
+    const oldDay = get().gameTime.day;
 
     // --- Update Game Time ---
     let newMinute = get().gameTime.minute + minutes;
@@ -179,6 +190,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     while (newMinute >= 60) { newMinute -= 60; newHour += 1; }
     while (newHour >= 24) { newHour -= 24; newDay += 1; }
     set({ gameTime: { day: newDay, hour: newHour, minute: newMinute } });
+
+    if(newDay > oldDay) {
+        get().checkMainQuestTriggers();
+    }
 
     // --- Update Weather ---
     let newWeather = { ...get().weather };
@@ -198,7 +213,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   movePlayer: (dx, dy) => {
-    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, currentBiome: previousBiome } = get();
+    const { map, playerPos, playerStatus, weather, gameTime, advanceTime, addJournalEntry, enterRefuge, visitedRefuges, currentBiome: previousBiome, checkMainQuestTriggers } = get();
     
     if (playerStatus.isExitingWater) {
         set({ playerStatus: { ...playerStatus, isExitingWater: false } });
@@ -278,9 +293,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         addJournalEntry({ text: "Il terreno scivoloso ti fa cadere. (-1 HP)", type: JournalEntryType.COMBAT });
     }
 
-    set({ playerPos: newPos });
+    set(state => ({ playerPos: newPos, totalSteps: state.totalSteps + 1 }));
     advanceTime(timeCost);
     useCharacterStore.getState().gainExplorationXp();
+    
+    checkMainQuestTriggers();
+    if (get().gameState !== GameState.IN_GAME) return;
 
     // --- REVISED EVENT TRIGGER LOGIC ---
     let eventTriggered = false;
@@ -503,6 +521,16 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   clearRefugeActionMessage: () => set({ refugeActionMessage: null }),
 
   enterRefuge: () => {
+    const isFirstRefuge = get().visitedRefuges.length === 0;
+    if (isFirstRefuge) {
+        const { mainQuestChapters } = useMainQuestDatabaseStore.getState();
+        const nextChapter = mainQuestChapters.find(c => c.stage === get().mainQuestStage);
+        if (nextChapter && nextChapter.trigger.type === 'firstRefugeEntry') {
+            set({ activeMainQuestEvent: nextChapter, gameState: GameState.MAIN_QUEST });
+        }
+    }
+
+
     const { gameTime, playerPos, lootedRefuges, refugeJustSearched } = get();
     const isNight = gameTime.hour >= 20 || gameTime.hour < 6;
     const isLooted = lootedRefuges.some(pos => pos.x === playerPos.x && pos.y === playerPos.y);
@@ -999,7 +1027,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   endCombat: (result) => {
-    const { addJournalEntry } = get();
+    const { addJournalEntry, checkMainQuestTriggers } = get();
+    if (result === 'win') {
+        set(state => ({ totalCombatWins: state.totalCombatWins + 1 }));
+        checkMainQuestTriggers();
+    }
     if (result === 'flee') {
         addJournalEntry({ text: "Sei fuggito dal combattimento.", type: JournalEntryType.NARRATIVE });
     } else if (result === 'lose') {
@@ -1075,7 +1107,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       }
       case 'tactic': {
         // FIX: Explicitly type the 't' parameter in the find method to resolve an inference issue where 't' was being treated as 'unknown'.
-        const tactic = combatState.enemy.tactics.actions.find((t: EnemyTactic) => t.id === action.tacticId);
+        const tactic = combatState.availableTacticalActions.find((t: EnemyTactic) => t.id === action.tacticId);
         if(tactic && tactic.skillCheck) {
             addLog(tactic.description);
             const check = performSkillCheck(tactic.skillCheck.skill, tactic.skillCheck.dc);
@@ -1152,4 +1184,55 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         }, 1500);
     }
   },
+  
+  checkMainQuestTriggers: () => {
+    const state = get();
+    if (state.activeMainQuestEvent || state.gameState !== GameState.IN_GAME) return;
+
+    const { mainQuestChapters } = useMainQuestDatabaseStore.getState();
+    const nextChapter = mainQuestChapters.find(c => c.stage === state.mainQuestStage);
+
+    if (!nextChapter) return;
+
+    let conditionMet = false;
+    const trigger = nextChapter.trigger;
+    const { level } = useCharacterStore.getState();
+
+    switch (trigger.type) {
+        case 'stepsTaken':
+            conditionMet = state.totalSteps >= trigger.value;
+            break;
+        case 'daysSurvived':
+            conditionMet = state.gameTime.day >= trigger.value;
+            break;
+        case 'levelReached':
+            conditionMet = level >= trigger.value;
+            break;
+        case 'combatWins':
+            conditionMet = state.totalCombatWins >= trigger.value;
+            break;
+        case 'reachLocation':
+             conditionMet = state.playerPos.x === trigger.value.x && state.playerPos.y === trigger.value.y;
+             break;
+        case 'reachEnd':
+            conditionMet = state.map[state.playerPos.y][state.playerPos.x] === 'E';
+            break;
+        case 'firstRefugeEntry':
+            // This is handled by a special check in enterRefuge to ensure context
+            break;
+    }
+
+    if (conditionMet) {
+        set({ activeMainQuestEvent: nextChapter, gameState: GameState.MAIN_QUEST });
+    }
+  },
+
+  resolveMainQuest: () => {
+    set(state => ({
+        mainQuestStage: state.mainQuestStage + 1,
+        activeMainQuestEvent: null,
+        gameState: GameState.IN_GAME,
+    }));
+  },
+
 }));
